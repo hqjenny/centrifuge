@@ -1,0 +1,3 @@
+[submodule "workloads/cf-base/linux"]
+	path = workloads/cf-base/linux
+	url = https://github.com/firesim/linux.git
