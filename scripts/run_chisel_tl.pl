@@ -528,7 +528,7 @@ for( $i = 0; $i < @m_axi_data_widths; $i = $i + 1 ){
     sbus.fromPort(Some(axi_m_portName)) {
             (TLWidthWidget($m_axi_data_widths[$i]>> 3 ) 
             := AXI4ToTL() 
-            := AXI4UserYanker() 
+            := AXI4UserYanker(Some(8)) 
             := AXI4Fragmenter() 
             := AXI4IdIndexer(1))
     }:=* hls_test_c_accel.node_$bus_names[$i]
@@ -545,7 +545,7 @@ $control2 .='
                        := TLBuffer()      
                        //:= TLWidthWidget(s_axi_data_width >> 3)
                        // Compared to TLWidthWidget, TLFragmenter saves the id info?
-                       := TLFragmenter(s_axi_data_width >> 3, 64, true))
+                       := TLFragmenter(s_axi_data_width >> 3, 64, alwaysMin=true, holdFirstDeny=true))
   }
 }
 
