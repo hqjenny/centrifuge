@@ -26,7 +26,6 @@ if ((not defined($rdir)) or $rdir eq '') {
     exit();
 }
 
-my $bm_path = $rdir."/sim/target-rtl/firechip/hls_$file_name"."_$func_name";
 my $wrapper_func_name = $func_name."_wrapper";
 my $wrapper_header= "bm_wrapper.h";
 
@@ -34,7 +33,7 @@ if ($prefix) {
   $func_name  = $prefix.$func_name;
 }
 
-my $bm_inc_path = $rdir."/hls/sw/bm/";
+my $bm_inc_path = $rdir."/tools/centrifuge/scripts/sw_aux/sw_helper/";
 #############################PARSE Verilog##############################
 
 my %var_dict;
@@ -93,8 +92,7 @@ if(!open VERILOG, "$verilog_file"){
       }
       print("\n");
     }
-    my $wrapper = '#include "'.$bm_inc_path.'/mmio.h"'."\n";
-    #$wrapper .= '#include "'.$bm_inc_path.'/time.h"'."\n";
+    my $wrapper = '#include "'.$bm_inc_path.'mmio.h"'."\n";
 
     $wrapper .= '#define ACCEL_BASE '.$func_base_addr."\n";
 

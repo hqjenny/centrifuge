@@ -1,0 +1,30 @@
+ARCH =  riscv64
+
+CC :=$(ARCH)-unknown-elf-g++
+
+# This defines a pre-processor flag called WRAP_funcname that benchmarks can
+# use to automatically select which function(s) to use the wrapper for.
+CFLAGS += -fpermissive -DWRAP_$(FUNC)
+LDFLAGS += -fpermissive
+
+src_files := $(TARGET).c
+OBJECTS = $(src_files:.c=.o)
+
+all: $(TARGET).rv
+
+$(TARGET).rv: Makefile $(OBJECTS)
+	$(CC) $(LDFLAGS) $(OBJECTS) -o $@
+	$(ARCH)-unknown-elf-objdump -D $@ > $(TARGET).asm
+
+.c.o:
+	$(CC) -c $(CFLAGS) $< -o $@
+
+.cpp.o:
+	$(CC) -c $(CFLAGS) $< -o $@
+
+
+run:
+	spike pk $(TARGET).rv
+
+clean:
+	rm -f $(OBJECTS) $(TARGET).rv $(TARGET).asm $(TARGET).ll $(TARGET).S

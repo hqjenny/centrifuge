@@ -24,13 +24,13 @@ if ((not defined($rdir)) or $rdir eq '') {
     print("Please source sourceme-f1.sh!\n");
     exit();
 }
-my $bm_path = $rdir."/sim/target-rtl/firechip/hls_$file_name"."_$func_name";
 my $wrapper_func_name = $func_name."_wrapper";
 my $wrapper_header= "bm_wrapper.h";
 if ($prefix) {
   $func_name  = $prefix.$func_name;
 }
 
+my $bm_inc_path = $rdir."/tools/centrifuge/scripts/sw_aux/sw_helper/";
 #############################PARSE Verilog##############################
 my $verilog_file = "$dir/../verilog/$func_name".".v";
 my $line = undef;
@@ -255,11 +255,7 @@ foreach my $arg (@verilog_input_pointer_arg) {
     print("pointer_arg: $arg\n");  
 }
 
-my $wrapper ='
-#ifdef CUSTOM_INST 
-#include "rocc.h"
-#endif
-';
+my $wrapper = '#include "'.$bm_inc_path.'rocc.h"'."\n";
 
 my $return_type = "void ";
 if($ap_return){
