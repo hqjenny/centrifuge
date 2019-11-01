@@ -33,7 +33,7 @@ require $scripts_dir.'generate_accel.pl';
 require $scripts_dir.'generate_build_sbt.pl';
 require $scripts_dir.'generate_config.pl';
 require $scripts_dir.'generate_f1_scripts.pl';
-require $scripts_dir.'generate_xsim_scripts.pl';
+#require $scripts_dir.'generate_xsim_scripts.pl';
 
 # Parse Json file
 my ($RoCC_ref, $TLL2_ref) = parse_json($json_fn);
@@ -95,15 +95,20 @@ generate_build_sbt($soc_name, \%hls_bm);
 generate_config(\@RoCC_names, \@TLL2_names, $postfix);
 
 # F1 
-#generate_f1_scripts(\%hls_bm);
+generate_f1_scripts(\%hls_bm);
 #generate_xsim_scripts(\%hls_bm);
 #compile_xsim_libs($postfix, "clean", 0);
-#compile_replace_rtl($postfix, "clean", 0);
+compile_replace_rtl($postfix, "clean", 0);
 #print_xsim_cmd($postfix, 0);
 
 # Ax machines
-compile_vcs("clean");
-#copy_verilog(\%hls_bm, "$rdir/sim/generated-src/f1/FireSimHLS-HLSFireSimRocketChipConfig-FireSimConfig/FPGATop.v");
+# compile_vcs("clean");
+# copy_verilog(\%hls_bm, "$rdir/sims/vcs/generated-src/example.TestHarness.HLSRocketConfig/example.TestHarness.HLSRocketConfig.top.v");
+# compile_vcs("");
+
+# compile_verilator("clean");
+# copy_verilog(\%hls_bm, "$rdir/sims/verilator/generated-src/example.TestHarness.HLSRocketConfig/example.TestHarness.HLSRocketConfig.top.v");
+# compile_verilator("");
 
 # SW
 # Copy Makefile Templates
@@ -135,8 +140,8 @@ sub compile_xsim_libs{
     if ($with_nic) {
         $nic = "";
     } 
-    chdir("$rdir/sim");
-    system("make DESIGN=FireSimHLS$nic TARGET_CONFIG=HLSFireSimRocketChipConfig$postfix PLATFORM_CONFIG=FireSimConfig $clean xsim");
+    chdir("$rdir/sims/firesim/sim");
+    system("make DESIGN=FireSimTopWithHLS$nic TARGET_CONFIG=HLSFireSimRocketChipConfig$postfix $clean xsim");
 }
 
 sub compile_replace_rtl{
@@ -147,8 +152,14 @@ sub compile_replace_rtl{
     if ($with_nic) {
         $nic = "";
     } 
-    chdir("$rdir/sim");
-    system("make DESIGN=FireSimHLS$nic TARGET_CONFIG=HLSFireSimRocketChipConfig$postfix PLATFORM_CONFIG=FireSimConfig $clean replace-rtl");
+    chdir("$rdir/sims/firesim/sim");
+    system("make DESIGN=FireSimTopWithHLS$nic TARGET_CONFIG=HLSFireSimRocketChipConfig$postfix PLATFORM_CONFIG=BaseF1Config_F90MHz $clean replace-rtl");
+}
+
+sub compile_verilator{
+    my $clean = $_[0];
+    chdir("$rdir/sims/verilator");
+    system("make $clean CONFIG=HLSRocketConfig TOP=TopWithHLS debug -j16");
 }
 
 sub compile_vcs{

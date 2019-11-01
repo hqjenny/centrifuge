@@ -274,7 +274,7 @@ foreach my $arg (@verilog_input_pointer_arg) {
 }
 
 my $arg_str = join ', ', @args;
-my $i = 0;
+$i = 0;
 foreach my $arg (@args) {
   if ($i != 0){
     $wrapper .=", "

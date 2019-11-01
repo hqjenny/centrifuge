@@ -16,9 +16,9 @@ pushd $RDIR/toolchains/riscv-tools/riscv-pk
 git apply $RDIR/tools/centrifuge/patches/riscv-pk.patch
 popd
 
-pushd $RDIR
-./scripts/build-toolchains.sh
-popd
+#pushd $RDIR
+#./scripts/build-toolchains.sh
+#popd
 
 # modify the midas F1Transform to generate clock gating buffers for blackbox modules:
 # pushd $RDIR/sim/midas/src/main/scala/midas/passes
@@ -44,11 +44,11 @@ popd
 #git apply $RDIR/hls/patches/riscv-linux.patch
 #popd
 #
-#pushd $CL_DIR/verif/scripts
-#git apply $RDIR/hls/patches/XSim_Makefile.patch 
-#touch top.vivado.vhd.f
-#popd
-#
+pushd $CL_DIR/verif/scripts
+git apply $RDIR/tools/centrifuge/patches/XSim_Makefile.patch 
+touch top.vivado.vhd.f
+popd
+
 ## Add Linux static memory allocator for the accelorator
 #cp $RDIR/hls/sw/riscv-linux/hls_mmap_static.c  $RDIR/sw/firesim-software/riscv-linux/mm/
 #echo "obj-y += hls_mmap_static.o" >> $RDIR/sw/firesim-software/riscv-linux/mm/Makefile
@@ -70,16 +70,16 @@ popd
 #source /ecad/tools/xilinx/Vivado/2017.1/settings64.sh > /dev/null" >> $RDIR/sourceme-f1-manager.sh
 #fi
 #
-## Only on AWS FPGA AMI machines (see firesim/build-setup-nolog.sh for how this trick works):
-#if wget -T 1 -t 3 -O /dev/null http://169.254.169.254/; then
-#  # # Update Makefiles for Xsim to support VHDL simluation.
-#  pushd $CL_DIR/verif/scripts
-#  git apply $RDIR/hls/patches/XSim_Makefile.patch 
-#  touch top.vivado.vhd.f
-#  popd
+# Only on AWS FPGA AMI machines (see firesim/build-setup-nolog.sh for how this trick works):
+if wget -T 1 -t 3 -O /dev/null http://169.254.169.254/; then
+  # # Update Makefiles for Xsim to support VHDL simluation.
+  pushd $CL_DIR/verif/scripts
+  git apply $RDIR/hls/patches/XSim_Makefile.patch 
+  touch top.vivado.vhd.f
+  popd
 
   # Setup perl modules
 #  sudo yum install -y cpan
 #  sudo cpan JSON
 #  sudo yum install -y perl-Tie-IxHash
-#fi
+fi
