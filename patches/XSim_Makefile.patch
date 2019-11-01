@@ -1,0 +1,13 @@
+diff --git a/hdk/cl/developer_designs/cl_firesim/verif/scripts/Makefile b/hdk/cl/developer_designs/cl_firesim/verif/scripts/Makefile
+index 9084269..6f95e96 100644
+--- a/hdk/cl/developer_designs/cl_firesim/verif/scripts/Makefile
++++ b/hdk/cl/developer_designs/cl_firesim/verif/scripts/Makefile
+@@ -18,7 +18,7 @@ export TEST ?= test_null
+ export C_TEST ?= test_null
+ 
+ export CL_ROOT = $(PWD)/../..
+-export SDK_DIR = $(AWS_FPGA_REPO_DIR)/sdk
++export SDK_DIR ?= $(AWS_FPGA_REPO_DIR)/sdk
+ 
+ export C_COMMON_DIR        = $(HDK_COMMON_DIR)/software
+ export C_SDK_USR_INC_DIR   = $(SDK_DIR)/userspace/include
