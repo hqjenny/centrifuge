@@ -1,1 +1,0 @@
-../../scripts/sw_aux/sw_helper/rocc.h
