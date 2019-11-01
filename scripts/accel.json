@@ -1,0 +1,9 @@
+{
+  "RoCC":{
+    "custom0":{"pgm": "vadd", "func":"vadd"}
+  },
+  "TLL2":[
+    {"pgm":"vadd_tl", "func": "vadd", "addr":"0x20000"},
+    {"pgm":"", "func": "", "addr":""}
+  ]
+}

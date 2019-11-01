@@ -1,0 +1,19 @@
+diff --git a/machine/minit.c b/machine/minit.c
+index 5ad6d92..2185d4b 100644
+--- a/machine/minit.c
++++ b/machine/minit.c
+@@ -23,9 +23,11 @@ void* kernel_end;
+ 
+ static void mstatus_init()
+ {
+-  // Enable FPU
+-  if (supports_extension('D') || supports_extension('F'))
+-    write_csr(mstatus, MSTATUS_FS);
++  // Enable FPU and Custom Instruction
++  uintptr_t ms = 0;
++  ms = INSERT_FIELD(ms, MSTATUS_FS, 1);
++  ms = INSERT_FIELD(ms, MSTATUS_XS, 1);
++  write_csr(mstatus, ms);
+ 
+   // Enable user/supervisor use of perf counters
+   if (supports_extension('S'))

@@ -48,10 +48,8 @@ sub generate_accel{
 
       system("mkdir -p $bm_path/src/main/c");
       chdir("$bm_path/src/main/c/") or die $!;
-      system("cp $RDIR/tools/centrifuge/examples/${PGM}/* $bm_path_c");
-      system("cp $RDIR/tools/centrifuge/scripts/run_hls.pl $bm_path_c");
-      #system("cp $RDIR/hls/sw/time.h $bm_path/src/main/c/");
-      #system("cp $RDIR/hls/sw/rocc.h $bm_path/src/main/c/");
+      system("cp -H $RDIR/tools/centrifuge/examples/${PGM}/* $bm_path_c");
+      system("cp -H $RDIR/tools/centrifuge/scripts/run_hls.pl $bm_path_c");
 
       # Specialize the Makefile for this function
       system("sed -i 's/^FUNC=.*/FUNC=$func/g' $bm_path_c/Makefile");
@@ -63,15 +61,15 @@ sub generate_accel{
       system("perl run_hls.pl ${PGM} ${FUNC} $prefix"); 
 
       if ($is_rocc) {
-          system("cp $RDIR/tools/centrifuge/scripts/run_chisel.pl $bm_path_c");
-          system("cp $RDIR/tools/centrifuge/scripts/generate_wrapper.pl $bm_path_c");
+          system("cp -H $RDIR/tools/centrifuge/scripts/run_chisel.pl $bm_path_c");
+          system("cp -H $RDIR/tools/centrifuge/scripts/generate_wrapper.pl $bm_path_c");
           system("perl run_chisel.pl ${PGM} ${FUNC} $prefix");
           system("perl generate_wrapper.pl ${PGM} ${FUNC} $idx_addr $prefix");
           #system("make clean");
           #system("make CUSTOM_INST=1");
       } else {
-          system("cp $RDIR/tools/centrifuge/scripts/run_chisel_tl.pl $bm_path_c");
-          system("cp $RDIR/tools/centrifuge/scripts/generate_wrapper_tl.pl $bm_path_c");
+          system("cp -H $RDIR/tools/centrifuge/scripts/run_chisel_tl.pl $bm_path_c");
+          system("cp -H $RDIR/tools/centrifuge/scripts/generate_wrapper_tl.pl $bm_path_c");
           system("perl run_chisel_tl.pl ${PGM} ${FUNC} $idx_addr $prefix");
           system("perl generate_wrapper_tl.pl ${PGM} ${FUNC} $idx_addr $prefix");
           #system("make clean");

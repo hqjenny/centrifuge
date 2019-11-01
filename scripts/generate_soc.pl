@@ -102,8 +102,12 @@ generate_config(\@RoCC_names, \@TLL2_names, $postfix);
 #print_xsim_cmd($postfix, 0);
 
 # Ax machines
-#compile_vcs("clean");
+compile_vcs("clean");
 #copy_verilog(\%hls_bm, "$rdir/sim/generated-src/f1/FireSimHLS-HLSFireSimRocketChipConfig-FireSimConfig/FPGATop.v");
+
+# SW
+# Copy Makefile Templates
+system("cp $scripts_dir/sw_aux/makefiles/* $rdir/generators/$soc_name/");
 
 sub print_xsim_cmd{
     my $postfix= $_[0];
@@ -150,7 +154,7 @@ sub compile_replace_rtl{
 sub compile_vcs{
     my $clean = $_[0];
     chdir("$rdir/sims/vcs");
-    system("make $clean debug CONFIG=");
+    system("make $clean CONFIG=HLSRocketConfig TOP=TopWithHLS debug -j16");
 }
 
 sub copy_verilog{
@@ -161,5 +165,4 @@ sub copy_verilog{
       system("cat $path/src/main/verilog/*.v >> $FPGATop_path");
     }
 }
-
 
