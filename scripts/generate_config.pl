@@ -143,6 +143,10 @@ import tracegen.{HasTraceGenTiles, HasTraceGenTilesModuleImp}
 import sifive.blocks.devices.uart._
 import java.io.File
 
+import firesim.bridges._
+import firesim.util.{WithNumNodes}
+import firesim.configs._
+
 import FireSimValName._
 ';
     foreach my $func_name (@rocc_func_names) {
@@ -165,8 +169,10 @@ class HLSFireSimRocketChipConfig$postfix extends Config(
   new WithBlockDevice ++
   new WithRocketL2TLBs(1024) ++
   new WithPerfCounters ++
-  new WithoutClockGating ++
   new WithInclusiveCache ++
+  new WithoutClockGating ++
+  new WithDefaultMemModel ++
+  new WithDefaultFireSimBridges ++
   new WithHLSRoCCExample ++
   new freechips.rocketchip.system.DefaultConfig)
 ";
