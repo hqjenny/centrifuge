@@ -79,7 +79,7 @@ if wget -T 1 -t 3 -O /dev/null http://169.254.169.254/; then
   popd
 
   # Setup perl modules
-#  sudo yum install -y cpan
-#  sudo cpan JSON
-#  sudo yum install -y perl-Tie-IxHash
+  sudo yum install -y cpan
+  sudo cpan JSON
+  sudo yum install -y perl-Tie-IxHash
 fi
