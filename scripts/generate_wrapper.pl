@@ -24,8 +24,9 @@ if ((not defined($rdir)) or $rdir eq '') {
     print("Please source sourceme-f1.sh!\n");
     exit();
 }
-my $wrapper_func_name = $func_name."_wrapper";
-my $wrapper_header= "bm_wrapper.h";
+my $wrapper_func_name = $func_name;
+my $wrapper_file= "accel_wrapper.c";
+my $wrapper_header= "accel_wrapper.h";
 if ($prefix) {
   $func_name  = $prefix.$func_name;
 }
@@ -256,6 +257,8 @@ foreach my $arg (@verilog_input_pointer_arg) {
 }
 
 my $wrapper = '#include "'.$bm_inc_path.'rocc.h"'."\n";
+$wrapper .="#define ACCEL_WRAPPER\n";
+$wrapper .='#include "accel.h"'."\n";
 
 my $return_type = "void ";
 if($ap_return){
@@ -263,7 +266,7 @@ if($ap_return){
 }
 
 my $total_args = @verilog_input_scalar + $hash_count;
-$wrapper .= "$return_type $wrapper_func_name(";
+my $func_prototype = "$return_type $wrapper_func_name(";
 
 my @args = ();
 foreach my $arg (@verilog_input_scalar) {
@@ -277,20 +280,23 @@ my $arg_str = join ', ', @args;
 $i = 0;
 foreach my $arg (@args) {
   if ($i != 0){
-    $wrapper .=", "
+    $func_prototype.=", "
   } 
-  $wrapper .="uint64_t $arg";
+  $func_prototype .="uint64_t $arg";
 
   $i=1;
 }
-$wrapper .= ") {
-";
+$func_prototype .= ")";
 
+$wrapper .= $func_prototype; 
 if($ap_return){
-  $wrapper .= "    uint64_t ret_val;\n";
+  $wrapper .= "
+{
+  uint64_t ret_val;\n";
 }
+
+#$wrapper .= "      ROCC_BARRIER();\n";
 $wrapper .="
-  #ifdef CUSTOM_INST
     #define XCUSTOM_ACC ";
 $wrapper .= $rocc_index."\n";
 
@@ -312,12 +318,20 @@ if ($ap_return){
   }
 }
 $wrapper .= "      ROCC_BARRIER();\n";
-$wrapper.="  #endif\n";
 if($ap_return){
   $wrapper .= "    return ret_val;\n";
 }
 $wrapper.="}";
 
 open FILE, "> $wrapper_header";
+print FILE "#ifndef ACCEL_WRAPPER_H
+#define ACCEL_WRAPPER_H\n
+";
+print FILE "$func_prototype;\n";
+print FILE "#endif";
+close FILE;
+
+open FILE, "> $wrapper_file";
 print FILE $wrapper;
+close FILE;
 

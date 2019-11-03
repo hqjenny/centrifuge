@@ -26,8 +26,10 @@ if ((not defined($rdir)) or $rdir eq '') {
     exit();
 }
 
-my $wrapper_func_name = $func_name."_wrapper";
-my $wrapper_header= "bm_wrapper.h";
+my $wrapper_func_name = $func_name;
+my $wrapper_file= "accel_wrapper.c";
+my $wrapper_header= "accel_wrapper.h";
+
 
 if ($prefix) {
   $func_name  = $prefix.$func_name;
@@ -93,7 +95,8 @@ if(!open VERILOG, "$verilog_file"){
       print("\n");
     }
     my $wrapper = '#include "'.$bm_inc_path.'mmio.h"'."\n";
-
+    $wrapper .="#define ACCEL_WRAPPER\n";
+    $wrapper .='#include "accel.h"'."\n";
     $wrapper .= '#define ACCEL_BASE '.$func_base_addr."\n";
 
     $wrapper .= "#define AP_DONE_MASK 0b10\n";
@@ -119,10 +122,12 @@ if(!open VERILOG, "$verilog_file"){
       $ap_return = 1;
     } 
     
+
+    my $func_prototype = '';
     if ($ap_return){
-      $wrapper .= $ap_return_type." $wrapper_func_name(";
+      $func_prototype .= $ap_return_type." $wrapper_func_name(";
     } else {
-      $wrapper .="void $wrapper_func_name(";
+      $func_prototype .="void $wrapper_func_name(";
     }
 
     my @arglist=();
@@ -140,10 +145,11 @@ if(!open VERILOG, "$verilog_file"){
     }
     
     my $args = join ', ', @arglist;
-    $wrapper.= $args.") {";
+    $func_prototype .= $args.")";
 
+    $wrapper .= $func_prototype; 
     $wrapper.= '
-    // Disable Interrupt
+{    // Disable Interrupt
     reg_write32(ACCEL_BASE + ACCEL_INT, 0x0);
 ';
 
@@ -199,8 +205,18 @@ if(!open VERILOG, "$verilog_file"){
     }
 
     $wrapper .="}\n";
+
     open FILE, "> $wrapper_header";
+    print FILE "#ifndef ACCEL_WRAPPER_H
+#define ACCEL_WRAPPER_H\n
+    ";
+    print FILE "$func_prototype;\n";
+    print FILE "#endif";
+    close FILE;
+
+    open FILE, "> $wrapper_file";
     print FILE $wrapper;
+    close FILE;
 #}
 
 #generate_bm_wrapper(\%var_dict, $func_base_addr);

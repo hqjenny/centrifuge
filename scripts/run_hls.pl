@@ -19,30 +19,41 @@ if ($num_args > 2) {
 # Generate directive file based on LLVM emitted output
 # If the variable is of pointer type that an ap_bus interface is generated  
 
-my $directive_tcl_insn = 'set_directive_interface -mode ap_bus "test_c_func" test_var
+my $directive_tcl_insn = 'set_directive_interface -mode ap_bus "FUNC" test_var
 ';
 
 my $prefix_tcl = "";
 if ($prefix) {
   $prefix_tcl = "config_rtl -prefix ".$prefix."\n";
 }
-my $hls_pgm = undef;
+#my $hls_pgm = undef;
+my @hls_pgms = ();
+my $cpp_flags = '';
 if (-f $file_name.".cpp"){
-  $hls_pgm = $file_name.'.cpp -cflags "-std=c++0x" ';
+  $cpp_flags = '-cflags "-std=c++0x"';
+  @hls_pgms = glob('*.cpp');   
 } else {
-  $hls_pgm = $file_name.".c";
+  @hls_pgms = glob('*.c');
 }
 
+my @hls_files = ();
+foreach my $pgm (@hls_pgms) {
+  if ($pgm ne 'accel_wrapper.c') {
+    push(@hls_files, 'add_files '.$pgm.' '.$cpp_flags);
+  } 
+}
+my $hls_files_str = join "\n", @hls_files;
+
 # should change to add all .c files 
-my $hls_tcl = 'open_project -reset test_c_prj
-set_top test_c_func
-add_files hls_pgm 
+my $hls_tcl = 'open_project -reset PGM_prj
+set_top FUNC
+HLS_FILES_STR 
 open_solution -reset "solution1"
 set_part {xcvu9p-flgb2104-2-i}
 config_compile -ignore_long_run_time
 create_clock -period 10 -name default
-'.$prefix_tcl.'
-#source "./test_c_prj/solution1/directives.tcl"
+PREFIX_TCL
+#source "./PGM_prj/solution1/directives.tcl"
 #config_interface -clock_enable
 config_interface -m_axi_addr64
 csynth_design
@@ -53,9 +64,10 @@ my $dir = getcwd;
 open HLS, ">$dir/run_hls.tcl";
 
 # replace the function name and file name
-$hls_tcl =~ s/test_c_func/$func_name/g;
-$hls_tcl =~ s/test_c/$file_name/g;
-$hls_tcl =~ s/hls_pgm/$hls_pgm/g;
+$hls_tcl =~ s/FUNC/$func_name/g;
+$hls_tcl =~ s/PGM/$file_name/g;
+$hls_tcl =~ s/PREFIX_TCL/$prefix_tcl/g;
+$hls_tcl =~ s/HLS_FILES_STR/$hls_files_str/g;
 
 
 # run vivado hls

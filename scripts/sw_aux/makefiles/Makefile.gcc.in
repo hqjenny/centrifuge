@@ -7,13 +7,15 @@ CC :=$(ARCH)-unknown-elf-g++
 CFLAGS += -fpermissive -DWRAP_$(FUNC)
 LDFLAGS += -fpermissive
 
-src_files := $(TARGET).c
-OBJECTS = $(src_files:.c=.o)
+SRC = $(wildcard *.c)
+OBJ = $(SRC:.c=.o) 
+
+OBJ_ORIG = $(filter-out accel_wrapper.o, $(OBJ))
 
 all: $(TARGET).rv
 
-$(TARGET).rv: Makefile $(OBJECTS)
-	$(CC) $(LDFLAGS) $(OBJECTS) -o $@
+$(TARGET).rv: Makefile $(OBJ_ORIG)
+	$(CC) $(LDFLAGS) $(OBJ_ORIG) -o $@
 	$(ARCH)-unknown-elf-objdump -D $@ > $(TARGET).asm
 
 .c.o:
@@ -27,4 +29,4 @@ run:
 	spike pk $(TARGET).rv
 
 clean:
-	rm -f $(OBJECTS) $(TARGET).rv $(TARGET).asm $(TARGET).ll $(TARGET).S
+	rm -f $(OBJ) $(TARGET).rv $(TARGET).asm $(TARGET).ll $(TARGET).S
