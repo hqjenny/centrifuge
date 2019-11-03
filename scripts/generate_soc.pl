@@ -3,18 +3,20 @@ use strict;
 use warnings;
 use Cwd;
 use File::Copy;
+use File::Path 'rmtree';
 
 my $dir = getcwd;
+
+################# Parse Arguments ####################
 my $json_fn = $ARGV[0];
-my $soc_name = $json_fn;
-$soc_name =~ s/.json//;
 my $rdir = $ENV{'RDIR'};
 
-my $postfix="";
+my $task = $ARGV[1];
 
+my $postfix="";
 my $num_args = $#ARGV + 1;
-if ($num_args > 1) {
-  $postfix= $ARGV[1];
+if ($num_args > 2) {
+  $postfix= $ARGV[2];
 }
 
 if ((not defined($rdir)) or $rdir eq '') {
@@ -26,7 +28,76 @@ if (not defined($json_fn)){
     print("Please specify a json config file\!\n");
     exit();
 }
+my $soc_name = $json_fn;
+$soc_name =~ s/.json//;
 
+my $arg_options = "Options: 
+        all -- Generate all HW/SW interfaces,configs, and scripts for the accelerator SoC
+        accel -- Rerun accelerator HW/SW interface generation  
+        accel_hls -- Rerun HLS generation
+        accel_chisel -- Rerun chisel wrapper generation (triggers accel_hls to run)
+        accel_sw -- Rerun C wrapper generation (triggers accel_hls to run)
+        build_sbt -- Regenerate build.sbt
+        config -- Regenerate HLSConfig.scala file in examples and firechip 
+        f1_scripts -- Regenerate scripts for including HLS generated Verilog in FireSim
+        xsim_scripts -- Regenerate scripts for including HLS generated Verilog in FireSim XSim
+        vcs_scripts -- Regenerate vcs imulation
+        verilator_scripts -- Regenerate verilator imulation
+        clean -- Delete accelerator directory
+        ";
+my @valid_task_list = qw(all accel accel_hls accel_chisel accel_sw build_sbt config f1_scripts xsim_scripts vcs_scripts verilator_scripts clean);
+if (not defined($task) or not grep( /^$task$/, @valid_task_list)){
+    print("Please specify a task\!\n");
+    print($arg_options);
+    exit();
+}
+
+if ($task eq 'clean') {
+    rmtree(["$rdir/generators/$soc_name/"]);
+    exit();
+}
+
+my @task_list = (); 
+my @accel_task_list = qw(accel accel_hls accel_chisel accel_sw);
+if ($task eq 'all') {
+    push (@task_list, @accel_task_list);
+    push (@task_list, qw(build_sbt config f1_scripts xsim_scripts vcs_scripts));
+} elsif ($task eq 'accel') {
+    push (@task_list, @accel_task_list);
+} elsif ($task eq 'accel_hls') {
+    push (@task_list, qw(accel accel_hls));
+} elsif ($task eq 'accel_chisel') {
+    push (@task_list, qw(accel accel_hls accel_chisel));
+} elsif ($task eq 'accel_sw') {
+    push (@task_list, qw(accel accel_hls accel_sw));
+} elsif ($task eq 'build_sbt') {
+    push (@task_list, qw(build_sbt));
+} elsif ($task eq 'config') {
+    push (@task_list, qw(config));
+} elsif ($task eq 'f1_scripts') {
+    push (@task_list, @accel_task_list);
+    push (@task_list, qw(f1_scripts));
+} elsif ($task eq 'xsim_scripts') {
+    push (@task_list, @accel_task_list);
+    push (@task_list, qw(xsim_scripts));
+} elsif ($task eq 'vcs_scripts') {
+    push (@task_list, @accel_task_list);
+    push (@task_list, qw(vcs_scripts));
+} elsif ($task eq 'verilator_scripts') {
+    push (@task_list, @accel_task_list);
+    push (@task_list, qw(verilator_scripts));
+}
+
+
+my %tasks = ();
+foreach my $task (@valid_task_list) {
+    $tasks{$task} = 0;
+}
+
+foreach my $task (@task_list) {
+    $tasks{$task} = 1  
+}
+################# Run ####################
 my $DESIGN='FireSimTopWithHLS';
 my $TARGET_CONFIG='HLSFireSimRocketChipConfig';
 my $PLATFORM_CONFIG='BaseF1Config_F90MHz';
@@ -95,32 +166,48 @@ foreach my $TLL2_accel (@TLL2_accels){
 }
 
 # Generate the verilog and chisel code
-generate_accel(\@Accel_tuples);
+if ($tasks{'accel'}){
+    generate_accel(\@Accel_tuples, \%tasks);
+    # SW
+    # Copy Makefile Templates
+    system("cp $scripts_dir/sw_aux/makefiles/* $rdir/generators/$soc_name/");
+}
 # Generate build.sbt under firesim/sim
-generate_build_sbt($soc_name, \%hls_bm);
+if ($tasks{'build_sbt'}){
+    generate_build_sbt($soc_name, \%hls_bm);
+}
 # Generate HLSConfig file for RoCC Accelerators
-generate_config(\@RoCC_names, \@TLL2_names, $postfix);
+if ($tasks{'config'}){
+    generate_config(\@RoCC_names, \@TLL2_names, $postfix);
+}
 
 # F1 
-generate_f1_scripts(\%hls_bm);
-generate_xsim_scripts(\%hls_bm);
-compile_xsim_libs($postfix, "clean", 0);
-#compile_replace_rtl($postfix, "clean", 0);
-print_xsim_cmd($postfix, 0);
+if ($tasks{'f1_scripts'}){
+    generate_f1_scripts(\%hls_bm);
+}
+if ($tasks{'xsim_scripts'}){
+    generate_xsim_scripts(\%hls_bm);
+}
+if ($tasks{'f1_scripts'} or $tasks{'xsim_scripts'}){
+    compile_replace_rtl($postfix, "clean", 0);
+}
+if ($tasks{'xsim_scripts'}){
+    compile_xsim_libs($postfix, "clean", 0);
+    print_xsim_cmd($postfix, 0);
+}
 
 # Ax machines
-# compile_vcs("clean");
-# copy_verilog(\%hls_bm, "$rdir/sims/vcs/generated-src/example.TestHarness.HLSRocketConfig/example.TestHarness.HLSRocketConfig.top.v");
-# compile_vcs("");
+if ($tasks{'vcs_scripts'}){
+    compile_vcs("clean");
+    copy_verilog(\%hls_bm, "$rdir/sims/vcs/generated-src/example.TestHarness.$CONFIG/example.TestHarness.$CONFIG.top.v");
+    compile_vcs("");
+}
 
-# compile_verilator("clean");
-# copy_verilog(\%hls_bm, "$rdir/sims/verilator/generated-src/example.TestHarness.HLSRocketConfig/example.TestHarness.HLSRocketConfig.top.v");
-# compile_verilator("");
-
-
-# SW
-# Copy Makefile Templates
-system("cp $scripts_dir/sw_aux/makefiles/* $rdir/generators/$soc_name/");
+if ($tasks{'verilator_scripts'}){
+    compile_verilator("clean");
+    copy_verilog(\%hls_bm, "$rdir/sims/verilator/generated-src/example.TestHarness.$CONFIG/example.TestHarness.$CONFIG.top.v");
+    compile_verilator("");
+}
 
 sub print_xsim_cmd{
     my $postfix= $_[0];

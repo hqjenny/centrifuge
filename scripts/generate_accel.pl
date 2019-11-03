@@ -14,6 +14,7 @@ if ((not defined($rdir)) or $rdir eq '') {
 sub generate_accel{
 
     my @accel_tuples= @{$_[0]};
+    my %tasks = %{$_[1]};
   
     foreach my $accel_tuple_ref (@accel_tuples) {
       print($accel_tuple_ref);
@@ -58,20 +59,31 @@ sub generate_accel{
       print("$dir\n");
       #next;
 
-      system("perl run_hls.pl ${PGM} ${FUNC} $prefix"); 
+      if ($tasks{'accel_hls'}){
+        system("perl run_hls.pl ${PGM} ${FUNC} $prefix"); 
+      }
 
       if ($is_rocc) {
           system("cp -H $RDIR/tools/centrifuge/scripts/run_chisel.pl $bm_path_c");
           system("cp -H $RDIR/tools/centrifuge/scripts/generate_wrapper.pl $bm_path_c");
-          system("perl run_chisel.pl ${PGM} ${FUNC} $prefix");
-          system("perl generate_wrapper.pl ${PGM} ${FUNC} $idx_addr $prefix");
+          if ($tasks{'accel_chisel'}){
+            system("perl run_chisel.pl ${PGM} ${FUNC} $prefix");
+          }
+          if ($tasks{'accel_sw'}){
+            system("perl generate_wrapper.pl ${PGM} ${FUNC} $idx_addr $prefix");
+          }
           #system("make clean");
           #system("make CUSTOM_INST=1");
       } else {
           system("cp -H $RDIR/tools/centrifuge/scripts/run_chisel_tl.pl $bm_path_c");
           system("cp -H $RDIR/tools/centrifuge/scripts/generate_wrapper_tl.pl $bm_path_c");
-          system("perl run_chisel_tl.pl ${PGM} ${FUNC} $idx_addr $prefix");
-          system("perl generate_wrapper_tl.pl ${PGM} ${FUNC} $idx_addr $prefix");
+          if ($tasks{'accel_chisel'}){
+            system("perl run_chisel_tl.pl ${PGM} ${FUNC} $idx_addr $prefix");
+          }
+
+          if ($tasks{'accel_sw'}){
+            system("perl generate_wrapper_tl.pl ${PGM} ${FUNC} $idx_addr $prefix");
+          }
           #system("make clean");
           #system("make CUSTOM_DRIVER=1");
       }
