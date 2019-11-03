@@ -23,15 +23,26 @@ source ./scripts/env.sh
 cd sims/firesim
 source sourceme-f1-manager.sh
 ```
+Also the Centrifuge dependencies
+```
+cd ../../
+source tools/centrifuge/scripts/source hls-setup.sh
+```
 
 4) Generate the accelerator SoC defined in `accel.json`
 ```
 cd tools/centrifuge/scripts
-source hls-setup.sh
-perl generate_soc.pl accel.json
+source envs.sh # Set the RDIR to the Chipyard root directory
+perl generate_soc.pl accel.json accel
 ```
+5) The generated sw wrapper `accel_wrapper.c` abd `accel_wrapper.h`is under the hardware path  `$RDIR/generators/accel/hls_vadd_tl_vadd/src/main/c`. The makefile for baremetal is compilation 
+is copied to `$RDIR/generators/accel/Makefile.bm.in`. The makefile for linux is copied to `$RDIR/generators/accel/Makefile.gcc.in`. The postfix of the bare-metal program is `.bm.rv' and `.bm_accel.rv`
+for programs with or without using the accelerator. Run `make` will generate both, while `make accel` generates only `.bm_accel.rv`. 
 
-5) Run Verilator Simulation 
+The postfix of generated linux program is `.rv`.
+
+Run Verilator Simulation 
 
 6) Generate FireSim Image
 
+7) 
