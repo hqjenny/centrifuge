@@ -1,0 +1,92 @@
+
+****** Vivado(TM) HLS - High-Level Synthesis from C, C++ and SystemC v2017.4.op (64-bit)
+  **** SW Build 2193837 on Tue Apr 10 18:06:59 MDT 2018
+  **** IP Build 2189296 on Tue Apr 10 19:39:46 MDT 2018
+    ** Copyright 1986-2017 Xilinx, Inc. All Rights Reserved.
+
+source /opt/Xilinx/Vivado/2017.4.op/scripts/vivado_hls/hls.tcl -notrace
+INFO: [HLS 200-10] Running '/opt/Xilinx/Vivado/2017.4.op/bin/unwrapped/lnx64.o/vivado_hls'
+INFO: [HLS 200-10] For user 'centos' on host 'ip-192-168-2-23.us-west-2.compute.internal' (Linux_x86_64 version 3.10.0-693.21.1.el7.x86_64) on Tue Dec 04 04:06:31 UTC 2018
+INFO: [HLS 200-10] On os "CentOS Linux release 7.4.1708 (Core) "
+INFO: [HLS 200-10] In directory '/home/centos/hls-fs/target-design/firechip/hls_dot_product_dot/src/main/c'
+INFO: [HLS 200-10] Creating and opening project '/home/centos/hls-fs/target-design/firechip/hls_dot_product_dot/src/main/c/dot_product_prj'.
+INFO: [HLS 200-10] Adding design file 'dot_product.c' to the project
+INFO: [HLS 200-10] Creating and opening solution '/home/centos/hls-fs/target-design/firechip/hls_dot_product_dot/src/main/c/dot_product_prj/solution1'.
+INFO: [HLS 200-10] Cleaning up the solution database.
+INFO: [HLS 200-10] Setting target device to 'xcvu9p-flgb2104-2-i'
+WARNING: [ANALYSIS 214-1] Skip long-run-time warning caused by lots of load/store instructions.
+INFO: [SYN 201-201] Setting up clock 'default' with a period of 10ns.
+INFO: [HLS 200-10] Analyzing design file 'dot_product.c' ...
+WARNING: [HLS 200-40] In file included from dot_product.c:1:
+dot_product.c:68:22: warning: format specifies type 'unsigned int' but the argument has type 'double' [-Wformat]
+    printf("A . B = %x\n", c);
+                    ~^     ~
+                    %f
+1 warning generated.
+INFO: [HLS 200-10] Validating synthesis directives ...
+INFO: [HLS 200-111] Finished Checking Pragmas Time (s): cpu = 00:00:05 ; elapsed = 00:00:04 . Memory (MB): peak = 454.211 ; gain = 17.500 ; free physical = 720 ; free virtual = 63929
+INFO: [HLS 200-111] Finished Linking Time (s): cpu = 00:00:07 ; elapsed = 00:00:06 . Memory (MB): peak = 454.211 ; gain = 17.500 ; free physical = 719 ; free virtual = 63928
+INFO: [HLS 200-10] Starting code transformations ...
+INFO: [XFORM 203-603] Inlining function 'ap_fixed_base<137, 84, false, (ap_q_mode)5, (ap_o_mode)3, 0>::operator<<' into 'generic_cast_IEEE754<int, (ap_q_mode)6, double>' (/wrk/2017.4/nightly/2018_04_10_2193837/src/products/hls/hls_lib/hlsmath/src/../include/internal/hls_round.h:286).
+INFO: [XFORM 203-603] Inlining function 'ap_fixed_base<1, 32, false, (ap_q_mode)5, (ap_o_mode)0, 0>::overflow_adjust' into 'ap_fixed_base<1, 32, false, (ap_q_mode)5, (ap_o_mode)0, 0>::ap_fixed_base<137, 84, false, (ap_q_mode)5, (ap_o_mode)3, 0>' ().
+INFO: [HLS 200-111] Finished Standard Transforms Time (s): cpu = 00:00:08 ; elapsed = 00:00:08 . Memory (MB): peak = 585.000 ; gain = 148.289 ; free physical = 666 ; free virtual = 63887
+INFO: [HLS 200-10] Checking synthesizability ...
+INFO: [XFORM 203-602] Inlining function 'fp_struct<double>::mantissa' into 'generic_cast_IEEE754<int, (ap_q_mode)6, double>' (/wrk/2017.4/nightly/2018_04_10_2193837/src/products/hls/hls_lib/hlsmath/src/../include/internal/hls_round.h:283) automatically.
+INFO: [XFORM 203-602] Inlining function 'fp_struct<double>::expv' into 'generic_cast_IEEE754<int, (ap_q_mode)6, double>' (/wrk/2017.4/nightly/2018_04_10_2193837/src/products/hls/hls_lib/hlsmath/src/../include/internal/hls_round.h:286) automatically.
+INFO: [XFORM 203-602] Inlining function 'fp_struct<double>::__signbit' into 'generic_cast_IEEE754<int, (ap_q_mode)6, double>' (/wrk/2017.4/nightly/2018_04_10_2193837/src/products/hls/hls_lib/hlsmath/src/../include/internal/hls_round.h:318) automatically.
+INFO: [XFORM 203-602] Inlining function 'generic_cast_IEEE754<int, (ap_q_mode)6, double>' into 'generic_cast_IEEE754<int, double>' (/wrk/2017.4/nightly/2018_04_10_2193837/src/products/hls/hls_lib/hlsmath/src/../include/internal/hls_round.h:368) automatically.
+INFO: [XFORM 203-602] Inlining function 'generic_cast_IEEE754<int, double>' into '__hls_fptosi_double_i32' (/wrk/2017.4/nightly/2018_04_10_2193837/src/products/hls/hls_lib/hlsmath/src/lib_floatconversion.cpp:53) automatically.
+INFO: [XFORM 203-602] Inlining function '__hls_fptosi_double_i32' into 'dot' (dot_product.c:47) automatically.
+INFO: [HLS 200-111] Finished Checking Synthesizability Time (s): cpu = 00:00:09 ; elapsed = 00:00:08 . Memory (MB): peak = 585.000 ; gain = 148.289 ; free physical = 632 ; free virtual = 63857
+INFO: [XFORM 203-502] Unrolling small iteration loop 'Loop-2' (dot_product.c:33) in function 'dot' automatically.
+INFO: [XFORM 203-501] Unrolling loop 'Loop-2' (dot_product.c:33) in function 'dot' completely.
+INFO: [HLS 200-111] Finished Pre-synthesis Time (s): cpu = 00:00:10 ; elapsed = 00:00:09 . Memory (MB): peak = 648.445 ; gain = 211.734 ; free physical = 556 ; free virtual = 63801
+INFO: [XFORM 203-811] Inferring bus burst read of length 8 on port 'a' (dot_product.c:20:2).
+INFO: [XFORM 203-811] Inferring bus burst read of length 8 on port 'b' (dot_product.c:20:2).
+INFO: [HLS 200-111] Finished Architecture Synthesis Time (s): cpu = 00:00:10 ; elapsed = 00:00:10 . Memory (MB): peak = 648.445 ; gain = 211.734 ; free physical = 540 ; free virtual = 63785
+INFO: [HLS 200-10] Starting hardware synthesis ...
+INFO: [HLS 200-10] Synthesizing 'dot' ...
+INFO: [HLS 200-10] ----------------------------------------------------------------
+INFO: [HLS 200-42] -- Implementing module 'dot'
+INFO: [HLS 200-10] ----------------------------------------------------------------
+INFO: [SCHED 204-11] Starting scheduling ...
+INFO: [SCHED 204-61] Pipelining loop 'Loop 1'.
+WARNING: [SCHED 204-68] Unable to enforce a carried constraint (II = 1)
+   between 'dadd' operation ('tmp_25', dot_product.c:28) and 'dadd' operation ('tmp_25', dot_product.c:28).
+WARNING: [SCHED 204-68] Unable to enforce a carried constraint (II = 2)
+   between 'dadd' operation ('tmp_25', dot_product.c:28) and 'dadd' operation ('tmp_25', dot_product.c:28).
+WARNING: [SCHED 204-68] Unable to enforce a carried constraint (II = 3)
+   between 'dadd' operation ('tmp_25', dot_product.c:28) and 'dadd' operation ('tmp_25', dot_product.c:28).
+WARNING: [SCHED 204-68] Unable to enforce a carried constraint (II = 4)
+   between 'dadd' operation ('tmp_25', dot_product.c:28) and 'dadd' operation ('tmp_25', dot_product.c:28).
+WARNING: [SCHED 204-68] Unable to enforce a carried dependence constraint (II = 7, distance = 1, offset = 1)
+   between bus read on port 'a' (dot_product.c:28) and bus read on port 'a' (dot_product.c:20).
+INFO: [SCHED 204-61] Pipelining result : Target II = 1, Final II = 8, Depth = 21.
+INFO: [SCHED 204-11] Finished scheduling.
+INFO: [HLS 200-111]  Elapsed time: 10.03 seconds; current allocated memory: 175.118 MB.
+INFO: [BIND 205-100] Starting micro-architecture generation ...
+INFO: [BIND 205-101] Performing variable lifetime analysis.
+INFO: [BIND 205-101] Exploring resource sharing.
+INFO: [BIND 205-101] Binding ...
+INFO: [BIND 205-100] Finished micro-architecture generation.
+INFO: [HLS 200-111]  Elapsed time: 0.19 seconds; current allocated memory: 175.755 MB.
+INFO: [HLS 200-10] ----------------------------------------------------------------
+INFO: [HLS 200-10] -- Generating RTL for module 'dot'
+INFO: [HLS 200-10] ----------------------------------------------------------------
+INFO: [RTGEN 206-500] Setting interface mode on port 'dot/a' to 'ap_bus'.
+INFO: [RTGEN 206-500] Setting interface mode on port 'dot/b' to 'ap_bus'.
+INFO: [RTGEN 206-500] Setting interface mode on function 'dot' to 'ap_ctrl_hs'.
+INFO: [SYN 201-210] Renamed object name 'dot_dadd_64ns_64ns_64_5_full_dsp_1' to 'dot_dadd_64ns_64nbkb' due to the length limit 20
+INFO: [SYN 201-210] Renamed object name 'dot_dmul_64ns_64ns_64_5_max_dsp_1' to 'dot_dmul_64ns_64ncud' due to the length limit 20
+WARNING: [RTGEN 206-101] Setting dangling out port 'dot/a_dataout' to 0.
+WARNING: [RTGEN 206-101] Setting dangling out port 'dot/b_dataout' to 0.
+INFO: [RTGEN 206-100] Generating core module 'dot_dadd_64ns_64nbkb': 4 instance(s).
+INFO: [RTGEN 206-100] Generating core module 'dot_dmul_64ns_64ncud': 1 instance(s).
+INFO: [RTGEN 206-100] Finished creating RTL model for 'dot'.
+INFO: [HLS 200-111]  Elapsed time: 0.18 seconds; current allocated memory: 176.613 MB.
+INFO: [HLS 200-111] Finished generating all RTL models Time (s): cpu = 00:00:11 ; elapsed = 00:00:11 . Memory (MB): peak = 648.445 ; gain = 211.734 ; free physical = 538 ; free virtual = 63785
+INFO: [SYSC 207-301] Generating SystemC RTL for dot with prefix rocc0_.
+INFO: [VHDL 208-304] Generating VHDL RTL for dot with prefix rocc0_.
+INFO: [VLOG 209-307] Generating Verilog RTL for dot with prefix rocc0_.
+INFO: [HLS 200-112] Total elapsed time: 11.24 seconds; peak allocated memory: 176.613 MB.
+INFO: [Common 17-206] Exiting vivado_hls at Tue Dec  4 04:06:42 2018...

@@ -1,0 +1,8 @@
+*.o
+*.a
+*.driver
+*.riscv
+*.rv
+*.ll
+*.S
+*.asm

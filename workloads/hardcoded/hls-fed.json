@@ -1,0 +1,7 @@
+{
+  "name" : "hls-fed",
+  "base" : "fedora-base.json",
+  "workdir" : "hls_aes_decrypt/",
+  "files" : [ ["aes", "/"] ],
+  "command" : "/aes"
+}
