@@ -16,6 +16,17 @@ class MmioArg():
         else:
             raise RuntimeError("Invalid size for argument " + self.name + ": " + str(self.size + 1))
 
+    def cType(self):
+        """Returns a string representing the C type of this argument"""
+        if self.size == 0:
+            return "void"
+        elif self.size == 1:
+            return "uint32_t"
+        elif self.size == 2:
+            return "uint64_t"
+        else:
+            raise RuntimeError("Unsupported variable size: " + str(self.size))
+
 def parseVerilogTL(vpath):
     """Parse a centrifuge-generated verilog file to extract the information
     needed to generate tilelink wrappers.
@@ -59,18 +70,6 @@ def parseVerilogTL(vpath):
 
         return (retVal, list(args.values()))
 
-def sizeToType(size):
-    """Convert a size (in number of 32-bit words) to a string representing the C type"""
-    if size == 0:
-       t = "void"
-    elif size == 1:
-       t = "uint32_t"
-    elif size == 2:
-       t = "uint64_t"
-    else:
-        raise RuntimeError("Unsupported variable size: " + str(size))
-
-    return t
 
 def generateWrapperTL(fname, baseAddr, retVal, args, cDir):
     """Given a set of mmio address/varialble pairs, produce a corresponding .c and .h file in cDir.
@@ -103,12 +102,12 @@ def generateWrapperTL(fname, baseAddr, retVal, args, cDir):
     if retVal is None:
         retStr = "void"
     else:
-        retStr = sizeToType(retVal.size)
+        retStr = retVal.cType()
 
     cWrapper += retStr + " " + fname + "("
     argStrs = []
     for arg in args:
-        argStrs.append(sizeToType(arg.size) + " " + arg.name)
+        argStrs.append(arg.cType() + " " + arg.name)
     cWrapper += ", ".join(argStrs)
     cWrapper += ")\n"
     cWrapper += "{\n"
@@ -136,7 +135,7 @@ def generateWrapperTL(fname, baseAddr, retVal, args, cDir):
 
     # Handle returns (if any)
     if retVal is not None:
-        cWrapper += "    " + sizeToType(retVal.size) + " ret_val = 0;\n"
+        cWrapper += "    " + retVal.cType() + " ret_val = 0;\n"
         cWrapper += "    ret_val = reg_read32(ACCEL_BASE + ACCEL_"+retVal.name+"_0);\n"
         if retVal.size == 2:
             cWrapper += "    ret_val |= reg_read32(ACCEL_BASE + ACCEL_"+retVal.name+"_1) >> 32;\n"
