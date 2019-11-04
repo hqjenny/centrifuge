@@ -158,7 +158,10 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
+    print(args)
     if args.mode == 'tl':
         retVal, funcArgs = parseVerilogTL(
                 args.source / 'src' / 'main' / 'verilog' / (args.prefix + args.fname + "_control_s_axi.v"))
         print(generateWrapperTL(args.fname, args.base, retVal, funcArgs, "."))
+    else:
+        raise NotImplementedError("Mode '" + args.mode + "' not supported.")

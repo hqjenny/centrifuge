@@ -83,6 +83,11 @@ sub generate_accel{
 
           if ($tasks{'accel_sw'}){
             system("perl generate_wrapper_tl.pl ${PGM} ${FUNC} $idx_addr $prefix");
+            # system("$RDIR/tools/centrifuge/scripts/generate_wrapper.py --fname ${FUNC} " . \
+            #   "--base $idx_addr " . \
+            #   "--prefix $prefix " . \
+            #   "--mode 'tl' "      . \
+            #   "--source $bm_path");
           }
           #system("make clean");
           #system("make CUSTOM_DRIVER=1");
