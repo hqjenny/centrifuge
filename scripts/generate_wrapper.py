@@ -70,25 +70,33 @@ def parseVerilogTL(vpath):
 
         return (retVal, list(args.values()))
 
+def generateHeaderTL(signature):
+    """Given the signature of the accelerated function, return an appropriate
+    header file. """
 
-def generateWrapperTL(fname, baseAddr, retVal, args, cDir):
-    """Given a set of mmio address/varialble pairs, produce a corresponding .c and .h file in cDir.
+    header = ("#ifndef ACCEL_WRAPPER_H\n"
+              "#define ACCEL_WRAPPER_H\n")
+
+    header += signature + ";\n"
+    header += "#endif"
+    return header
+
+def generateWrapperTL(fname, baseAddr, retVal, args):
+    """Given a set of mmio address/varialble pairs, produce the C wrapper
+    (returned as a string).
 
     fname: Name to use for the function
     baseAddr: MMIO base address to use
     retVal: MmioArg representing the return value (may be None)
     args: List of MmioArg representing the function inputs
-    cDir: Path to c source directory (pathlike object)
     """
 
-    cWrapper = """
-#include "mmio.h"
-#include "accel.h"
+    cWrapper = ('#include "mmio.h"\n'
+                '#include "accel.h"\n'
+                '\n'
+                '#define ACCEL_WRAPPER\n'
+                '#define AP_DONE_MASK 0b10\n')
 
-#define ACCEL_WRAPPER
-#define AP_DONE_MASK 0b10
-
-"""
     # MMIO Constants
     cWrapper += "#define ACCEL_BASE " + str(baseAddr) + "\n"
     cWrapper += "#define ACCEL_INT 0x4\n"
@@ -99,17 +107,20 @@ def generateWrapperTL(fname, baseAddr, retVal, args, cDir):
     cWrapper += "\n"
 
     # Create the function signature
+    signature = ""
     if retVal is None:
         retStr = "void"
     else:
         retStr = retVal.cType()
 
-    cWrapper += retStr + " " + fname + "("
+    signature += retStr + " " + fname + "("
     argStrs = []
     for arg in args:
         argStrs.append(arg.cType() + " " + arg.name)
-    cWrapper += ", ".join(argStrs)
-    cWrapper += ")\n"
+    signature += ", ".join(argStrs)
+    signature += ")"
+
+    cWrapper += signature + "\n"
     cWrapper += "{\n"
 
     # Pass Args to MMIO
@@ -121,17 +132,14 @@ def generateWrapperTL(fname, baseAddr, retVal, args, cDir):
             cWrapper += "    reg_write32(ACCEL_BASE + ACCEL_"+arg.name+"_1, (uint32_t) ("+arg.name+" >> 32));\n"
 
     # Execute Accelerator
-    cWrapper +="""
-    // Write to ap_start to start the execution 
-    reg_write32(ACCEL_BASE, 0x1);
-
-    // Done?
-    int done = 0;
-    while (!done){
-        done = reg_read32(ACCEL_BASE) & AP_DONE_MASK;
-    }
-
-"""
+    cWrapper += ("    // Write to ap_start to start the execution \n"
+                 "    reg_write32(ACCEL_BASE, 0x1);\n"
+                 "\n"
+                 "    // Done?\n"
+                 "    int done = 0;\n"
+                 "    while (!done){\n"
+                 "        done = reg_read32(ACCEL_BASE) & AP_DONE_MASK;\n"
+                 "    }\n")
 
     # Handle returns (if any)
     if retVal is not None:
@@ -142,7 +150,7 @@ def generateWrapperTL(fname, baseAddr, retVal, args, cDir):
 
     cWrapper += "}"
 
-    return cWrapper
+    return cWrapper, generateHeaderTL(signature)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -158,10 +166,16 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    print(args)
     if args.mode == 'tl':
         retVal, funcArgs = parseVerilogTL(
                 args.source / 'src' / 'main' / 'verilog' / (args.prefix + args.fname + "_control_s_axi.v"))
-        print(generateWrapperTL(args.fname, args.base, retVal, funcArgs, "."))
+
+        cWrapper, hWrapper = generateWrapperTL(args.fname, args.base, retVal, funcArgs)
+        with open(args.source / 'src' / 'main' / 'c' / 'accel_wrapper.c', 'w') as cF:
+            cF.write(cWrapper)
+        
+        with open(args.source / 'src' / 'main' / 'c' / 'accel_wrapper.h', 'w') as hF:
+            hF.write(hWrapper)
+
     else:
         raise NotImplementedError("Mode '" + args.mode + "' not supported.")
