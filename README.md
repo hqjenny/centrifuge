@@ -181,7 +181,7 @@ to run a single node simulation (substituting our config_runtime.ini of
 course).
 
 ##### d) Run Linux SW
-See workloads/README.md for instructions on how to build linux-based workloads.
+See [workloads/README.md](./workloads/README.md) for instructions on how to build linux-based workloads.
 To simulate these workloads, simply change the `workloadname` option in
 `$RDIR/sims/firesim/deploy/config_runtime.ini` to the appropriate workload that
 you installed and follow the instructions as before.
