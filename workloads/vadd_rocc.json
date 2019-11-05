@@ -1,0 +1,8 @@
+{
+  "name" : "vadd_rocc",
+  "base" : "cf-buildroot.json",
+  "workdir" : "hardcoded/vadd_rocc",
+  "host-init" : "build.sh",
+  "files" : [["vadd_rocc", "/root/"]],
+  "command" : "/root/vadd_rocc"
+}

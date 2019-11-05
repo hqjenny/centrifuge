@@ -1,7 +1,7 @@
 VERBOSE= 1
-TARGET ?=vadd
+TARGET ?=vadd_rocc
 
-FUNC=encrypt
+FUNC=vadd
 LDFLAGS=
 CFLAGS=
 
