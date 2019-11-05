@@ -36,7 +36,8 @@ source tools/centrifuge/env.sh
 ```
  
 ### 2.1 Vector Add Example 
-1) Source code format
+
+#### 1) Source code format
 
 The source code of *vadd* and *vadd_tl* is defined in `centrifuge/examples/`.
 The current flow requires the user to define the function they would like to accelerate in `accel.c`. 
@@ -49,7 +50,7 @@ This enables proper link time behavior during the compilation.
 int vadd(int* length_a, int* b_c);
 #endif
 ```
-2) Configuration format 
+#### 2) Configuration format 
 
 Below is the SoC configuration file for the vadd example.
 
@@ -70,7 +71,8 @@ Note that currently we only look at the `centrifuge/examples/${PGM}` to find the
 
 For defining the RoCC accelerators, only the key `custom0` - `custom2` can be used. `custom3` RoCC Accelerator is reserved for Virtual-to-Physical Address Translator. For the Tilelink accelerators, you can specify as many accelerators as you want, as long as their MMIO addresses don't overlap with each other. 
 
-3) Run Centrifuge to generate the accelerator SoC defined in `accel.json`.
+#### 3) Centrifuge SoC Generation
+Run the follow commands to generate the accelerator SoC defined in `accel.json`.
 ```
 cd $RDIR/tools/centrifuge/scripts
 perl generate_soc.pl accel.json accel
@@ -79,14 +81,14 @@ This also generates the sw helper functions to invoke the accelerator. The gener
 is copied to `$RDIR/generators/accel/Makefile.bm.in`. The makefile for linux is copied to `$RDIR/generators/accel/Makefile.gcc.in`. The postfix of the bare-metal program is `.bm.rv` and `.bm_accel.rv`
 for programs with or without using the accelerator. Run `make` will generate both, while `make accel` generates only `.bm_accel.rv`. The postfix of generated linux program is `.rv`.
 
-4) Software Compilation
+#### 4) Software Compilation
 
 Run the following command to invoke compilation for bare-metal. 
 ```
 perl generate_soc.pl accel.json compile_sw_bm
 ```
 
-5) Run VCS/Verilator Simulation 
+#### 5) Run VCS/Verilator Simulation 
 To run VCS simulation, 
 ```
 perl generate_soc.pl accel.json run_vcs
@@ -101,24 +103,27 @@ For instance, to invoke the accelerator in bare-metal software for `vadd_tl` acc
 cd $RDIR/sims/vcs/
 ./simv-example-HLSRocketConfig-debug $RDIR/generators/accel/hls_vadd_tl_vadd/src/main/c/vadd_tl.bm_accel.rv
 ```
-6) Run FPGA Simulation 
+#### 6) Run FPGA Simulation
 
-  a) **Manager Setup.** Following the FireSim instrucitons to set up the manager instance here
+##### a) Manager Setup 
+Following the FireSim instrucitons to set up the manager instance here
 (https://docs.fires.im/en/latest/Initial-Setup/Setting-up-your-Manager-Instance.html). 
 Commands `aws configure` and `firesim managerinit` should be run for the setup.
 Then the user should set up S3 buckets name in `$RDIR/sims/firesim/deploy/config_build.ini` 
 following the instructions here (https://docs.fires.im/en/latest/Building-a-FireSim-AFI.html). 
 
+##### b)Generate FireSim Image 
+###### b1) FireSim Compilation
 
-  b) **Generate FireSim Image.** 
-  *b1)* First, run the following command to generate a new accelerator configuration in FireSim with `DESIGN=FireSimTopWithHLS`, `TARGET_CONFIG=HLSFireSimRocketChipConfig` and `PLATFORM_CONFIG=BaseF1Config_F90MHz`:
+First, run the following command to generate a new accelerator configuration in FireSim with `DESIGN=FireSimTopWithHLS`, `TARGET_CONFIG=HLSFireSimRocketChipConfig` and `PLATFORM_CONFIG=BaseF1Config_F90MHz`:
 ```
 unset FIRESIM_STANDALONE # We first need to disable firesim as a standalone module
 perl generate_soc.pl accel.json f1_scripts
 ```
-   This commmand also sets up custom F1 scripts to compile the design with accelerators. 
+This commmand also sets up custom F1 scripts to compile the design with accelerators. 
 
-  *b2)* Then we need configure the FireSim build receipes by appending the following build recipes to the `$RDIR/sims/firesim/deploy/config_build_recipes.ini`.
+###### b2) Configure Build Receipe 
+Then we need configure the FireSim build receipes by appending the following build recipes to the `$RDIR/sims/firesim/deploy/config_build_recipes.ini`.
 ```
 [firesimhls-singlecore-no-nic-l2-lbp]
 DESIGN=FireSimTopWithHLSNoNIC
@@ -128,7 +133,18 @@ instancetype=c5.4xlarge
 deploytriplet=None
 ```
 
-  *b3)* Once the complation of the FPGA image finishes, add the following config together with your new AGFI number
+###### b3) Configure HW Build
+Add `firesimhls-singlecore-no-nic-l2-lbp` to the `[builds]` and `[agfistoshare]` sections in file 
+`$RDIR/sims/firesim/deploy/config_build.ini`. 
+
+###### b4) Launch Compilation for the FPGA Image
+Lastly, let's start building the FPGA image.
+```
+firesim buildafi
+```
+
+###### b5) Configure HWDB
+Once the complation of the FPGA image finishes, add the following config together with your new AGFI number
 to the `$RDIR/sims/firesim/deploy/config_hwdb.ini`. 
 ```
 [firesimhls-singlecore-no-nic-l2-lbp]
@@ -137,17 +153,9 @@ deploytripletoverride=None
 customruntimeconfig=None
 ```
 
-  *b4)* Add `firesimhls-singlecore-no-nic-l2-lbp` to the `[builds]` and `[agfistoshare]` sections in file 
-`$RDIR/sims/firesim/deploy/config_build.ini`. 
-
-  *b5)* Lastly, let's start building the FPGA image.
-```
-firesim buildafi
-```
-
 To understand how FireSim manager works, please refer to (https://docs.fires.im/en/latest/Building-a-FireSim-AFI.html)
 
-c) **Run Baremetal SW.**
+##### c) Run Baremetal SW
 With the `perl generate_soc.pl accel.json accel` command, we also generated
 JSON configuration files for FireMarshal to build software workloads to run on
 FireSim. To run the `vadd` acclerator defined in `vadd.json`, run FireMarshal
@@ -172,7 +180,7 @@ documentation](https://docs.fires.im/en/latest/Running-Simulations-Tutorial/Runn
 to run a single node simulation (substituting our config_runtime.ini of
 course).
 
-d) **Run Linux SW.**
+##### d) Run Linux SW
 See workloads/README.md for instructions on how to build linux-based workloads.
 To simulate these workloads, simply change the `workloadname` option in
 `$RDIR/sims/firesim/deploy/config_runtime.ini` to the appropriate workload that
