@@ -1,6 +1,6 @@
 {
   "name" : "cf-buildroot",
-  "base" : "br-base",
+  "base" : "br-base.json",
   "workdir" : "cf-base",
   "linux-src" : "linux"
 }

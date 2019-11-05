@@ -1,0 +1,63 @@
+
+****** Vivado(TM) HLS - High-Level Synthesis from C, C++ and SystemC v2017.4.op (64-bit)
+  **** SW Build 2193837 on Tue Apr 10 18:06:59 MDT 2018
+  **** IP Build 2189296 on Tue Apr 10 19:39:46 MDT 2018
+    ** Copyright 1986-2017 Xilinx, Inc. All Rights Reserved.
+
+source /opt/Xilinx/Vivado/2017.4.op/scripts/vivado_hls/hls.tcl -notrace
+INFO: [HLS 200-10] Running '/opt/Xilinx/Vivado/2017.4.op/bin/unwrapped/lnx64.o/vivado_hls'
+INFO: [HLS 200-10] For user 'centos' on host 'ip-192-168-2-23.us-west-2.compute.internal' (Linux_x86_64 version 3.10.0-693.21.1.el7.x86_64) on Tue Dec 04 04:07:12 UTC 2018
+INFO: [HLS 200-10] On os "CentOS Linux release 7.4.1708 (Core) "
+INFO: [HLS 200-10] In directory '/home/centos/hls-fs/target-design/firechip/hls_dot_product_tl_dot/src/main/c'
+INFO: [HLS 200-10] Creating and opening project '/home/centos/hls-fs/target-design/firechip/hls_dot_product_tl_dot/src/main/c/dot_product_tl_prj'.
+INFO: [HLS 200-10] Adding design file 'dot_product_tl.c' to the project
+INFO: [HLS 200-10] Creating and opening solution '/home/centos/hls-fs/target-design/firechip/hls_dot_product_tl_dot/src/main/c/dot_product_tl_prj/solution1'.
+INFO: [HLS 200-10] Cleaning up the solution database.
+INFO: [HLS 200-10] Setting target device to 'xcvu9p-flgb2104-2-i'
+WARNING: [ANALYSIS 214-1] Skip long-run-time warning caused by lots of load/store instructions.
+INFO: [SYN 201-201] Setting up clock 'default' with a period of 10ns.
+INFO: [HLS 200-10] Analyzing design file 'dot_product_tl.c' ...
+INFO: [HLS 200-10] Validating synthesis directives ...
+INFO: [HLS 200-111] Finished Checking Pragmas Time (s): cpu = 00:00:05 ; elapsed = 00:00:04 . Memory (MB): peak = 454.211 ; gain = 17.500 ; free physical = 655 ; free virtual = 63925
+INFO: [HLS 200-111] Finished Linking Time (s): cpu = 00:00:07 ; elapsed = 00:00:06 . Memory (MB): peak = 454.211 ; gain = 17.500 ; free physical = 655 ; free virtual = 63926
+INFO: [HLS 200-10] Starting code transformations ...
+INFO: [HLS 200-111] Finished Standard Transforms Time (s): cpu = 00:00:07 ; elapsed = 00:00:07 . Memory (MB): peak = 454.211 ; gain = 17.500 ; free physical = 652 ; free virtual = 63923
+INFO: [HLS 200-10] Checking synthesizability ...
+INFO: [HLS 200-111] Finished Checking Synthesizability Time (s): cpu = 00:00:07 ; elapsed = 00:00:07 . Memory (MB): peak = 454.211 ; gain = 17.500 ; free physical = 652 ; free virtual = 63923
+INFO: [XFORM 203-101] Partitioning array 'result' (dot_product_tl.c:22) in dimension 1 completely.
+INFO: [XFORM 203-11] Balancing expressions in function 'dot' (dot_product_tl.c:10)...7 expression(s) balanced.
+INFO: [HLS 200-111] Finished Pre-synthesis Time (s): cpu = 00:00:08 ; elapsed = 00:00:07 . Memory (MB): peak = 582.207 ; gain = 145.496 ; free physical = 633 ; free virtual = 63904
+INFO: [HLS 200-111] Finished Architecture Synthesis Time (s): cpu = 00:00:09 ; elapsed = 00:00:08 . Memory (MB): peak = 582.207 ; gain = 145.496 ; free physical = 642 ; free virtual = 63913
+INFO: [HLS 200-10] Starting hardware synthesis ...
+INFO: [HLS 200-10] Synthesizing 'dot' ...
+WARNING: [SYN 201-107] Renaming port name 'dot/length' to 'dot/length_r' to avoid the conflict with HDL keywords or other object names.
+INFO: [HLS 200-10] ----------------------------------------------------------------
+INFO: [HLS 200-42] -- Implementing module 'dot'
+INFO: [HLS 200-10] ----------------------------------------------------------------
+INFO: [SCHED 204-11] Starting scheduling ...
+INFO: [SCHED 204-11] Finished scheduling.
+INFO: [HLS 200-111]  Elapsed time: 7.9 seconds; current allocated memory: 61.188 MB.
+INFO: [BIND 205-100] Starting micro-architecture generation ...
+INFO: [BIND 205-101] Performing variable lifetime analysis.
+INFO: [BIND 205-101] Exploring resource sharing.
+INFO: [BIND 205-101] Binding ...
+INFO: [BIND 205-100] Finished micro-architecture generation.
+INFO: [HLS 200-111]  Elapsed time: 0.09 seconds; current allocated memory: 62.231 MB.
+INFO: [HLS 200-10] ----------------------------------------------------------------
+INFO: [HLS 200-10] -- Generating RTL for module 'dot'
+INFO: [HLS 200-10] ----------------------------------------------------------------
+INFO: [RTGEN 206-500] Setting interface mode on port 'dot/gmem0' to 'm_axi'.
+INFO: [RTGEN 206-500] Setting interface mode on port 'dot/a' to 's_axilite & ap_none'.
+INFO: [RTGEN 206-500] Setting interface mode on port 'dot/b' to 's_axilite & ap_none'.
+INFO: [RTGEN 206-500] Setting interface mode on port 'dot/length_r' to 's_axilite & ap_none'.
+INFO: [RTGEN 206-500] Setting interface mode on function 'dot' to 's_axilite & ap_ctrl_hs'.
+INFO: [RTGEN 206-100] Bundling port 'return', 'a', 'b' and 'length_r' to AXI-Lite port control.
+INFO: [RTGEN 206-100] Generating core module 'dot_mux_83_32_1_1': 8 instance(s).
+INFO: [RTGEN 206-100] Finished creating RTL model for 'dot'.
+INFO: [HLS 200-111]  Elapsed time: 0.2 seconds; current allocated memory: 64.086 MB.
+INFO: [HLS 200-111] Finished generating all RTL models Time (s): cpu = 00:00:10 ; elapsed = 00:00:09 . Memory (MB): peak = 582.207 ; gain = 145.496 ; free physical = 625 ; free virtual = 63899
+INFO: [SYSC 207-301] Generating SystemC RTL for dot with prefix tl0_.
+INFO: [VHDL 208-304] Generating VHDL RTL for dot with prefix tl0_.
+INFO: [VLOG 209-307] Generating Verilog RTL for dot with prefix tl0_.
+INFO: [HLS 200-112] Total elapsed time: 9.34 seconds; peak allocated memory: 64.086 MB.
+INFO: [Common 17-206] Exiting vivado_hls at Tue Dec  4 04:07:21 2018...
