@@ -37,7 +37,40 @@ source tools/centrifuge/env.sh
  
 ### 2.1 Vector Add Example 
 1) Source code format
+
+The source code of *vadd* and *vadd_tl* is defined in `centrifuge/examples/`.
+The current flow requires the user to define the function they would like to accelerate in `accel.c`. 
+Its prototype definition in the header file `accel.h` must be wrapped by the following template. 
+This enables proper link time behavior during the compilation.  
+```
+#ifdef ACCEL_WRAPPER
+#include "accel_wrapper.h"
+#else
+int vadd(int* length_a, int* b_c);
+#endif
+```
 2) Configuration format 
+
+Below is the SoC configuration file for the vadd example.
+
+```
+{
+  "RoCC":{
+    "custom0":{"pgm": "vadd", "func":"vadd"}
+  },
+  "TLL2":[
+    {"pgm":"vadd_tl", "func": "vadd", "addr":"0x20000"}
+  ]
+}
+```
+In this configuration, we added the `vadd` function from the `vadd.c` program as a RoCC accelerator that can be invoked as `custom0` instruction. We also add a Tilelink accelerator from `vadd` function in the `vadd_tl.c` to the SoC. 
+This Tilelink accelerator is mapped to the address `0x20000` and can be invoked by accessing the MMIO registers. 
+Note that currently we only look at the `centrifuge/examples/${PGM}` to find the programs, where $PGM is the same as `pgm` defined the config file. 
+
+For defining the RoCC accelerators, only the key 'custom0' - 'custom2' can be used. 
+`custom3` RoCC Accelerator is reserved for Virtual-to-Physical Address Translator.
+For the Tilelink accelerators, you can specify as many accelerators as you want,  
+as long as their MMIO addresses don't overlap with each other. 
 
 3) Run Centrifuge to generate the accelerator SoC defined in `accel.json`.
 ```
@@ -70,25 +103,24 @@ For instance, to invoke the accelerator in bare-metal software for `vadd_tl` acc
 cd $RDIR/sims/vcs/
 ./simv-example-HLSRocketConfig-debug $RDIR/generators/accel/hls_vadd_tl_vadd/src/main/c/vadd_tl.bm_accel.rv
 ```
+6) Run FPGA Simulation 
 
-5) Run FPGA Simulation 
-a) Following the FireSim instrucitons to set up the manager instance here
+  a) **Manager Setup.** Following the FireSim instrucitons to set up the manager instance here
 (https://docs.fires.im/en/latest/Initial-Setup/Setting-up-your-Manager-Instance.html). 
 Commands `aws configure` and `firesim managerinit` should be run for the setup.
 Then the user should set up S3 buckets name in `$RDIR/sims/firesim/deploy/config_build.ini` 
 following the instructions here (https://docs.fires.im/en/latest/Building-a-FireSim-AFI.html). 
 
 
-b) Generate FireSim Image 
-First, run the following command to generate a new accelerator configuration in FireSim with `DESIGN=FireSimTopWithHLS`, `TARGET_CONFIG=HLSFireSimRocketChipConfig` and `PLATFORM_CONFIG=BaseF1Config_F90MHz`:
-
+  b) **Generate FireSim Image.** 
+  *b1)* First, run the following command to generate a new accelerator configuration in FireSim with `DESIGN=FireSimTopWithHLS`, `TARGET_CONFIG=HLSFireSimRocketChipConfig` and `PLATFORM_CONFIG=BaseF1Config_F90MHz`:
 ```
+unset FIRESIM_STANDALONE # We first need to disable firesim as a standalone module
 perl generate_soc.pl accel.json f1_scripts
 ```
-This commmand also sets up custom F1 scripts to compile the design with accelerators. 
+   This commmand also sets up custom F1 scripts to compile the design with accelerators. 
 
-Then we need configure the FireSim build receipes. 
-First, append the following build recipes to the `$RDIR/sims/firesim/deploy/config_build_recipes.ini`
+  *b2)* Then we need configure the FireSim build receipes by appending the following build recipes to the `$RDIR/sims/firesim/deploy/config_build_recipes.ini`.
 ```
 [firesimhls-singlecore-no-nic-l2-lbp]
 DESIGN=FireSimTopWithHLSNoNIC
@@ -97,13 +129,27 @@ PLATFORM_CONFIG=BaseF1Config_F90MHz
 instancetype=c5.4xlarge
 deploytriplet=None
 ```
-Then, add `firesimhls-singlecore-no-nic-l2-lbp` to the `[builds]` and `[agfistoshare]` sections in file 
+
+  *b3)* Once the complation of the FPGA image finishes, add the following config together with your new AGFI number
+to the `$RDIR/sims/firesim/deploy/config_hwdb.ini`. 
+```
+[firesimhls-singlecore-no-nic-l2-lbp]
+agfi=agfi-XXXXXXXXXXXXXXXXX
+deploytripletoverride=None
+customruntimeconfig=None
+```
+
+  *b4)* Add `firesimhls-singlecore-no-nic-l2-lbp` to the `[builds]` and `[agfistoshare]` sections in file 
 `$RDIR/sims/firesim/deploy/config_build.ini`. 
 
-Lastly, run `firesim buildafi` to start building the FPGA image.
+  *b5)* Lastly, let's start building the FPGA image.
+```
+firesim buildafi
+```
+
 To understand how FireSim manager works, please refer to (https://docs.fires.im/en/latest/Building-a-FireSim-AFI.html)
 
-d) Run Baremetal SW
+c) **Run Baremetal SW.**
 With the `perl generate_soc.pl accel.json accel` command, we also generated
 JSON configuration files for FireMarshal to build software workloads to run on
 FireSim. To run the `vadd` acclerator defined in `vadd.json`, run FireMarshal
@@ -128,7 +174,7 @@ documentation](https://docs.fires.im/en/latest/Running-Simulations-Tutorial/Runn
 to run a single node simulation (substituting our config_runtime.ini of
 course).
 
-e) Run Linux SW
+d) **Run Linux SW.**
 See workloads/README.md for instructions on how to build linux-based workloads.
 To simulate these workloads, simply change the `workloadname` option in
 `$RDIR/sims/firesim/deploy/config_runtime.ini` to the appropriate workload that
