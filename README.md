@@ -63,14 +63,12 @@ Below is the SoC configuration file for the vadd example.
   ]
 }
 ```
+
 In this configuration, we added the `vadd` function from the `vadd.c` program as a RoCC accelerator that can be invoked as `custom0` instruction. We also add a Tilelink accelerator from `vadd` function in the `vadd_tl.c` to the SoC. 
 This Tilelink accelerator is mapped to the address `0x20000` and can be invoked by accessing the MMIO registers. 
-Note that currently we only look at the `centrifuge/examples/${PGM}` to find the programs, where $PGM is the same as `pgm` defined the config file. 
+Note that currently we only look at the `centrifuge/examples/${PGM}` to find the programs, where ${PGM} is the same as `pgm` defined the config file. 
 
-For defining the RoCC accelerators, only the key 'custom0' - 'custom2' can be used. 
-`custom3` RoCC Accelerator is reserved for Virtual-to-Physical Address Translator.
-For the Tilelink accelerators, you can specify as many accelerators as you want,  
-as long as their MMIO addresses don't overlap with each other. 
+For defining the RoCC accelerators, only the key `custom0` - `custom2` can be used. `custom3` RoCC Accelerator is reserved for Virtual-to-Physical Address Translator. For the Tilelink accelerators, you can specify as many accelerators as you want, as long as their MMIO addresses don't overlap with each other. 
 
 3) Run Centrifuge to generate the accelerator SoC defined in `accel.json`.
 ```
