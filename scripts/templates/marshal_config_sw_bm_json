@@ -1,0 +1,8 @@
+{
+  "name" : "NAME",
+  "workdir" : "WORKDIR", 
+  "base" : "bare",
+  "host-init" : "HOSTINIT",
+  "bin" : "BIN" 
+}
+

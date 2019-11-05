@@ -63,11 +63,40 @@ sub generate_accel{
         system("perl run_hls.pl ${PGM} ${FUNC} $prefix"); 
       }
 
-      # Add compile-bm.sh for compile_sw and fireMarshal
-      system("echo 'make clean' > compile-bm.sh");
-      system("echo 'make' >> compile-bm.sh");
-      system("chmod +x compile-bm.sh");
-
+      if ($tasks{'accel_sw'}){
+          # Add compile-bm.sh for compile_sw and fireMarshal
+          system("echo 'make clean' > compile-bm.sh");
+          system("echo 'make' >> compile-bm.sh");
+          system("chmod +x compile-bm.sh");
+    	
+          # Generate fireMarshal config 
+          my $marshal_config_sw_bm_json = "$rdir/tools/centrifuge/scripts/templates/marshal_config_sw_bm_json"; 
+          open my $fh, '<', $marshal_config_sw_bm_json or die "error opening $marshal_config_sw_bm_json $!";
+          my $marshal_config_sw_bm_template = do { local $/; <$fh> };
+    
+          my $name = $pgm.'-bare-'.'sw-bm';  
+          my $bin = "$pgm.bm.rv";  
+          my $marshal_config_sw_bm = $marshal_config_sw_bm_template; 
+          $marshal_config_sw_bm =~ s/WORKDIR/$bm_path_c/;
+          $marshal_config_sw_bm =~ s/HOSTINIT/compile-bm.sh/;
+    
+          # For orig sw run
+          my $marshal_config_sw_bm_accel = $marshal_config_sw_bm; 
+          $marshal_config_sw_bm =~ s/NAME/$name/;
+          $marshal_config_sw_bm =~ s/BIN/$bin/;
+          open FILE, ">$name.json";
+          print FILE $marshal_config_sw_bm;
+          close FILE;
+    
+          # For accel run 
+          $name = $name.'_accel'; 
+          $bin = "$pgm.bm_accel.rv";
+          $marshal_config_sw_bm_accel =~ s/NAME/$name/;
+          $marshal_config_sw_bm_accel =~ s/BIN/$bin/;
+          open FILE, ">$name.json";
+          print FILE $marshal_config_sw_bm_accel;
+          close FILE;
+      }
       if ($is_rocc) {
           system("cp -H $RDIR/tools/centrifuge/scripts/run_chisel.pl $bm_path_c");
           system("cp -H $RDIR/tools/centrifuge/scripts/generate_wrapper.pl $bm_path_c");

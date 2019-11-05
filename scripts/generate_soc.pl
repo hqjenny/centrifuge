@@ -60,7 +60,7 @@ if ($task eq 'clean') {
 }
 
 my @task_list = (); 
-my @accel_task_list = qw(accel accel_hls accel_chisel accel_sw, build_sbt, config);
+my @accel_task_list = qw(accel accel_hls accel_chisel accel_sw build_sbt config);
 if ($task eq 'all') {
     push (@task_list, @accel_task_list);
     push (@task_list, qw(build_sbt config f1_scripts xsim_scripts));

@@ -9,7 +9,7 @@ sub generate_build_sbt {
     my $rdir = $ENV{'RDIR'};
     print $rdir;
     if ((not defined($rdir)) or $rdir eq '') {
-        print("Please source sourceme-f1-manager.sh!\n");
+        print("Please source centrifuge/env.sh!\n");
         exit();
     }
 
@@ -22,7 +22,7 @@ sub generate_build_sbt {
     my $soc_name = $_[0];
     my %bm_path = %{$_[1]};
 
-    my $build_sbt_template = "$rdir/tools/centrifuge/scripts/build_sbt_template"; 
+    my $build_sbt_template = "$rdir/tools/centrifuge/scripts/templates/build_sbt_template"; 
     open my $fh, '<', $build_sbt_template or die "error opening $build_sbt_template $!";
     my $build_sbt = do { local $/; <$fh> };
 
