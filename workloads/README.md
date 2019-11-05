@@ -51,7 +51,7 @@ These options have the following effects:
   configuration before building your workload.
 - workdir: All file paths in this configuration file will be relative to this directory
 - host-init: This script is run automatically before constructing the Linux
-  root filesystem. In this case, `hardcoded/vadd\_tl/build.sh` simply
+  root filesystem. In this case, `hardcoded/vadd_tl/build.sh` simply
   cross-compiles the vector add example benchmark.
 - files: This instructs FireMarshal to copy the benchmark into the target root filesystem.
 - command: FireMarshal will configure the workload to automatically run this
