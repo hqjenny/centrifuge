@@ -104,13 +104,32 @@ Lastly, run `firesim buildafi` to start building the FPGA image.
 To understand how FireSim manager works, please refer to (https://docs.fires.im/en/latest/Building-a-FireSim-AFI.html)
 
 d) Run Baremetal SW
-With the `perl generate_soc.pl accel.json accel` command, we also generate JSON configurations file for fireMarshal to build  software workload to run on FireSim. To run the `vadd` acclerator defined in `vadd.json`, run fireMarshal to generate the workload: 
+With the `perl generate_soc.pl accel.json accel` command, we also generated
+JSON configuration files for FireMarshal to build software workloads to run on
+FireSim. To run the `vadd` acclerator defined in `vadd.json`, run FireMarshal
+to generate the workload: 
 ```
-$RDIR/sims/firesim/sw/firesim-software/marshal build $RDIR/generators/accel/hls_vadd_vadd/src/main/c/vadd-bare-sw-bm_accel.json
-$RDIR/sims/firesim/sw/firesim-software/marshal install $RDIR/generators/accel/hls_vadd_vadd/src/main/c/vadd-bare-sw-bm_accel.json
+$RDIR/tools/firemarshal/marshal build $RDIR/generators/accel/hls_vadd_vadd/src/main/c/vadd-bare-sw-bm_accel.json
+$RDIR/tools/firemarshal/marshal install $RDIR/generators/accel/hls_vadd_vadd/src/main/c/vadd-bare-sw-bm_accel.json
 ```
 
-In file `$RDIR/sims/firesim/deploy/config_runtime.ini`, change the default configuration 
-`defaulthwconfig` to `firesimhls-singlecore-no-nic-l2-lbp` and the workload `workloadname` to `vadd-bare-sw-bm_accel.json`.
+FireMarshal's `install` command automatically generated a FireSim configuration for this workload. All that is left is to configure the simulation in FireSim. To do that, copy over the centrifuge example configuration file:
+```
+cp $RDIR/tools/centrifuge/configs/config_runtime.ini $RDIR/sims/firesim/deploy/
+```
+
+This file has all the configuration options FireSim needs to run a real
+workload. The most important ones for our purposes are the `defaulthwconfig`
+and `workloadname` options. `defaulthwconfig` is the name of the afi we
+generated earlier. `workloadname` is the name of the FireMarshal workload we
+installed (`vadd-bare-sw-bm_accel.json` in our case). From here, you can follow
+the [official FireSim
+documentation](https://docs.fires.im/en/latest/Running-Simulations-Tutorial/Running-a-Single-Node-Simulation.html)
+to run a single node simulation (substituting our config_runtime.ini of
+course).
 
 e) Run Linux SW
+See workloads/README.md for instructions on how to build linux-based workloads.
+To simulate these workloads, simply change the `workloadname` option in
+`$RDIR/sims/firesim/deploy/config_runtime.ini` to the appropriate workload that
+you installed and follow the instructions as before.
