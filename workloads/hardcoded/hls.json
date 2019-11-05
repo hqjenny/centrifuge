@@ -1,7 +1,0 @@
-{
-  "name" : "hls",
-  "base" : "br-base.json",
-  "workdir" : ".",
-  "files" : [ ["bin/*", "/"] ],
-  "command" : "/aes"
-}
