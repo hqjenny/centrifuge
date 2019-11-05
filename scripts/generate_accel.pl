@@ -7,7 +7,7 @@ use File::Copy;
 my $rdir = $ENV{'RDIR'};
 print $rdir;
 if ((not defined($rdir)) or $rdir eq '') {
-    print("Please source sourceme-f1-manager.sh!\n");
+    print("Please source centrifuge/env.sh!\n");
     exit();
 }
 
@@ -62,6 +62,11 @@ sub generate_accel{
       if ($tasks{'accel_hls'}){
         system("perl run_hls.pl ${PGM} ${FUNC} $prefix"); 
       }
+
+      # Add compile-bm.sh for compile_sw and fireMarshal
+      system("echo 'make clean' > compile-bm.sh");
+      system("echo 'make' >> compile-bm.sh");
+      system("chmod +x compile-bm.sh");
 
       if ($is_rocc) {
           system("cp -H $RDIR/tools/centrifuge/scripts/run_chisel.pl $bm_path_c");
