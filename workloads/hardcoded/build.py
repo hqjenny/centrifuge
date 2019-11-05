@@ -57,7 +57,7 @@ def main():
                 buildBench(dstName, pDir, pName, roccEnv)
 
             if args.tilelink:
-                dstName = "_".join((prog, "tl", func + ".driver"))
+                dstName = "_".join((prog, "tl", func + ".rv"))
                 pDir = "_".join((prog, "tl", func))
                 pName = prog + "_tl" + ".driver"
                 buildBench(dstName, pDir, pName, TLEnv)

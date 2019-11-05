@@ -86,50 +86,37 @@ int access_addr(unsigned gpio_addr, int direction, int value)
 
 int vadd_accel(int* a, int* b, int* c, int length){
 	uint64_t addr;
-    // Disable interrupt for now
-    //reg_write32(ACCEL_INT, 0x0);
+  // Disable interrupt for now
+  //reg_write32(ACCEL_INT, 0x0);
 	access_addr(ACCEL_INT, OUT, 0);
-    // Set up pointer a and pointer b address
-    //reg_write32(ACCEL_A, (uint32_t)a);
+
+  // Set up pointer a and pointer b address
 	addr = vtop_translate(a);
 	
 	access_addr(ACCEL_A, OUT, addr);
 	access_addr(ACCEL_A + 4, OUT, addr >> 32);
 	
-	//int ret1 =access_addr(addr, IN, 0x1);
-	//int ret2 =access_addr(addr+4, IN, 0x1);
-	//printf("A: %d %d", ret1, ret2);
-	
-    //reg_write32(ACCEL_B, (uint32_t)b);
-   	addr = vtop_translate(b);
+ 	addr = vtop_translate(b);
 	access_addr(ACCEL_B, OUT, addr);
 	access_addr(ACCEL_B + 4, OUT, addr >> 32);
-	//ret1 =access_addr(addr, IN, 0x1);
-	//ret2 =access_addr(addr+4, IN, 0x1);
-	//printf("B: %d %d", ret1, ret2);
-	
    
-    //reg_write32(ACCEL_C, (uint32_t)c);
-   	addr = vtop_translate(c);
+  addr = vtop_translate(c);
 	access_addr(ACCEL_C, OUT, addr);
 	access_addr(ACCEL_C + 4, OUT, addr >> 32);
  
-    //reg_write32(ACCEL_LEN, (uint32_t)length);
 	access_addr(ACCEL_LEN, OUT, length);
 
  
-    // Write to ap_start to start the execution 
-    //reg_write32(ACCEL_CONTROL, 0x1);
+  // Write to ap_start to start the execution 
 	access_addr(ACCEL_CONTROL, OUT, 0x1);
-    //printf("Accel Control: %x\n", reg_read32(ACCEL_CONTROL));
 
-    // Done?
-    int done = 0;
-    while (!done){
-        //done = reg_read32(ACCEL_CONTROL) & AP_DONE_MASK;
-	done = access_addr(ACCEL_CONTROL, IN, 0x1) & AP_DONE_MASK;
-    }
-    return 0;
+  // Done?
+  int done = 0;
+  while (!done){
+    done = access_addr(ACCEL_CONTROL, IN, 0x1) & AP_DONE_MASK;
+  } 
+
+  return 0;
 }
 
 int vadd(int* a, int* b, int* c, int length) {
@@ -178,34 +165,32 @@ int main () {
       b[i] = i + 5;
     }
 
-//    printf("C = [");
-//    print_vec(c, length);
-//    printf("]\n");
-//
-uint64_t begin = read_cycle();
+    uint64_t begin = read_cycle();
 
 #ifdef CUSTOM_DRIVER
+    printf("Running Accelerated VADD:");
     vadd_accel(a, b, c, length); 
-    //vadd_accel(0x80000000, 0x80000100, 0x80000200, 8);
 #else
+    printf("Running baseline VADD:");
     vadd(a, b, c, length);
 #endif
 
 uint64_t end = read_cycle();
-printf("walltime: %lld\n", end- begin);
-printf("last result: %d\n", c[length-1]);
-if(0){
-    printf("A = [");
-    print_vec(a, length);
-    printf("]\n");
+    printf("walltime: %lld\n", end- begin);
+    printf("last result: %d\n", c[length-1]);
+    if(0){
+        printf("A = [");
+        print_vec(a, length);
+        printf("]\n");
 
-    printf("B = [");
-    print_vec(b, length);
-    printf("]\n");
+        printf("B = [");
+        print_vec(b, length);
+        printf("]\n");
 
-    printf("C = [");
-    print_vec(c, length);
-    printf("]\n");
-}
+        printf("C = [");
+        print_vec(c, length);
+        printf("]\n");
+    }
+
     return 0;
 }
