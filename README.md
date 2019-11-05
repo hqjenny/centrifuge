@@ -54,7 +54,6 @@ Run the following command to invoke compilation for bare-metal.
 ```
 perl generate_soc.pl accel.json compile_sw_bm
 ```
-We currently 
 
 5) Run VCS/Verilator Simulation 
 To run VCS simulation, 
@@ -66,7 +65,7 @@ This command generates a simulation executable called `simv-example-HLSRocketCon
 This executable is a simulator that has been compiled based on the design that was built. 
 
 You can then use this executable to run any compatible RV64 code. 
-For instance, to invoke the accelerator in bare-metal software, run:
+For instance, to invoke the accelerator in bare-metal software for `vadd_tl` accelerator, run:
 ```
 cd $RDIR/sims/vcs/
 ./simv-example-HLSRocketConfig-debug $RDIR/generators/accel/hls_vadd_tl_vadd/src/main/c/vadd_tl.bm_accel.rv
@@ -105,5 +104,13 @@ Lastly, run `firesim buildafi` to start building the FPGA image.
 To understand how FireSim manager works, please refer to (https://docs.fires.im/en/latest/Building-a-FireSim-AFI.html)
 
 d) Run Baremetal SW
+With the `perl generate_soc.pl accel.json accel` command, we also generate JSON configurations file for fireMarshal to build  software workload to run on FireSim. To run the `vadd` acclerator defined in `vadd.json`, run fireMarshal to generate the workload: 
+```
+$RDIR/sims/firesim/sw/firesim-software/marshal build $RDIR/generators/accel/hls_vadd_vadd/src/main/c/vadd-bare-sw-bm_accel.json
+$RDIR/sims/firesim/sw/firesim-software/marshal install $RDIR/generators/accel/hls_vadd_vadd/src/main/c/vadd-bare-sw-bm_accel.json
+```
+
+In file `$RDIR/sims/firesim/deploy/config_runtime.ini`, change the default configuration 
+`defaulthwconfig` to `firesimhls-singlecore-no-nic-l2-lbp` and the workload `workloadname` to `vadd-bare-sw-bm_accel.json`.
 
 e) Run Linux SW
