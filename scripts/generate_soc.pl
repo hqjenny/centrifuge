@@ -20,7 +20,7 @@ if ($num_args > 2) {
 }
 
 if ((not defined($rdir)) or $rdir eq '') {
-    print("Please source sourceme-f1-manager.sh!\n");
+    print("Please source centrifuge/env.sh!\n");
     exit();
 }
 
@@ -39,13 +39,15 @@ my $arg_options = "Options:
         accel_sw -- Rerun C wrapper generation (triggers accel_hls to run)
         build_sbt -- Regenerate build.sbt
         config -- Regenerate HLSConfig.scala file in examples and firechip 
+        compile_sw_bm -- Compile bare-metal accelerator invocation code
         f1_scripts -- Regenerate scripts for including HLS generated Verilog in FireSim
         xsim_scripts -- Regenerate scripts for including HLS generated Verilog in FireSim XSim
-        vcs_scripts -- Regenerate vcs imulation
-        verilator_scripts -- Regenerate verilator imulation
+        run_vcs -- Regenerate vcs imulation
+        run_verilator -- Regenerate verilator imulation
         clean -- Delete accelerator directory
         ";
-my @valid_task_list = qw(all accel accel_hls accel_chisel accel_sw build_sbt config f1_scripts xsim_scripts vcs_scripts verilator_scripts clean);
+
+my @valid_task_list = qw(all accel accel_hls accel_chisel accel_sw build_sbt config f1_scripts xsim_scripts run_vcs run_verilator clean compile_sw_bm);
 if (not defined($task) or not grep( /^$task$/, @valid_task_list)){
     print("Please specify a task\!\n");
     print($arg_options);
@@ -58,10 +60,10 @@ if ($task eq 'clean') {
 }
 
 my @task_list = (); 
-my @accel_task_list = qw(accel accel_hls accel_chisel accel_sw);
+my @accel_task_list = qw(accel accel_hls accel_chisel accel_sw, build_sbt, config);
 if ($task eq 'all') {
     push (@task_list, @accel_task_list);
-    push (@task_list, qw(build_sbt config f1_scripts xsim_scripts vcs_scripts));
+    push (@task_list, qw(build_sbt config f1_scripts xsim_scripts));
 } elsif ($task eq 'accel') {
     push (@task_list, @accel_task_list);
 } elsif ($task eq 'accel_hls') {
@@ -74,18 +76,16 @@ if ($task eq 'all') {
     push (@task_list, qw(build_sbt));
 } elsif ($task eq 'config') {
     push (@task_list, qw(config));
+} elsif ($task eq 'compile_sw_bm') {
+    push (@task_list, qw(compile_sw_bm));
 } elsif ($task eq 'f1_scripts') {
-    push (@task_list, @accel_task_list);
     push (@task_list, qw(f1_scripts));
 } elsif ($task eq 'xsim_scripts') {
-    push (@task_list, @accel_task_list);
     push (@task_list, qw(xsim_scripts));
-} elsif ($task eq 'vcs_scripts') {
-    push (@task_list, @accel_task_list);
-    push (@task_list, qw(vcs_scripts));
-} elsif ($task eq 'verilator_scripts') {
-    push (@task_list, @accel_task_list);
-    push (@task_list, qw(verilator_scripts));
+} elsif ($task eq 'run_vcs') {
+    push (@task_list, qw(run_vcs));
+} elsif ($task eq 'run_verilator') {
+    push (@task_list, qw(run_verilator));
 }
 
 
@@ -108,6 +108,7 @@ my $TOP='TopWithHLS';
 my $scripts_dir = $rdir.'/tools/centrifuge/scripts/';
 require $scripts_dir.'parse_json.pl';
 require $scripts_dir.'generate_accel.pl';
+require $scripts_dir.'compile_sw_bm.pl';
 require $scripts_dir.'generate_build_sbt.pl';
 require $scripts_dir.'generate_config.pl';
 require $scripts_dir.'generate_f1_scripts.pl';
@@ -172,6 +173,11 @@ if ($tasks{'accel'}){
     # Copy Makefile Templates
     system("cp $scripts_dir/sw_aux/makefiles/* $rdir/generators/$soc_name/");
 }
+
+if ($tasks{'compile_sw_bm'}){
+    compile_sw_bm(\@Accel_tuples, \%tasks);
+}
+
 # Generate build.sbt under firesim/sim
 if ($tasks{'build_sbt'}){
     generate_build_sbt($soc_name, \%hls_bm);
@@ -197,13 +203,13 @@ if ($tasks{'xsim_scripts'}){
 }
 
 # Ax machines
-if ($tasks{'vcs_scripts'}){
+if ($tasks{'run_vcs'}){
     compile_vcs("clean");
     copy_verilog(\%hls_bm, "$rdir/sims/vcs/generated-src/example.TestHarness.$CONFIG/example.TestHarness.$CONFIG.top.v");
     compile_vcs("");
 }
 
-if ($tasks{'verilator_scripts'}){
+if ($tasks{'run_verilator'}){
     compile_verilator("clean");
     copy_verilog(\%hls_bm, "$rdir/sims/verilator/generated-src/example.TestHarness.$CONFIG/example.TestHarness.$CONFIG.top.v");
     compile_verilator("");

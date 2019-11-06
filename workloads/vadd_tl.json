@@ -1,0 +1,8 @@
+{
+  "name" : "vadd_tl",
+  "base" : "cf-buildroot.json",
+  "workdir" : "hardcoded/vadd_tl",
+  "host-init" : "build.sh",
+  "files" : [["vadd_tl", "/root/"]],
+  "command" : "/root/vadd_tl"
+}
