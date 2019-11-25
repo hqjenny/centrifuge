@@ -31,9 +31,11 @@ my @hls_pgms = ();
 my $cpp_flags = '';
 if (-f $file_name.".cpp"){
   $cpp_flags = '-cflags "-std=c++0x"';
-  @hls_pgms = glob('*.cpp');   
+  #@hls_pgms = glob('*.cpp');   
+  push(@hls_pgms, $file_name.'.cpp') 
 } else {
   @hls_pgms = glob('*.c');
+  #push(@hls_pgms, $file_name.'.c') 
 }
 
 my @hls_files = ();
