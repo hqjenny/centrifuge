@@ -1,0 +1,5 @@
+# Path to the chipyard repository to use when generating hardware
+chipyard-dir: '../../../'
+
+# Directory to store runtime logs in
+log-dir: 'logs'
