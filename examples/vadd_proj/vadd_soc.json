@@ -1,0 +1,8 @@
+{
+  "RoCC":{
+    "custom0":{"pgm": "vadd", "func":"vadd", "srcs":["./src/hls/vadd/vadd.c", "./src/hls/vadd/accel.c", "./src/hls/vadd/accel.h"]}
+  },
+  "TL":[
+    {"pgm":"vadd_tl", "func": "vadd", "addr":"0x20000", "srcs":["./src/hls/vadd_tl/vadd_tl.c", "./src/hls/vadd_tl/accel.c", "./src/hls/vadd_tl/accel.h"]}
+  ]
+}
