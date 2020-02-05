@@ -1,24 +1,21 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # PYTHON_ARGCOMPLETE_OK
-
-# REQUIRES PYTHON2, because fabric requires python2
 
 from __future__ import with_statement, print_function
 import sys
 import os
-import signal
 import argparse
 from time import sleep, strftime, gmtime
 import logging
 import random
 import string  
 import argcomplete
-
+import pathlib
 
 # centrifuge 
-from parseconfig import AccelConfig
+import pkg.util as util 
+import pkg.buildaccel as buildaccel
 
-from util.streamlogger import StreamLogger
 from os.path import dirname as up
 
 def construct_centrifuge_argparser():
@@ -33,7 +30,7 @@ def construct_centrifuge_argparser():
                             'generate_sw',
                             'clean_sw',
                             ])
-    parser.add_argument('-c', '--accelconfigfile', type=str,
+    parser.add_argument('-c', '--accelconfigfile', type=pathlib.Path,
                         help='Path to accelerator SoC config JSON file. Defaults to accel.json',
                         default='accel.json'
                         )
@@ -46,7 +43,7 @@ def initLogging():
     rootLogger.setLevel(logging.NOTSET) # capture everything
 
     # log to file
-    full_log_filename = util.getOpt("log-dir") / util.getOpt("run-name")
+    full_log_filename = util.getOpt("log-dir") / (util.getOpt("run-name") + ".log")
     fileHandler = logging.FileHandler(full_log_filename)
     # formatting for log to file
     logFormatter = logging.Formatter("%(asctime)s [%(funcName)-12.12s] [%(levelname)-5.5s]  %(message)s")
@@ -64,24 +61,28 @@ def main(args):
     """ Main function for FireSim manager. """
 
     # load accel.json 
-    accel_config = AccelConfig(args.accelconfigfile, util.getOpt('chipyard-dir'), util.getOpt('cf-dir'))
-    
+    accel_config = util.AccelConfig(args.accelconfigfile, util.getOpt('chipyard-dir'), util.getOpt('cf-dir'))
+
     # print the info
     accel_config.info()
 
     # tasks that have a special config/dispatch setup
     if args.task == 'generate_hw':
-       pass 
+        buildaccel.generate_hw(accel_config)
+    else:
+        print("Command: " + str(args.task) + " not yet implemented")
 
 if __name__ == '__main__':
 
     args = construct_centrifuge_argparser()
 
-    ctx = util.initConfig()
-    ctx.setRunName(
-    rootLogger = initLogging(args.accelconfigfile, args.task)
+    # Make all paths absolute as early as possible
+    args.accelconfigfile = args.accelconfigfile.resolve()
 
-    os.chdir(util.getOpt('cf-dir'))
+    ctx = util.initConfig()
+    ctx.setRunName(args.accelconfigfile, args.task)
+    rootLogger = initLogging()
+
     exitcode = 0
     try:
         main(args)
@@ -90,5 +91,5 @@ if __name__ == '__main__':
         rootLogger.exception("Fatal error.")
         exitcode = 1
     finally:
-        rootLogger.info("""The full log of this run is:\n{logdir}/{runname}.log""".format(logdir=util.getOpt('log-dir'), runname=util.getOpt('run-name'))
+        rootLogger.info("""The full log of this run is:\n{logdir}/{runname}.log""".format(logdir=util.getOpt('log-dir'), runname=util.getOpt('run-name')))
         exit(exitcode)

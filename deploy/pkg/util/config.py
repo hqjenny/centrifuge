@@ -1,4 +1,11 @@
 import pathlib
+import collections
+import yaml
+import re
+import os
+import time
+import random
+import string
 
 # Global configuration (cfCtx set by initialize())
 ctx = None
@@ -14,9 +21,10 @@ userOpts = [
 # These represent all available derived options (constants and those generated
 # from userOpts, but not directly settable by users)
 derivedOpts = [
-        'cf-dir',     # top of centrifuge directory tree
-        'genhw-dir',  # where to put generated hardware
-        'run-name'    # A unique name for a single invocation of this command
+        'cf-dir',           # top of centrifuge directory tree
+        'support-dir',      # Various supporting non-code files (e.g. configs and templates)
+        'genhw-dir',        # where to put generated hardware
+        'run-name'          # A unique name for a single invocation of this command
     ]
 
 # These options represent userOpts and derivedOpts that should be pathlib paths.
@@ -87,11 +95,12 @@ class cfCtx(collections.MutableMapping):
         """
 
         # These are set early to help with config file search-paths
-        self['cf-dir'] = pathlib.Path(__file__).parent.parent.resolve()
+        self['cf-dir'] = pathlib.Path(__file__).parent.parent.parent.parent.resolve()
+        self['support-dir'] = self['cf-dir'] / 'deploy' / 'support'
 
         # This is an exhaustive list of defaults, it always exists and can be
         # overwritten by other user-defined configs
-        defaultCfg = self['cf-dir'] / 'deploy' / 'default-config.yaml'
+        defaultCfg = self['support-dir'] / 'default-config.yaml'
         self.addPath(defaultCfg)
         
         # These are mutually-exlusive search paths (only one will be loaded)
@@ -166,6 +175,7 @@ class cfCtx(collections.MutableMapping):
         user-defined options have been set already. See the 'derivedOpts' list
         above for documentation of these options."""
         self['genhw-dir'] = self['chipyard-dir'] / 'generators' 
+        self['run-name'] = ""
 
     def setRunName(self, configPath, operation):
         """Helper function for formatting a  unique run name. You are free to

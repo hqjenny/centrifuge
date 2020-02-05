@@ -4,3 +4,4 @@
 # if we want
 from .streamlogger import *
 from .config import *
+from .parseconfig import *
