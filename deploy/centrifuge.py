@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.6
 # PYTHON_ARGCOMPLETE_OK
 
 from __future__ import with_statement, print_function
@@ -21,18 +21,25 @@ from os.path import dirname as up
 def construct_centrifuge_argparser():
     # parse command line args
     parser = argparse.ArgumentParser(description='Centrifuge Script')
-    parser.add_argument('task', type=str,
-                        help='Management task to run.', choices=[
+    parser.add_argument('task', 
+                        type=str,
+                        help='Management task to run.', 
+                        choices=[
                             'generate_all',
                             'clean_all',
                             'generate_hw',
                             'clean_hw',
                             'generate_sw',
                             'clean_sw',
-                            ])
-    parser.add_argument('-c', '--accelconfigfile', type=pathlib.Path,
-                        help='Path to accelerator SoC config JSON file. Defaults to accel.json',
-                        default='accel.json'
+                            'run_f1',
+                            'run_sim',
+                            ], 
+                        )
+    parser.add_argument('-c', 
+                        '--accelconfigfile', 
+                        type=pathlib.Path,
+                        help='Path to accelerator SoC config JSON file.',
+                        required=True
                         )
     argcomplete.autocomplete(parser)
     return parser.parse_args()
@@ -61,14 +68,19 @@ def main(args):
     """ Main function for FireSim manager. """
 
     # load accel.json 
-    accel_config = util.AccelConfig(args.accelconfigfile, util.getOpt('chipyard-dir'), util.getOpt('cf-dir'))
+    accel_config = util.AccelConfig(args.accelconfigfile, 
+                                    util.getOpt('chipyard-dir'), 
+                                    util.getOpt('cf-dir'),
+                                    util.getOpt('genhw-dir'))
 
     # print the info
-    accel_config.info()
+    # accel_config.info()
 
     # tasks that have a special config/dispatch setup
     if args.task == 'generate_hw':
         buildaccel.generate_hw(accel_config)
+    elif args.task == 'clean_hw':
+        buildaccel.clean_hw(accel_config)
     else:
         print("Command: " + str(args.task) + " not yet implemented")
 

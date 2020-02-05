@@ -22,7 +22,8 @@ userOpts = [
 # from userOpts, but not directly settable by users)
 derivedOpts = [
         'cf-dir',           # top of centrifuge directory tree
-        'support-dir',      # Various supporting non-code files (e.g. configs and templates)
+        'support-dir',      # Various supporting non-code files (e.g. context configs)
+        'template-dir',      # Various supporting non-code files (e.g. code templates)
         'genhw-dir',        # where to put generated hardware
         'run-name'          # A unique name for a single invocation of this command
     ]
@@ -97,6 +98,7 @@ class cfCtx(collections.MutableMapping):
         # These are set early to help with config file search-paths
         self['cf-dir'] = pathlib.Path(__file__).parent.parent.parent.parent.resolve()
         self['support-dir'] = self['cf-dir'] / 'deploy' / 'support'
+        self['template-dir'] = self['cf-dir'] / 'deploy' / 'templates'
 
         # This is an exhaustive list of defaults, it always exists and can be
         # overwritten by other user-defined configs

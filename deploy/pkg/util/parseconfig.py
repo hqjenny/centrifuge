@@ -4,36 +4,36 @@ import re
 import random
 import logging
 import json
-import os
+import pathlib
 
 rootLogger = logging.getLogger()
 
 class Accel(object): 
     """Base Definition of Accelerator"""
-    def __init__(self, prefix_id, pgm, func, src_dir, accel_dir):
+    def __init__(self, prefix_id, pgm, func, srcs, hw_accel_dir):
         self.prefix_id = prefix_id
         self.pgm = pgm
         self.func = func
-        self.src_dir = src_dir
+        self.srcs = srcs
         self.name = """{}_{}_{}""".format(self.prefix_id, self.pgm, self.func)
-        self.dir = os.path.join(accel_dir, self.name)
+        self.dir = hw_accel_dir / self.name
 
-        src_main_path = os.path.join(self.dir, os.path.join('src','main'))
-        self.c_dir = os.path.join(src_main_path, 'c')
-        self.verilog_dir = os.path.join(src_main_path, 'verilog') 
-        self.scala_dir = os.path.join(src_main_path, 'scala') 
+        src_main_path = self.dir / 'src' / 'main'
+        self.c_dir = src_main_path / 'c'
+        self.verilog_dir = src_main_path / 'verilog' 
+        self.scala_dir = src_main_path / 'scala' 
 
     def info(self):
         rootLogger.info(str(self))
 
     def __str__(self):
-        return """\t\taccel_name: {} src_dir: {}""".format(self.name, self.src_dir)
+        return """\t\taccel_name: {} srcs: {}""".format(self.name, self.srcs)
 
 
 class RoCCAccel(Accel): 
     """Definition of RoCC Accelerator"""
-    def __init__(self, prefix_id, pgm, func, rocc_insn_id, src_dir, accel_dir):
-        super(RoCCAccel, self).__init__(prefix_id, pgm, func, src_dir, accel_dir)
+    def __init__(self, prefix_id, pgm, func, rocc_insn_id, src_dir, hw_accel_dir):
+        super(RoCCAccel, self).__init__(prefix_id, pgm, func, src_dir, hw_accel_dir)
         self.rocc_insn_id = rocc_insn_id
     def info(self):
         rootLogger.info("""\tRoCC Accelerator {}""".format(self.prefix_id))
@@ -42,8 +42,8 @@ class RoCCAccel(Accel):
 
 class TLAccel(Accel): 
     """Definition of TL Accelerator"""
-    def __init__(self, prefix_id, pgm, func, base_addr, src_dir, accel_dir):
-        super(TLAccel, self).__init__(prefix_id, pgm, func, src_dir, accel_dir)
+    def __init__(self, prefix_id, pgm, func, base_addr, src_dir, hw_accel_dir):
+        super(TLAccel, self).__init__(prefix_id, pgm, func, src_dir, hw_accel_dir)
         self.base_addr = base_addr
     def info(self):
         rootLogger.info("""\tTL Accelerator {} @ {}""".format(self.prefix_id, self.base_addr))
@@ -52,13 +52,14 @@ class TLAccel(Accel):
 
 class AccelConfig:
     """Definition of Accelerator Config"""
-    def __init__(self, accel_json_path, chipyard_dir, centrifuge_dir):
+    def __init__(self, accel_json_path, chipyard_dir, centrifuge_dir, genhw_dir):
         self.accel_json_path = accel_json_path
         self.chipyard_dir = chipyard_dir
         self.centrifuge_dir = centrifuge_dir
 
-        self.accel_name = os.path.basename(self.accel_json_path).replace('.json','')
-        self.accel_dir = os.path.join(self.chipyard_dir, os.path.join('generators', self.accel_name))
+        self.accel_name = self.accel_json_path.stem
+        self.accel_json_dir = accel_json_path.parent
+        self.hw_accel_dir = genhw_dir / self.accel_name
         self.accel_json = self.parse_json(self.accel_json_path)
         self.rocc_accels = []
         self.tl_accels = []
@@ -66,7 +67,7 @@ class AccelConfig:
 
     def __str__(self):
         s = """Accelerator SoC Definition: \n"""
-        s += "Generated SoC Directory: {}\n".format(self.accel_dir)
+        s += "Generated SoC Directory: {}\n".format(self.hw_accel_dir)
         for rocc_accel in self.rocc_accels:
             s += str(rocc_accel) + "\n"
         for tl_accel in self.tl_accels:
@@ -76,22 +77,15 @@ class AccelConfig:
     def info(self):
         rootLogger.info(str(self))
 
-    def get_default_src_dir(self, pgm): 
-        """
-        Return the default src_dir if src_dir is not defined in the json file
-        Assume the pgm is the same as the dir name under examples dir 
-        """
-        return os.path.join(self.centrifuge_dir, os.path.join('examples', pgm))
-
     def parse_json(self, accel_json_path):
         """Parse the JSON input"""
         rootLogger.info("Parsing input JSON file: {}".format(accel_json_path))
         with open(accel_json_path, "r") as json_file:
             return json.load(json_file)
 
-    def check_src_dir(self, input_str):
-        if not (os.path.isdir(input_str) and os.path.exists(input_str)):
-            raise Exception("Not valid src_dir in accelerator def: {}".format(input_str))
+    def check_src_path(self, src_path):
+        if not (src_path.exists()):
+            raise Exception("{} does not exist in accel 'srcs' def".format(src_path))
 
     def check_str(self, input_str):
         """Throw exception if str is not valid"""
@@ -131,14 +125,17 @@ class AccelConfig:
                         self.check_str(pgm)
                         self.check_str(func)
 
-                        src_dir = rocc_accel_dict.get('src_dir')
-                        if src_dir is None:
-                            src_dir = self.get_default_src_dir(pgm) 
-                            rootLogger.info("Use default src path: {src_dir} for rocc{idx} accelerator""".format(src_dir=src_dir,idx=idx))
+                        srcs = rocc_accel_dict.get('srcs')
+                        if srcs is None:
+                            raise Exception("Please specify the 'srcs' in your accelerator definition for {}!".format(prefix_id))
                         else:
-                            self.check_src_dir(src_dir)
+                            for i, _ in enumerate(srcs):
+                                srcs[i] = pathlib.Path(srcs[i])
+                                if not srcs[i].is_absolute():
+                                    srcs[i] = (self.accel_json_dir / srcs[i]).resolve()
+                                self.check_src_path(srcs[i])
 
-                        rocc_accel = RoCCAccel(prefix_id, pgm, func, idx, src_dir, self.accel_dir)
+                        rocc_accel = RoCCAccel(prefix_id, pgm, func, idx, srcs, self.hw_accel_dir)
                         self.rocc_accels.append(rocc_accel)
                 except Exception as err:
                     rootLogger.exception(err)
@@ -162,14 +159,17 @@ class AccelConfig:
                     self.check_str(func)
                     self.check_addr_str(base_addr)
 
-                    src_dir = rocc_accel_dict.get('src_dir')
-                    if src_dir is None:
-                        src_dir = self.get_default_src_dir(pgm) 
-                        rootLogger.info("Use default src path: {src_dir} for tl{idx} accelerator""".format(src_dir=src_dir,idx=idx))
+                    srcs = tl_accel_dict.get('srcs')
+                    if srcs is None:
+                        raise Exception("Please specify the 'srcs' in your accelerator definition for {}!".format(prefix_id))
                     else:
-                        self.check_src_dir(src_dir)
+                        for i, _ in enumerate(srcs):
+                            srcs[i] = pathlib.Path(srcs[i])
+                            if not srcs[i].is_absolute():
+                                srcs[i] = (self.accel_json_dir / srcs[i]).resolve()
+                            self.check_src_path(srcs[i])
 
-                    tl_accel = TLAccel(prefix_id, pgm, func, base_addr, src_dir, self.accel_dir)
+                    tl_accel = TLAccel(prefix_id, pgm, func, base_addr, srcs, self.hw_accel_dir)
                     self.tl_accels.append(tl_accel)
                     idx += 1
                 except Exception as err:
