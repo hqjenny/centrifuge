@@ -24,7 +24,10 @@ class Accel(object):
         self.scala_dir = os.path.join(src_main_path, 'scala') 
 
     def info(self):
-        rootLogger.info("""\t\taccel_name: {} src_dir: {}""".format(self.name, self.src_dir))
+        rootLogger.info(str(self))
+
+    def __str__(self):
+        return """\t\taccel_name: {} src_dir: {}""".format(self.name, self.src_dir)
 
 
 class RoCCAccel(Accel): 
@@ -61,13 +64,17 @@ class AccelConfig:
         self.tl_accels = []
         self.parse_json_config(self.accel_json)
 
-    def info(self):
-        rootLogger.info("""Accelerator SoC Definition: """)
-        rootLogger.info("Generated SoC Directory: {}".format(self.accel_dir))
+    def __str__(self):
+        s = """Accelerator SoC Definition: \n"""
+        s += "Generated SoC Directory: {}\n".format(self.accel_dir)
         for rocc_accel in self.rocc_accels:
-            rocc_accel.info()
+            s += str(rocc_accel) + "\n"
         for tl_accel in self.tl_accels:
-            tl_accel.info()
+            s += str(tl_accel) + "\n"
+        return s
+
+    def info(self):
+        rootLogger.info(str(self))
 
     def get_default_src_dir(self, pgm): 
         """

@@ -7,9 +7,9 @@ import json
 import os
 import shutil
 import errno    
+from .. import util
 
 rootLogger = logging.getLogger()
-
 
 def mkdir_p(path):
     try:
@@ -31,9 +31,9 @@ def cp_src(accel):
     """Copy src files"""
     src_files = os.listdir(accel.src_dir)
     for file_name in src_files:
-	full_file_name = os.path.join(accel.src_dir, file_name)
-	if os.path.isfile(full_file_name):
-	    shutil.copy(full_file_name, accel.c_dir)
+        full_file_name = os.path.join(accel.src_dir, file_name)
+    if os.path.isfile(full_file_name):
+        shutil.copy(full_file_name, accel.c_dir)
 
 def init_accel(accel_conf):
     """Init project directories for all accels"""
@@ -45,11 +45,9 @@ def init_accel(accel_conf):
         init_proj_dir(accel)
         cp_src(accel)
 
-
 def generate_hw(accel_conf):
     """Generate hardware SoC """
 
+    print("gernerate_hw not implemented. Called with config: ", accel_conf)
     # init project repos
-    init_accel(accel_conf) 
-
-
+    # init_accel(accel_conf) 
