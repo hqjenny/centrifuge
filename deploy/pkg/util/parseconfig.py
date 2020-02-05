@@ -4,24 +4,24 @@ import re
 import random
 import logging
 import json
-import os
+import pathlib
 
 rootLogger = logging.getLogger()
 
 class Accel(object): 
-    """Base Definition of Accelerator"""
+    """Base Definition of a single accelerator. All path-like objects are pathlib.Path."""
     def __init__(self, prefix_id, pgm, func, src_dir, accel_dir):
         self.prefix_id = prefix_id
         self.pgm = pgm
         self.func = func
         self.src_dir = src_dir
         self.name = """{}_{}_{}""".format(self.prefix_id, self.pgm, self.func)
-        self.dir = os.path.join(accel_dir, self.name)
+        self.dir = accel_dir / self.name
 
-        src_main_path = os.path.join(self.dir, os.path.join('src','main'))
-        self.c_dir = os.path.join(src_main_path, 'c')
-        self.verilog_dir = os.path.join(src_main_path, 'verilog') 
-        self.scala_dir = os.path.join(src_main_path, 'scala') 
+        src_main_path = self.dir / 'src' / 'main'
+        self.c_dir = src_main_path / 'c'
+        self.verilog_dir = src_main_path / 'verilog'
+        self.scala_dir = src_main_path / 'scala'
 
     def info(self):
         rootLogger.info(str(self))
@@ -51,17 +51,26 @@ class TLAccel(Accel):
 
 
 class AccelConfig:
-    """Definition of Accelerator Config"""
+    """Configuration for all accelerators to be included in the SoC
+    
+       Args:
+            accel_json_path: pathlib.Path pointing to the config file for this accelerator
+            chipyard_dir: pathlib.Path pointing to the chipyard repo to use
+            centrifugre_dir: pathlib.Path pointing to the base directory of centrifuge
+    """
     def __init__(self, accel_json_path, chipyard_dir, centrifuge_dir):
         self.accel_json_path = accel_json_path
         self.chipyard_dir = chipyard_dir
         self.centrifuge_dir = centrifuge_dir
 
-        self.accel_name = os.path.basename(self.accel_json_path).replace('.json','')
-        self.accel_dir = os.path.join(self.chipyard_dir, os.path.join('generators', self.accel_name))
+        self.accel_name = self.accel_json_path.stem
+        self.accel_dir = self.chipyard_dir / 'generators' / self.accel_name
         self.accel_json = self.parse_json(self.accel_json_path)
+
+        # Lists of Accel representing the included rocc and tl accelerators (respectively)
         self.rocc_accels = []
         self.tl_accels = []
+
         self.parse_json_config(self.accel_json)
 
     def __str__(self):
@@ -81,7 +90,7 @@ class AccelConfig:
         Return the default src_dir if src_dir is not defined in the json file
         Assume the pgm is the same as the dir name under examples dir 
         """
-        return os.path.join(self.centrifuge_dir, os.path.join('examples', pgm))
+        return self.centrifuge_dir / 'examples' / pgm
 
     def parse_json(self, accel_json_path):
         """Parse the JSON input"""
@@ -89,9 +98,9 @@ class AccelConfig:
         with open(accel_json_path, "r") as json_file:
             return json.load(json_file)
 
-    def check_src_dir(self, input_str):
-        if not (os.path.isdir(input_str) and os.path.exists(input_str)):
-            raise Exception("Not valid src_dir in accelerator def: {}".format(input_str))
+    def check_src_dir(self, src_dir):
+        if not src_dir.is_dir() and src_dir.exists():
+            raise Exception("Not valid src_dir in accelerator def: {}".format(src_dir))
 
     def check_str(self, input_str):
         """Throw exception if str is not valid"""
@@ -136,6 +145,7 @@ class AccelConfig:
                             src_dir = self.get_default_src_dir(pgm) 
                             rootLogger.info("Use default src path: {src_dir} for rocc{idx} accelerator""".format(src_dir=src_dir,idx=idx))
                         else:
+                            src_dir = pathlib.Path(src_dir)
                             self.check_src_dir(src_dir)
 
                         rocc_accel = RoCCAccel(prefix_id, pgm, func, idx, src_dir, self.accel_dir)
@@ -167,6 +177,7 @@ class AccelConfig:
                         src_dir = self.get_default_src_dir(pgm) 
                         rootLogger.info("Use default src path: {src_dir} for tl{idx} accelerator""".format(src_dir=src_dir,idx=idx))
                     else:
+                        src_dir = pathlib.Path(src_dir)
                         self.check_src_dir(src_dir)
 
                     tl_accel = TLAccel(prefix_id, pgm, func, base_addr, src_dir, self.accel_dir)
@@ -176,5 +187,3 @@ class AccelConfig:
                     rootLogger.exception(err)
                     rootLogger.exception("""Fatal error. TL Accelerator definitions in {} is not valid """.format(self.accel_json_path))
                     assert(False)
-
-        
