@@ -1,4 +1,3 @@
 argparse
 argcomplete
 logging
-cStringIO
