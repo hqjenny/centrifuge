@@ -23,10 +23,10 @@ def mkdir_p(path):
             raise
 
 def copytree(src, dst, symlinks=False, ignore=None):
-    for item in os.listdir(src):
-        s = os.path.join(src, item)
-        d = os.path.join(dst, item)
-        if os.path.isdir(s):
+    for item in src.glob('*'):
+        s = src / item.name
+        d = dst / item.name
+        if s.is_dir():
             shutil.copytree(s, d, symlinks, ignore)
         else:
             shutil.copy2(s, d)
@@ -99,6 +99,7 @@ def copy_verilog(accel):
     if not (gen_ver_dir.exists()):
         raise Exception("{} does not exist after running HLS".format(gen_ver_dir))
     copytree(gen_ver_dir, accel.verilog_dir)
+    rootLogger.info("\t\tCopy\t{} to {}".format(gen_ver_dir, accel.verilog_dir))
 
 def run_hls(accel_conf):
     """Run Vivado HLS"""

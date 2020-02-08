@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.6
+#!/usr/bin/env python3
 # PYTHON_ARGCOMPLETE_OK
 
 from __future__ import with_statement, print_function

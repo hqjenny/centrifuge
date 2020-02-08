@@ -51,7 +51,8 @@ class TLAccel(Accel):
 
 
 class AccelConfig:
-    """Definition of Accelerator Config"""
+    """Configuration for all accelerators to be included in the SoC"""
+
     def __init__(self, accel_json_path, chipyard_dir, centrifuge_dir, genhw_dir):
         self.accel_json_path = accel_json_path
         self.chipyard_dir = chipyard_dir
