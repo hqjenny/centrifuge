@@ -43,7 +43,7 @@ def generateHeader(signature):
 
 def ident(level):
     """Return a string of spaces representing an indentation to level 'level'"""
-    return "    "*n
+    return "    "*level
 
 def cleanRoccArg(body):
     """Cleans up a RoccArg. Returns True if the argument was cleaned and can be
@@ -152,7 +152,7 @@ def generateWrapperRocc(fname, roccIdx, inputs, retVal):
                 '#include "accel.h"\n'
                 '\n')
 
-    cWrapper += ident(lvl) + "#define XCUSTOM_ACC " + roccIdx + "\n"
+    cWrapper += ident(lvl) + "#define XCUSTOM_ACC " + str(roccIdx) + "\n"
     cWrapper += "\n"
 
     signature = ""
@@ -291,12 +291,14 @@ def generateSW(accels):
         accel.wrapper_dir.mkdir(exist_ok=True)
 
         cPath = accel.wrapper_dir / (accel.name + '_rocc_wrapper.c')
-        cPath.unlink(missing_ok=True)
+        if cPath.exists():
+            cPath.unlink()
         with open(cPath , 'w') as cF:
             cF.write(cWrapper)
 
         hPath = accel.wrapper_dir / (accel.name + '_rocc_wrapper.h')
-        hPath.unlink(missing_ok=True)
+        if hPath.exists():
+            hPath.unlink()
         with open(hPath , 'w') as hF:
             hF.write(hWrapper)
 
@@ -307,12 +309,14 @@ def generateSW(accels):
         accel.wrapper_dir.mkdir(exist_ok=True)
 
         cPath = accel.wrapper_dir / (accel.name + '_tl_wrapper.c')
-        cPath.unlink(missing_ok=True)
+        if cPath.exists():
+            cPath.unlink()
         with open(cPath , 'w') as cF:
             cF.write(cWrapper)
 
         hPath = accel.wrapper_dir / (accel.name + '_tl_wrapper.h')
-        hPath.unlink(missing_ok=True)
+        if hPath.exists():
+            hPath.unlink()
         with open(hPath , 'w') as hF:
             hF.write(hWrapper)
 
