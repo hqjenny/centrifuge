@@ -20,7 +20,6 @@ int vadd(int * a, int * b, int* c, int length) {
     int upper = (length >> 3) << 3;
     int i = 0;
     for (i = 0; i < upper; i += 8) {
-        // To prevent burst mode
         c[i+0] = a[i+0] +b[i+0];
         c[i+1] = a[i+1] +b[i+1];
         c[i+2] = a[i+2] +b[i+2];
@@ -37,80 +36,4 @@ int vadd(int * a, int * b, int* c, int length) {
     }
     return 0;
 }
-
-//Including to use ap_uint<> datatype
-//#include <ap_int.h>
-/*
-#define BUFFER_SIZE 128
-#define DATAWIDTH   512
-#define VECTOR_SIZE (DATAWIDTH / 32) // vector size is 16 (512/32 = 16)
-//typedef ap_uint<DATAWIDTH> uint512_dt;
-
-    Vector Addition Kernel Implementation using uint512_dt datatype 
-    Arguments:
-        in1   (input)     --> Input Vector1
-        in2   (input)     --> Input Vector2
-        out   (output)    --> Output Vector
-        size  (input)     --> Size of Vector in Integer
-   */
-/*extern "C" {
-void vadd(
-        const uint512_dt *in1, // Read-Only Vector 1
-        const uint512_dt *in2, // Read-Only Vector 2
-        uint512_dt *out,       // Output Result
-        int size               // Size in integer
-        )
-{
-#pragma HLS INTERFACE m_axi port=in1  offset=slave bundle=gmem
-#pragma HLS INTERFACE m_axi port=in2  offset=slave bundle=gmem
-#pragma HLS INTERFACE m_axi port=out offset=slave bundle=gmem
-#pragma HLS INTERFACE s_axilite port=in1  bundle=control
-#pragma HLS INTERFACE s_axilite port=in2  bundle=control
-#pragma HLS INTERFACE s_axilite port=out bundle=control
-#pragma HLS INTERFACE s_axilite port=size bundle=control
-#pragma HLS INTERFACE s_axilite port=return bundle=control
-
-    uint512_dt v1_local[BUFFER_SIZE];    // Local memory to store vector1
-    uint512_dt result_local[BUFFER_SIZE];// Local Memory to store result
-
-    // Input vector size for interger vectors. However kernel is directly 
-    // accessing 512bit data (total 16 elements). So total number of read
-    // from global memory is calculated here:
-    int size_in16 = (size-1) / VECTOR_SIZE + 1; 
-
-    //Per iteration of this loop perform BUFFER_SIZE vector addition
-    for(int i = 0; i < size_in16;  i += BUFFER_SIZE)
-    {
-        #pragma HLS LOOP_TRIPCOUNT min=8 max=8
-        int chunk_size = BUFFER_SIZE;
-
-        //boundary checks
-        if ((i + BUFFER_SIZE) > size_in16) 
-            chunk_size = size_in16 - i;
-
-        //burst read first vector from global memory to local memory
-        v1_rd: for (int j = 0 ; j <  chunk_size; j++){
-        #pragma HLS pipeline
-        #pragma HLS LOOP_TRIPCOUNT min=128 max=128
-            v1_local[j] = in1 [i + j];
-        }
-
-        //burst read second vector and perform vector addition
-        v2_rd_add: for (int j = 0 ; j < chunk_size; j++){
-        #pragma HLS pipeline
-        #pragma HLS LOOP_TRIPCOUNT min=128 max=128
-            uint512_dt tmpV1     = v1_local[j];
-            uint512_dt tmpV2     = in2[i+j];
-            result_local[j] = tmpV1 + tmpV2; // Vector Addition Operation
-        }
-
-        //burst write the result
-        out_write: for (int j = 0 ; j < chunk_size; j++){
-        #pragma HLS pipeline
-        #pragma HLS LOOP_TRIPCOUNT min=128 max=128
-            out[i+j] = result_local[j];
-       }
-    }
-}
-}*/
 
