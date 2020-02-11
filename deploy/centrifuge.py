@@ -15,6 +15,7 @@ import pathlib
 # centrifuge 
 import pkg.util as util 
 import pkg.buildaccel as buildaccel
+import pkg.buildsw as buildsw
 
 from os.path import dirname as up
 
@@ -81,6 +82,8 @@ def main(args):
         buildaccel.generate_hw(accel_config)
     elif args.task == 'clean_hw':
         buildaccel.clean_hw(accel_config)
+    elif args.task == 'generate_sw':
+        buildsw.generateSW(accel_config)
     else:
         print("Command: " + str(args.task) + " not yet implemented")
 

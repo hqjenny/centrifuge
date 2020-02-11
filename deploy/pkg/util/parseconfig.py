@@ -60,6 +60,7 @@ class AccelConfig:
 
         self.accel_name = self.accel_json_path.stem
         self.accel_json_dir = accel_json_path.parent
+        self.gensw_dir = self.accel_json_dir / 'centrifuge_wrappers'
         self.hw_accel_dir = genhw_dir / self.accel_name
         self.accel_json = self.parse_json(self.accel_json_path)
         self.rocc_accels = []

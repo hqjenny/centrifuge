@@ -1,3 +1,4 @@
 *.o
 *.a
 cf-config.yaml
+*.swp
