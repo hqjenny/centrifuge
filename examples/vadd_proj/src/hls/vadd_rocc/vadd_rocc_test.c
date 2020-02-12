@@ -1,7 +1,7 @@
 #include<stdio.h>
 #include<stdint.h>
 #define LENGTH 80
-#include "accel.h"
+#include "vadd_rocc.h"
 
 void print_vec(int* vec, int length){
     for(int i = 0; i < length; i++){
@@ -22,7 +22,7 @@ int main () {
     }
 
     uint64_t begin, end, dur;
-    vadd(length_a, b_c); 
+    vadd_rocc(length_a, b_c); 
 
     printf("A = [");
     print_vec(&length_a[1], length);
