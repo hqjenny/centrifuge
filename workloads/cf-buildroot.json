@@ -2,5 +2,8 @@
   "name" : "cf-buildroot",
   "base" : "br-base.json",
   "workdir" : "cf-base",
+  "host-init" : "host-init.sh",
+  "files" : [["driver/centrifuge_mmap.ko", "/usr/share/centrifuge_mmap.ko"],
+             ["S90Centrifuge", "/etc/init.d/"]],
   "linux-src" : "linux"
 }
