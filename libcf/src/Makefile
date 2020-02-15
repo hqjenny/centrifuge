@@ -1,5 +1,11 @@
+CFLAGS=-g -O0 --std=gnu99 -DCF_LINUX
+
+ifeq ($(ARCH),riscv)
+CC=riscv64-unknown-linux-gnu-gcc
+CFLAGS += -static -DRISCV
+else
 CC=gcc
-CFLAGS=--std=gnu99 -DCF_LINUX
+endif
 
 LIB=libcf.a
 LIB_SRCS=centrifuge.c os_utils.c

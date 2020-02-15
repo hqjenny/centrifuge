@@ -1,0 +1,6 @@
+{
+    "name" : "libcf_test",
+    "base" : "cf-buildroot.json",
+    "host-init" : "build_test.sh",
+    "files" : [["../../libcf/src/libcf_test", "/root/"]]
+}

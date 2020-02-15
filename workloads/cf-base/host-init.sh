@@ -1,3 +1,3 @@
 #!/bin/bash
 cd driver
-make
+make ARCH=riscv64

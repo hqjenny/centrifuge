@@ -20,6 +20,7 @@ static inline uint64_t duration(uint64_t start, uint64_t end) {
 }
 
 // Generic translation of userspace vaddr to paddr (hard-coded to 4k pages)
+// WARNING: this does not work for addresses returned by cf_malloc!
 uintptr_t vtop(uintptr_t vaddr);
 
 // Access an MMIO address

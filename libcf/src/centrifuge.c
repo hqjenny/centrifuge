@@ -3,6 +3,8 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <fcntl.h>
+#include <errno.h>
+#include <string.h>
 #include <sys/mman.h>
 #include "centrifuge.h"
 #include "os_utils.h"
@@ -33,7 +35,7 @@ cf_ctl_t cf_init(uintptr_t gpio_base)
 
 cf_buf_t cf_malloc(size_t size)
 {
-    cf_buf_t b;
+    cf_buf_t b = (cf_buf_t){0};
 
     b.size = size;
 
@@ -41,17 +43,33 @@ cf_buf_t cf_malloc(size_t size)
     //(custom driver)
     int fd = open("/proc/centrifuge_mmap", O_RDWR|O_SYNC);
     if(fd < 0) {
+        printf("cf_malloc: failed to open centrifuge special file\n");
         return (cf_buf_t){0};
     }
 
-    b.vaddr = mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
+    b.vaddr = mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED|MAP_LOCKED, fd, 0);
     if(b.vaddr  == NULL) {
+        printf("cf_malloc: mmap failure\n");
         return (cf_buf_t){0};
     }
     close(fd);
     
-    b.paddr = vtop((uintptr_t)b.vaddr);
+    FILE *vtopf = fopen("/proc/centrifuge_vtop", "rb");
+    if(vtopf == NULL) {
+        printf("Failed to open /proc/centrifuge_vtop. Is the driver working?");
+        return (cf_buf_t){0};
+    }
+
+    size_t nread = fread(&(b.paddr), sizeof(uintptr_t), 1, vtopf);
+    if(nread != 1) {
+        printf("Failed to read from /proc/centrifuge_vtop: %s\n", strerror(errno));
+        fclose(vtopf);
+        return (cf_buf_t){0};
+    }
+    fclose(vtopf);
+
     if(b.paddr == 0) {
+        printf("cf_malloc: vtop failure\n");
         return (cf_buf_t){0};
     }
 

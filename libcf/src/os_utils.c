@@ -1,5 +1,6 @@
 #include <sys/mman.h>
 #include <fcntl.h>
+#include <stdio.h>
 
 #include "os_utils.h"
 
@@ -16,11 +17,11 @@ uint64_t  vtop_translate(uint64_t src) {
 }
 #else
 #define PGMAP_ENTRY_SZ 8
-// Generic translation of userspace vaddr to paddr (hard-coded to 4k pages)
 uintptr_t vtop(uintptr_t vaddr)
 {
     FILE *pgmap = fopen("/proc/self/pagemap", "rb");
     if(pgmap == NULL) {
+        printf("cf vtop failure: can't open pagemap\n");
         return 0;
     }
 
@@ -28,17 +29,19 @@ uintptr_t vtop(uintptr_t vaddr)
     off_t off = (vaddr / pgsize) * PGMAP_ENTRY_SZ;
     if(fseek(pgmap, off, SEEK_SET) != 0) {
         fclose(pgmap);
+        printf("cf vtop failure: cannot seek to required page entry.\n");
         return 0;
     }
 
-    uintptr_t ent;
-    fread(&ent, PGMAP_ENTRY_SZ, 1, pgmap);
+    uint64_t ent;
+    int nread = fread(&ent, PGMAP_ENTRY_SZ, 1, pgmap);
     fclose(pgmap);
 
     //bits 0-54
     uintptr_t pfn = (ent & 0x7FFFFFFFFFFFFF);
 
-    return pfn << 12;
+    uintptr_t paddr = pfn << 12;
+    return paddr;
 }
 #endif
 
