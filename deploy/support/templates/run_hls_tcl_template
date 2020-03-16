@@ -1,12 +1,11 @@
-open_project -reset $prj_name
-set_top $func
-$srcs
+open_project -reset $PRJ_NAME
+set_top $FUNC
+$SRCS
 open_solution -reset "solution1"
-set_part {$part}
+set_part {$PART}
 config_compile -ignore_long_run_time
-create_clock -period $clock_period -name default
-config_rtl -prefix $prj_prefix
-
+create_clock -period $CLOCK_PERIOD -name default
+config_rtl -prefix $PRJ_PREFIX
 config_interface -m_axi_addr64
 #export_design -format ip_catalog
 #config_interface -clock_enable

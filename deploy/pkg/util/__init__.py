@@ -5,3 +5,4 @@
 from .streamlogger import *
 from .config import *
 from .parseconfig import *
+from .util import *

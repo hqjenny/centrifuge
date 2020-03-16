@@ -1,0 +1,39 @@
+package hls_${FUNC}
+import Chisel._
+import chisel3.experimental.dontTouch
+import freechips.rocketchip.config.{Parameters, Field}
+import freechips.rocketchip.tile._
+import freechips.rocketchip.util._
+import vivadoHLS._
+
+class ${FUNC}() extends BlackBox() {
+    val io = new Bundle {
+        ${ARGS}
+    }
+}
+
+
+class HLS${FUNC}Blackbox() extends Module {
+	val scalar_io_dataWidths = List(${SCALAR_DATA_WIDTH_ARR})
+	val scalar_io_argLoc = List(${SCALAR_IDX_ARR}) //Lists the argument number of the scalar_io
+	val ap_bus_addrWidths = List(${PTR_ADDR_WIDTH_ARR})
+	val ap_bus_dataWidths = List(${PTR_DATA_WIDTH_ARR})
+	val ap_bus_argLoc = List(${PTR_IDX_ARR})
+	val io = new Bundle {
+	    val ap = new ApCtrlIO(dataWidth = ${RETURN_WIDTH})
+	    val ap_bus = HeterogeneousBag(ap_bus_addrWidths.zip(ap_bus_dataWidths).map {
+                        case (aw, dw) => new ApBusIO(dw, aw)
+                        })
+       ${SCALAR_IO} 
+    }
+
+	val bb = Module(new ${FUNC}())
+
+	bb.io.ap_start := io.ap.start
+	io.ap.done := bb.io.ap_done
+	io.ap.idle := bb.io.ap_idle
+	io.ap.ready := bb.io.ap_ready
+
+${AP_RETURN_RST_CLK}
+${SIGNAL_ASSIGNMENT}
+}

@@ -96,7 +96,7 @@ class cfCtx(collections.MutableMapping):
         """
 
         # These are set early to help with config file search-paths
-        self['cf-dir'] = pathlib.Path(__file__).parent.parent.parent.parent.resolve()
+        self['cf-dir'] = pathlib.Path(__file__).resolve().parent.parent.parent.parent.resolve()
         self['support-dir'] = self['cf-dir'] / 'deploy' / 'support'
         self['template-dir'] = self['cf-dir'] / 'deploy' / 'support' / 'templates'
 

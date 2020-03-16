@@ -8,7 +8,35 @@ which has no license associated with it.
 import sys
 import logging
 import io
+from time import sleep, strftime, gmtime
+import random
+import string
 
+def setup_logging(module_name, logger):
+    # logging setup
+    def logfilename():
+        """ Construct a unique log file name from: date + 16 char random. """
+        timeline = strftime("%Y-%m-%d--%H-%M-%S", gmtime())
+        randname = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(16))
+        return module_name + "-" + timeline + "-" + randname + ".log"
+        
+    # log to file
+    full_log_filename = logfilename()
+
+    fileHandler = logging.FileHandler(full_log_filename)
+    # formatting for log to file
+    # TODO: filehandler should be handler 0 (firesim_topology_with_passes expects this
+    # to get the filename) - handle this more appropriately later
+    logFormatter = logging.Formatter("%(asctime)s [%(funcName)-12.12s] [%(levelname)-5.5s]  %(message)s")
+    fileHandler.setFormatter(logFormatter)
+    fileHandler.setLevel(logging.NOTSET) # log everything to file
+    logger.addHandler(fileHandler)
+
+    # log to stdout, without special formatting
+    consoleHandler = logging.StreamHandler(stream=sys.stdout)
+    consoleHandler.setLevel(logging.INFO) # show only INFO and greater in console
+    logger.addHandler(consoleHandler)
+    
 
 class StreamLogger(object):
     """
