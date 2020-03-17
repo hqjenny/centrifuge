@@ -6,7 +6,6 @@ import logging
 import argparse
 from string import Template
 import re
-from .. import util
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG) 
@@ -120,7 +119,7 @@ def get_rocc_scalarIO_count(input_info):
 
 def generate_rocc_scalarIO(num_scalar):
     if num_scalar > 0: 
-        return "\tval scalar_io = HeterogeneousBag(scalar_io_dataWidths.map(w => Input(UInt(w))))\n"
+        return "    val scalar_io = HeterogeneousBag(scalar_io_dataWidths.map(w => Input(UInt(w))))\n"
     else:
         return ""
 
@@ -162,6 +161,16 @@ def generate_vals(io, width):
     return val
 
 
+def generate_params(params):
+    params_arr = []
+
+    # Parameters
+    for k, v in params.items():
+        param_str = "val {} = {}".format(k, v)
+        params_arr.append(param_str)
+    return params_arr
+
+
 def generate_args(inputs, outputs):
     reClk = re.compile('ap_clk(.*)')
     #reRst = re.compile('ap_rst(.*)')
@@ -187,28 +196,30 @@ def generate_args(inputs, outputs):
     return args_arr
 
 
-def generate_rocc_opt_ap_signals(inputs, outputs):
+def generate_opt_ap_signals(inputs, outputs):
     ret_str = ""
     if 'ap_return' in list(outputs.keys()): 
-        ret_str += "\tio.ap.rtn := bb.io.ap_return\n"
+        ret_str += "    io.ap.rtn := bb.io.ap_return\n"
     if 'ap_rst' in list(inputs.keys()):
-        ret_str += "\tbb.io.ap_rst := reset\n"
+        ret_str += "    bb.io.ap_rst := reset\n"
     if 'ap_clk' in list(inputs.keys()):
-        ret_str += "\tbb.io.ap_clk := clock\n"
+        ret_str += "    bb.io.ap_clk := clock\n"
+    if 'ap_rst_n' in list(inputs.keys()):
+        ret_str += "    bb.io.ap_rst_n := !reset.toBool()\n"
     return ret_str
-    
+
 
 def generate_rocc_assignment(input_info):
-    scalar_template = Template("\tbb.io.${ARG} := io.scalar_io($IDX)\n")
-    ptr_template = Template("""\tio.ap_bus($IDX).req.din := bb.io.${ARG}_req_din 
-\tbb.io.${ARG}_req_full_n := io.ap_bus($IDX).req_full_n 
-\tio.ap_bus($IDX).req_write := bb.io.${ARG}_req_write
-\tbb.io.${ARG}_rsp_empty_n := io.ap_bus($IDX).rsp_empty_n
-\tio.ap_bus($IDX).rsp_read := bb.io.${ARG}_rsp_read
-\tio.ap_bus($IDX).req.address := bb.io.${ARG}_address
-\tbb.io.${ARG}_datain := io.ap_bus($IDX).rsp.datain
-\tio.ap_bus($IDX).req.dataout := bb.io.${ARG}_dataout
-\tio.ap_bus($IDX).req.size := bb.io.${ARG}_size
+    scalar_template = Template("    bb.io.${ARG} := io.scalar_io($IDX)\n")
+    ptr_template = Template("""    io.ap_bus($IDX).req.din := bb.io.${ARG}_req_din 
+    bb.io.${ARG}_req_full_n := io.ap_bus($IDX).req_full_n 
+    io.ap_bus($IDX).req_write := bb.io.${ARG}_req_write
+    bb.io.${ARG}_rsp_empty_n := io.ap_bus($IDX).rsp_empty_n
+    io.ap_bus($IDX).rsp_read := bb.io.${ARG}_rsp_read
+    io.ap_bus($IDX).req.address := bb.io.${ARG}_address
+    bb.io.${ARG}_datain := io.ap_bus($IDX).rsp.datain
+    io.ap_bus($IDX).req.dataout := bb.io.${ARG}_dataout
+    io.ap_bus($IDX).req.size := bb.io.${ARG}_size
 """)
 
     ret_str = ""
@@ -243,15 +254,22 @@ def parse_verilog_arg_line(line, reArg, args):
             argWidthMatch = reArgWidth.match(argName)
             end = 0
             start = 0
+            size = None
             if argWidthMatch: 
                 end = argWidthMatch.group(1)
                 endMatch = re.match(r"(\S+) - 1", end)
                 if endMatch:
                     size = endMatch.group(1)
-                    end = size - 1
+                    intMatch = re.match(r"\d+", size)
+                    if intMatch:
+                        end = size - 1
+                        size = None
                 start = argWidthMatch.group(2) 
                 argName = argWidthMatch.group(3)
-            width = int(end) - int(start) + 1
+            if size is None:
+                width = int(end) - int(start) + 1
+            else:
+                width = size 
             args[argName] = {'width': width} 
             ret = True
     return ret
@@ -286,13 +304,15 @@ def parse_verilog_rocc(vpath):
                 # test if it is output
                 match = parse_verilog_arg_line(line, reOutput, outputs)
 
+    logger.info("Inputs: {}".format(inputs))
+    logger.info("Outputs: {}".format(outputs))
     return (inputs, outputs)
 
 
 def generate_chisel_rocc(func, idx, inputs, outputs, scala_dir, template_dir):
 
     ##########################################################
-    logger.info("Generating BlackBox file ...") 
+    logger.info("Generating RoCC BlackBox file ...") 
     template_name = 'chisel_rocc_blackbox_scala_template'
     with open (template_dir / template_name, 'r') as f:
         template_str= f.read()
@@ -311,7 +331,7 @@ def generate_chisel_rocc(func, idx, inputs, outputs, scala_dir, template_dir):
 
     # Generate signal assignments
     # For optional vivado ap signals
-    ap_return_rst_clk_str = generate_rocc_opt_ap_signals(inputs, outputs)
+    ap_return_rst_clk_str = generate_opt_ap_signals(inputs, outputs)
     signal_assignment_str = generate_rocc_assignment(input_info) 
     
     chisel_dict = {
@@ -336,9 +356,8 @@ def generate_chisel_rocc(func, idx, inputs, outputs, scala_dir, template_dir):
     with open(scala_path,'w') as f:
         f.write(rocc_blackbox_scala_str)
 
-
     ##########################################################
-    logger.info("Generating Control file ...") 
+    logger.info("Generating RoCC Control file ...") 
     template_name = 'chisel_rocc_accel_scala_template'
     with open (template_dir / template_name, 'r') as f:
         template_str= f.read()
@@ -369,13 +388,13 @@ def generate_chisel_rocc(func, idx, inputs, outputs, scala_dir, template_dir):
     shutil.copy(str(src_path), str(dst_path))
 
     ##########################################################
-    logger.info("Copying ROCC  Memory Controller file ...");
+    logger.info("Copying ROCC Memory Controller file ...");
     src_path = template_dir / 'memControllerComponents_scala_template' 
     dst_path = scala_dir / 'memControllerComponents.scala' 
     shutil.copy(str(src_path), str(dst_path))
 
     ##########################################################
-    logger.info("Copying Controller Utilities file ...");
+    logger.info("Copying RoCC Controller Utilities file ...");
     src_path = template_dir / 'controlUtils_scala_template' 
     dst_path = scala_dir / 'controlUtils.scala' 
     shutil.copy(str(src_path), str(dst_path))
@@ -400,7 +419,7 @@ def parse_verilog_tl(vpath):
     params = collections.OrderedDict()
     buses = collections.OrderedDict()
 
-    logger.info("Parsing: ",vpath)
+    logger.info("Parsing: {}".format(vpath))
     with open(vpath, 'r') as vf:
         for line in vf.readlines():
             # test if it is input
@@ -413,23 +432,362 @@ def parse_verilog_tl(vpath):
                     if paramMatch: 
                         param  = paramMatch.group(1)
                         width = paramMatch.group(2)
-                        params[param] = {'width': width}
+                        params[param] = width
                         busMatch = re.match(r"C_M_AXI_(\S+)_DATA_WIDTH", param)
                         if busMatch:
                             bus = busMatch.group(1).lower()
                             buses[bus] = {'width': width}
+
+    logger.info("Inputs: {}".format(inputs))
+    logger.info("Outputs: {}".format(outputs))
+    logger.info("Paramters: {}".format(params))
+    logger.info("Buses: {}".format(buses))
     return (inputs, outputs, params, buses)
 
+
+def generate_tl_assignment(buses):
+    ret_str = ""
+    template = Template("""
+    val node_${BUS_NAME} = AXI4MasterNode(Seq(AXI4MasterPortParameters(
+        masters = Seq(AXI4MasterParameters(
+            name = "axil_hub_mem_out_${IDX}",
+            id = IdRange(0, numInFlight),
+            aligned = true,
+        maxFlight = Some(8)
+      )),
+      userBits = 0
+      )
+    ))
+""")
+
+    for idx, (k, v) in enumerate(buses.items()):
+        d = {'BUS_NAME': k, 'IDX': idx}
+        ret_str += template.substitute(d) 
+
+    return ret_str
+
+
+def generate_AXI_signal(matchInput, template):
+    assert(matchInput.group(1) is not None)
+    assert(matchInput.group(2) is not None)
+    bus = matchInput.group(1)
+    signal_type = matchInput.group(2).lower()
+    return template.format(bus, signal_type)
+
+
+def construct_axi_regex(regex):
+    axi_types = ['m', 's']
+    ret_dict = {}
+    for axi_type in axi_types: 
+       ret_dict[axi_type] = re.compile(axi_type + regex)
+    return ret_dict
+
+
+def generate_tl_module_stmt(inputs, outputs, buses):
+    ret_str = ""
+    
+    bus_stmt_arr = []
+    for k, _ in buses.items():
+        bus_stmt = "val (out_{0}, edge_{0}) = outer.node_{0}.out(0)".format(k)
+        bus_stmt_arr.append(bus_stmt)
+    ret_str += "\n    ".join(bus_stmt_arr) 
+    ret_str += "\n"
+    
+    ret_str += generate_opt_ap_signals(inputs, outputs)
+    ret_str += "\n"
+    
+    reAXI = re.compile('^(m_axi|s_axi)\S+$')
+
+    # Input Signals Regex
+    reAWWARREADY = construct_axi_regex('_axi_(.*)_(AW|W|AR)READY$')
+    reRBVALID = construct_axi_regex('_axi_(.*)_(R|B)VALID$')
+    reRDATA = construct_axi_regex('_axi_(.*)_(R)DATA$')
+    reRLAST = construct_axi_regex('_axi_(.*)_(R)LAST$')
+    reRBID = construct_axi_regex('_axi_(.*)_(R|B)ID$')
+    reRBUSER = construct_axi_regex('_axi_(.*)_(R|B)USER$')
+    reRBRESP = construct_axi_regex('_axi_(.*)_(R|B)RESP$')
+
+    reAWWARVALID = construct_axi_regex('_axi_(.*)_(AW|W|AR)VALID$')
+    reAWARADDR = construct_axi_regex('_axi_(.*)_(AW|AR)ADDR$')
+    reWDATA = construct_axi_regex('_axi_(.*)_(W)DATA$')
+    reWSTRB = construct_axi_regex('_axi_(.*)_(W)STRB$')
+    reRBREADY = construct_axi_regex('_axi_(.*)_(R|B)READY$')
+    reWLAST = construct_axi_regex('_axi_(.*)_(W)LAST$')
+    reWID = construct_axi_regex('_axi_(.*)_(W)ID$')
+    reWUSER = construct_axi_regex('_axi_(.*)_(W)USER$')
+
+    reAWARID = construct_axi_regex('_axi_(.*)_(AW|AR)ID')
+    reAWARLEN = construct_axi_regex('_axi_(.*)_(AW|AR)LEN$')
+    reAWARSIZE = construct_axi_regex('_axi_(.*)_(AW|AR)SIZE$')
+    reAWARBURST = construct_axi_regex('_axi_(.*)_(AW|AR)BURST$')
+    reAWARLOCK = construct_axi_regex('_axi_(.*)_(AW|AR)LOCK$') 
+    reAWARCACHE = construct_axi_regex('_axi_(.*)_(AW|AR)CACHE$')
+    reAWARPROT = construct_axi_regex('_axi_(.*)_(AW|AR)PROT$')
+    reAWARQOS = construct_axi_regex('_axi_(.*)_(AW|AR)QOS$')
+    reAWARREGION = construct_axi_regex('_axi_(.*)_(AW|AR)REGION$')
+    reAWARUSER = construct_axi_regex('_axi_(.*)_(AW|AR)USER$')
+
+    bus_assign_arr = []
+    for k, v in inputs.items():
+        matchAXI = reAXI.match(k)
+        if matchAXI:
+            matchAWWARREADY = reAWWARREADY['m'].match(k)
+            matchRBVALID = reRBVALID['m'].match(k)
+            matchRDATA = reRDATA['m'].match(k)
+            matchRLAST = reRLAST['m'].match(k)
+            matchRBID = reRBID['m'].match(k)
+            matchRBUSER = reRBUSER['m'].match(k)
+            matchRBRESP = reRBRESP['m'].match(k)
+
+            matchAWWARVALID = reAWWARVALID['s'].match(k)
+            matchAWARADDR = reAWARADDR['s'].match(k)
+            matchWDATA = reWDATA['s'].match(k)
+            matchWSTRB = reWSTRB['s'].match(k)
+            matchRBREADY = reRBREADY['s'].match(k)
+
+            assign_str = None
+            in_str = "bb.io." + k
+            if matchAWWARREADY: 
+                assign_str = generate_AXI_signal(matchAWWARREADY, 
+                    in_str + " := out_{0}.{1}.ready")
+            elif matchRBVALID: 
+                assign_str = generate_AXI_signal(matchRBVALID, 
+                    in_str + " := out_{0}.{1}.valid")
+            elif matchRDATA: 
+                assign_str = generate_AXI_signal(matchRDATA, 
+                    in_str + " := out_{0}.{1}.bits.data")
+            elif matchRLAST: 
+                assign_str = generate_AXI_signal(matchRLAST, 
+                    in_str + " := out_{0}.{1}.bits.last")
+            elif matchRBID: 
+                assign_str = generate_AXI_signal(matchRBID, 
+                    in_str + " := out_{0}.{1}.bits.id")
+            elif matchRBUSER: # omit user signal
+                assign_str = ""
+            elif matchRBRESP: 
+                assign_str = generate_AXI_signal(matchRBRESP, 
+                    in_str + " := out_{0}.{1}.bits.resp")
+            elif matchAWWARVALID: 
+                assign_str = generate_AXI_signal(matchAWWARVALID, 
+                    in_str + " := slave_in.{1}.valid")
+            elif matchAWARADDR: 
+                assign_str = generate_AXI_signal(matchAWARADDR, 
+                    in_str + " := slave_in.{1}.bits.addr")
+            elif matchWDATA: 
+                assign_str = generate_AXI_signal(matchWDATA, 
+                    in_str + " := slave_in.{1}.bits.data")
+            elif matchWSTRB: 
+                assign_str = generate_AXI_signal(matchWSTRB, 
+                    in_str + " := slave_in.{1}.bits.strb")
+            elif matchRBREADY: 
+                assign_str = generate_AXI_signal(matchRBREADY, 
+                    in_str + " := slave_in.{1}.ready")
+            assert(assign_str is not None)
+            bus_assign_arr.append(assign_str)
+
+    for k, v in outputs.items():
+        matchAXI = reAXI.match(k)
+        if matchAXI:
+            matchAWWARREADY = reAWWARREADY['s'].match(k)
+            matchRBVALID = reRBVALID['s'].match(k)
+            matchRDATA = reRDATA['s'].match(k)
+            matchRBRESP = reRBRESP['s'].match(k)
+
+            matchAWWARVALID = reAWWARVALID['m'].match(k)
+            matchRBREADY = reRBREADY['m'].match(k)
+            matchAWARADDR = reAWARADDR['m'].match(k)
+            matchAWARID = reAWARID['m'].match(k)
+            matchAWARLEN = reAWARLEN['m'].match(k)
+
+            matchAWARSIZE = reAWARSIZE['m'].match(k)
+            matchAWARBURST = reAWARBURST['m'].match(k)
+            matchAWARLOCK = reAWARLOCK['m'].match(k)
+            matchAWARCACHE = reAWARCACHE['m'].match(k)
+            matchAWARPROT = reAWARPROT['m'].match(k)
+
+            matchAWARQOS = reAWARQOS['m'].match(k)
+            matchAWARREGION = reAWARREGION['m'].match(k)
+            matchAWARUSER = reAWARUSER['m'].match(k)
+            matchWDATA = reWDATA['m'].match(k)
+            matchWSTRB = reWSTRB['m'].match(k)
+            matchWLAST = reWLAST['m'].match(k)
+            matchWID = reWID['m'].match(k) 
+            matchWUSER = reWUSER['m'].match(k) 
+
+            assign_str = None
+            out_str = "bb.io." + k
+            if matchAWWARVALID: 
+                assign_str = generate_AXI_signal(matchAWWARVALID, 
+                    "out_{0}.{1}.valid := " + out_str)
+            elif matchRBREADY: 
+                assign_str = generate_AXI_signal(matchRBREADY, 
+                    "out_{0}.{1}.ready :=" + out_str)
+            elif matchAWARADDR: 
+                assign_str = generate_AXI_signal(matchAWARADDR, 
+                    "out_{0}.{1}.bits.addr := " + out_str)
+            elif matchAWARID: 
+                assign_str = generate_AXI_signal(matchAWARID, 
+                    "out_{0}.{1}.bits.id := " + out_str)
+            elif matchAWARLEN: 
+                assign_str = generate_AXI_signal(matchAWARLEN, 
+                    "out_{0}.{1}.bits.len := " + out_str)
+            elif matchAWARSIZE: 
+                assign_str = generate_AXI_signal(matchAWARSIZE, 
+                    "out_{0}.{1}.bits.size := " + out_str)
+            elif matchAWARBURST: 
+                assign_str = generate_AXI_signal(matchAWARBURST, 
+                    "out_{0}.{1}.bits.burst := " + out_str)
+            elif matchAWARLOCK: 
+                assign_str = generate_AXI_signal(matchAWARLOCK, 
+                    "out_{0}.{1}.bits.lock := " + out_str)
+            elif matchAWARCACHE: 
+                assign_str = generate_AXI_signal(matchAWARCACHE, 
+                    "out_{0}.{1}.bits.cache := " + out_str)
+            elif matchAWARPROT: 
+                assign_str = generate_AXI_signal(matchAWARPROT, 
+                    "out_{0}.{1}.bits.prot := " + out_str)
+            elif matchAWARQOS: 
+                assign_str = generate_AXI_signal(matchAWARQOS, 
+                    "out_{0}.{1}.bits.qos := " + out_str)
+            elif matchAWARREGION: 
+                assign_str = generate_AXI_signal(matchAWARREGION, 
+                    "//out_{0}.{1}.bits.region := " + out_str)
+            elif matchAWARUSER:
+                assign_str = ""
+            elif matchWDATA: 
+                assign_str = generate_AXI_signal(matchWDATA, 
+                    "out_{0}.{1}.bits.data := " + out_str)
+            elif matchWSTRB: 
+                assign_str = generate_AXI_signal(matchWSTRB, 
+                    "out_{0}.{1}.bits.strb := " + out_str)
+            elif matchWLAST: 
+                assign_str = generate_AXI_signal(matchWLAST, 
+                    "out_{0}.{1}.bits.last := " + out_str)
+            elif matchWID: 
+                # TODO check if this is needed
+                assign_str = generate_AXI_signal(matchWID, 
+                    "out_{0}.{1}.bits.id := " + out_str)
+            elif matchWUSER: 
+                assign_str = ""
+            elif matchAWWARREADY: 
+                assign_str = generate_AXI_signal(matchAWWARREADY, 
+                    "slave_in.{1}.ready := " + out_str)
+            elif matchRBVALID: 
+                assign_str = generate_AXI_signal(matchRBVALID, 
+                    "slave_in.{1}.valid := " + out_str)
+            elif matchRDATA: 
+                assign_str = generate_AXI_signal(matchRDATA, 
+                    "slave_in.{1}.bits.data := " + out_str)
+            elif matchRBRESP: 
+                assign_str = generate_AXI_signal(matchRBRESP, 
+                    "slave_in.{1}.bits.resp := " + out_str)
+
+            assert(assign_str is not None)
+            bus_assign_arr.append(assign_str)
+    ret_str += "    "
+    ret_str += "\n    ".join(bus_assign_arr)
+
+
+    # add return stmt if any
+    if 'ap_return' in list(outputs.keys()): 
+        ret_str += "\n    val ap_return = accel.io.ap.rtn\n"
+     
+    return ret_str
+
+
+def generate_tl_trait_stmt(func, buses):
+    ret_str = ""
+    template = Template("""
+    sbus.fromPort(Some(axi_m_portName)) {
+            (TLWidthWidget(${M_AXI_DATA_WIDTH} >> 3 ) 
+            := AXI4ToTL() 
+            := AXI4UserYanker(Some(8)) 
+            := AXI4Fragmenter() 
+            := AXI4IdIndexer(1))
+    }:=* hls_${FUNC}_accel.node_${BUS_NAME}
+""")
+
+    for k, v in buses.items():
+        d = {'FUNC': func, 'BUS_NAME': k, 'M_AXI_DATA_WIDTH': v['width']}
+        ret_str += template.substitute(d) 
+    return ret_str
+
+
+def generate_chisel_tl(func, idx, inputs, outputs, params, buses, scala_dir, template_dir):
+    ##########################################################
+    logger.info("Generating TL BlackBox file ...") 
+    template_name = 'chisel_tl_blackbox_scala_template'
+    with open (template_dir / template_name, 'r') as f:
+        template_str= f.read()
+    
+    t = Template(template_str)
+    # Generate parameters
+    params_arr = generate_params(params)
+    params_str = "\n    ".join(params_arr)
+
+    # Generate arguments
+    args_arr = generate_args(inputs, outputs)
+    args_str = "\n        ".join(args_arr)
+
+    chisel_dict = {
+        "FUNC": func,
+        "PARAMS": params_str,
+        "ARGS": args_str,
+    }
+    tl_blackbox_scala_str = t.substitute(chisel_dict)
+    scala_path = scala_dir / pathlib.Path(func + '_blackbox.scala')
+    
+    logger.info("\t\tGenerate tl_blackbox code in CHISEL: {}".format(scala_path))
+    with open(scala_path,'w') as f:
+        f.write(tl_blackbox_scala_str)
+
+    ##########################################################
+    logger.info("Generating TL Control file ...") 
+    template_name = 'chisel_tl_accel_scala_template'
+    with open (template_dir / template_name, 'r') as f:
+        template_str= f.read()
+    
+    t = Template(template_str)
+
+    # Add dummy bus 
+    if len(buses) < 1:
+        buses['gmem_dummy'] = {'width': 32}
+
+    axi_master_stmt_str  = generate_tl_assignment(buses) 
+    axi_module_stmt_str = generate_tl_module_stmt(inputs, outputs, buses)
+    # TODO test multi bundles 
+    axi_trait_stmt_str = generate_tl_trait_stmt(func, buses)
+        
+    chisel_dict = {
+        "FUNC": func,
+        "BASE_ADDR": idx,
+        "S_AXI_DATA_WIDTH": params['C_S_AXI_DATA_WIDTH'],
+        "AXI_MASTER_STMT": axi_master_stmt_str, 
+        "AXI_MODULE_STMT": axi_module_stmt_str,
+        "AXI_TRAIT_STMT": axi_trait_stmt_str,
+    }
+    tl_accel_scala_str = t.substitute(chisel_dict)
+    scala_path = scala_dir / pathlib.Path(func + '_accel.scala')
+    
+    logger.info("\t\tGenerate tl_accel code in CHISEL: {}".format(scala_path))
+    with open(scala_path,'w') as f:
+        f.write(tl_accel_scala_str)
+
 def run_chisel(accel_conf):
+    from .. import util
     template_dir = util.getOpt('template-dir')
     for accel in accel_conf.rocc_accels:
         logger.info("\tRun CHISEL generation for {}:".format(accel.name))
         inputs, outputs = parse_verilog_rocc(
                 accel.verilog_dir / (accel.name + ".v"))
-        chiselWrapper = generate_chisel_rocc( accel.name, accel.rocc_insn_id, inputs, outputs, accel.scala_dir, template_dir)
+        generate_chisel_rocc( accel.name, accel.rocc_insn_id, inputs, outputs, accel.scala_dir, template_dir)
 
     for accel in accel_conf.tl_accels:
-        pass
+        logger.info("\tRun CHISEL generation for {}:".format(accel.name))
+        inputs, outputs, params, buses = parse_verilog_tl(
+                accel.verilog_dir / (accel.name + ".v"))
+        generate_chisel_tl( accel.name, accel.base_addr, inputs, outputs, params, buses, accel.scala_dir, template_dir)
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -458,13 +816,13 @@ if __name__ == '__main__':
     template_dir = util.getOpt('template-dir')
 
     if args.mode == 'tl':
-        funcArgs, retVal = parse_verilog_tl(
-                args.source / 'src' / 'main' / 'verilog' / (args.prefix + args.func + "_control_s_axi.v"))
-        cWrapper, hWrapper = generateWrapperTL(args.func, args.base, funcArgs, retVal)
+        inputs, outputs, params, buses = parse_verilog_tl(
+                args.source / 'src' / 'main' / 'verilog' / (args.prefix + args.func + ".v"))
+        generate_chisel_tl(args.prefix + args.func, args.base, inputs, outputs, params, buses, scala_dir, template_dir)
     elif args.mode == 'rocc':
         inputs, outputs = parse_verilog_rocc(
                 args.source / 'src' / 'main' / 'verilog' / (args.prefix + args.func + ".v"))
-        chiselWrapper = generate_chisel_rocc( args.prefix + args.func, args.base, inputs, outputs, scala_dir, template_dir)
+        generate_chisel_rocc( args.prefix + args.func, args.base, inputs, outputs, scala_dir, template_dir)
     else:
         raise NotImplementedError("Mode '" + args.mode + "' not supported.")
 

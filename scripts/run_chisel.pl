@@ -155,7 +155,7 @@ for( $i = 0; $i < @verilog_input; $i = $i + 1 ){
             $verilog_input_pointer{$arg_name} = 1;
         }
     }
-	elsif(!($input_name =~ m/ap_(,*)/)){
+	elsif(!($input_name =~ m/ap_(.*)/)){
 		push (@verilog_input_scalar, $input_name);
     push(@sindices, $arg_count);
     $arg_count = $arg_count + 1;
