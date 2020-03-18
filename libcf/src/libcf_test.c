@@ -115,6 +115,7 @@ int main(int argc, char *argv[])
         printf("cf_malloc test failure\n");
         return EXIT_FAILURE;
     }
+    printf("cf_malloc test succes\n");
 
     return EXIT_SUCCESS;
 }
