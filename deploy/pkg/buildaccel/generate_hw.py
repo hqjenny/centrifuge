@@ -10,7 +10,8 @@ import errno
 from .. import util
 from string import Template
 from . import run_hls
-from . import run_chisel
+from . import generate_chisel
+from . import generate_build_sbt
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.NOTSET) 
@@ -52,7 +53,8 @@ def generate_hw(accel_conf):
     logger.info("Initialize Generated Hardware Repository {}".format(accel_conf.hw_accel_dir))
     init_accel(accel_conf) 
     run_hls.run_hls(accel_conf)
-    run_chisel.run_chisel(accel_conf)
+    generate_chisel.generate_chisel(accel_conf)
+    generate_build_sbt.generate_build_sbt(accel_conf)
 
 
 def clean_hw(accel_conf):

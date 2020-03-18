@@ -1,4 +1,3 @@
-#from generate_wrapper import parse_verilog_rocc, parse_verilog_tl 
 import pathlib
 import shutil
 import collections
@@ -773,7 +772,7 @@ def generate_chisel_tl(func, idx, inputs, outputs, params, buses, scala_dir, tem
     with open(scala_path,'w') as f:
         f.write(tl_accel_scala_str)
 
-def run_chisel(accel_conf):
+def generate_chisel(accel_conf):
     from .. import util
     template_dir = util.getOpt('template-dir')
     for accel in accel_conf.rocc_accels:
