@@ -1,0 +1,51 @@
+package example
+import chisel3._
+import freechips.rocketchip.diplomacy.{LazyModule, ValName}
+import freechips.rocketchip.config.{Parameters, Config}
+import testchipip.{WithBlockDevice, BlockDeviceKey, BlockDeviceConfig}
+import freechips.rocketchip.tile._
+import freechips.rocketchip.subsystem._
+import freechips.rocketchip.system.DefaultConfig
+import freechips.rocketchip.rocket._
+import freechips.rocketchip.tilelink._     
+import freechips.rocketchip.devices.tilelink._
+import freechips.rocketchip._
+import testchipip._
+import sifive.blocks.devices.uart.{PeripheryUARTKey,UARTParams}
+
+import sifive.blocks.devices.uart._
+import java.io.File
+import ConfigValName._
+
+${HLS_SOC_IMPORT}
+
+class WithHLSRoCCExample extends Config((site, here, up) => {
+    case BuildRoCC => Seq(
+        ${ROCC_CONFIG}
+        (p: Parameters) => {
+            val translator = LazyModule(new TranslatorExample(OpcodeSet.custom3)(p))
+            translator 
+        }
+    )
+})
+
+class ${SOC_NAME}HLSRocketConfig extends Config(
+    new WithHLSTop ++
+    new WithBootROM ++
+    new freechips.rocketchip.subsystem.WithInclusiveCache ++
+    new WithHLSRoCCExample ++ 
+    new freechips.rocketchip.subsystem.WithNBigCores(1) ++
+    new freechips.rocketchip.system.BaseConfig)
+
+class ${SOC_NAME}WithHLSTop extends Config((site, here, up) => {
+  case BuildTop => (clock: Clock, reset: Bool, p: Parameters) =>
+      Module(LazyModule(new ${SOC_NAME}TopWithHLS()(p)).module)
+})
+
+class ${SOC_NAME}TopWithHLS(implicit p: Parameters) extends Top ${TL_PERIPHERY}
+{
+    override lazy val module = new ${SOC_NAME}TopWithHLSModule(this)
+}
+
+class ${SOC_NAME}TopWithHLSModule(l: ${SOC_NAME}TopWithHLS) extends TopModule(l) ${TL_PERIPHERY_IMP}
+

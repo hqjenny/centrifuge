@@ -5,6 +5,7 @@ import logging
 import argparse
 from string import Template
 import re
+from .. import util
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG) 
@@ -313,10 +314,8 @@ def generate_chisel_rocc(func, idx, inputs, outputs, scala_dir, template_dir):
     ##########################################################
     logger.info("Generating RoCC BlackBox file ...") 
     template_name = 'chisel_rocc_blackbox_scala_template'
-    with open (template_dir / template_name, 'r') as f:
-        template_str= f.read()
-    
-    t = Template(template_str)
+    template_path = template_dir / template_name
+
     # Generate arguments
     args_arr = generate_args(inputs, outputs)
     args_str = "\n        ".join(args_arr)
@@ -347,21 +346,15 @@ def generate_chisel_rocc(func, idx, inputs, outputs, scala_dir, template_dir):
         'SIGNAL_ASSIGNMENT': signal_assignment_str, 
 
     }
-
-    rocc_blackbox_scala_str = t.substitute(chisel_dict)
     scala_path = scala_dir / pathlib.Path(func + '_blackbox.scala')
-    
+    util.generate_file(template_path, chisel_dict, scala_path) 
     logger.info("\t\tGenerate rocc_blackbox code in CHISEL: {}".format(scala_path))
-    with open(scala_path,'w') as f:
-        f.write(rocc_blackbox_scala_str)
 
     ##########################################################
     logger.info("Generating RoCC Control file ...") 
     template_name = 'chisel_rocc_accel_scala_template'
-    with open (template_dir / template_name, 'r') as f:
-        template_str= f.read()
+    template_path = template_dir / template_name
     
-    t = Template(template_str)
     scalar_io_assignment0 = generate_rocc_scalarIO_stmt0(input_info)
     ap_return_assignment = generate_rocc_ap_return_stmt(outputs)
     num_scalar = get_rocc_scalarIO_count(input_info)
@@ -373,12 +366,9 @@ def generate_chisel_rocc(func, idx, inputs, outputs, scala_dir, template_dir):
         'SCALAR_IO_ASSIGNMENT1': scalar_io_assignment1, 
         }
 
-    rocc_accel_scala_str = t.substitute(chisel_dict)
     scala_path = scala_dir / pathlib.Path(func + '_accel.scala')
-
+    util.generate_file(template_path, chisel_dict, scala_path) 
     logger.info("\t\tGenerate rocc_accel code in CHISEL: {}".format(scala_path))
-    with open(scala_path,'w') as f:
-        f.write(rocc_accel_scala_str)
 
     ##########################################################
     logger.info("Copying Vivado HLS Interface file ...");
@@ -716,10 +706,8 @@ def generate_chisel_tl(func, idx, inputs, outputs, params, buses, scala_dir, tem
     ##########################################################
     logger.info("Generating TL BlackBox file ...") 
     template_name = 'chisel_tl_blackbox_scala_template'
-    with open (template_dir / template_name, 'r') as f:
-        template_str= f.read()
-    
-    t = Template(template_str)
+    template_path = template_dir / template_name
+
     # Generate parameters
     params_arr = generate_params(params)
     params_str = "\n    ".join(params_arr)
@@ -733,20 +721,14 @@ def generate_chisel_tl(func, idx, inputs, outputs, params, buses, scala_dir, tem
         "PARAMS": params_str,
         "ARGS": args_str,
     }
-    tl_blackbox_scala_str = t.substitute(chisel_dict)
     scala_path = scala_dir / pathlib.Path(func + '_blackbox.scala')
-    
+    util.generate_file(template_path, chisel_dict, scala_path) 
     logger.info("\t\tGenerate tl_blackbox code in CHISEL: {}".format(scala_path))
-    with open(scala_path,'w') as f:
-        f.write(tl_blackbox_scala_str)
 
     ##########################################################
     logger.info("Generating TL Control file ...") 
     template_name = 'chisel_tl_accel_scala_template'
-    with open (template_dir / template_name, 'r') as f:
-        template_str= f.read()
-    
-    t = Template(template_str)
+    template_path = template_dir / template_name
 
     # Add dummy bus 
     if len(buses) < 1:
@@ -765,12 +747,9 @@ def generate_chisel_tl(func, idx, inputs, outputs, params, buses, scala_dir, tem
         "AXI_MODULE_STMT": axi_module_stmt_str,
         "AXI_TRAIT_STMT": axi_trait_stmt_str,
     }
-    tl_accel_scala_str = t.substitute(chisel_dict)
     scala_path = scala_dir / pathlib.Path(func + '_accel.scala')
-    
+    util.generate_file(template_path, chisel_dict, scala_path)    
     logger.info("\t\tGenerate tl_accel code in CHISEL: {}".format(scala_path))
-    with open(scala_path,'w') as f:
-        f.write(tl_accel_scala_str)
 
 def generate_chisel(accel_conf):
     from .. import util

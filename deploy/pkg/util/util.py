@@ -1,6 +1,9 @@
 import shutil
 import os
 import pathlib
+import errno
+from string import Template
+
 
 def mkdir_p(path):
     try:
@@ -20,4 +23,14 @@ def copytree(src, dst, symlinks=False, ignore=None):
             shutil.copytree(s, d, symlinks, ignore)
         else:
             shutil.copy2(s, d)
+
+
+def generate_file(template_path, config_dict, output_path):
+    with open (template_path, 'r') as f:
+        template_str = f.read()
+
+    t = Template(template_str)
+    output_str = t.substitute(config_dict)
+    with open(output_path, 'w') as f:
+        f.write(output_str)
 

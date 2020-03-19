@@ -62,10 +62,23 @@ class AccelConfig:
         self.accel_json_dir = accel_json_path.parent
         self.gensw_dir = self.accel_json_dir / 'centrifuge_wrappers'
         self.hw_accel_dir = genhw_dir / self.accel_name
+        self.hw_scala_dir = self.hw_accel_dir / 'src' / 'main' / 'scala' 
         self.accel_json = self.parse_json(self.accel_json_path)
         self.rocc_accels = []
         self.tl_accels = []
         self.parse_json_config(self.accel_json)
+
+        # NIC
+        nonic = 'NoNIC'
+
+        # Default config string 
+        self.DESIGN= self.accel_name + 'FireSimTopWithHLS' + nonic
+        self.TARGET_CONFIG = self.accel_name + 'HLSFireSimRocketChipConfig'
+        self.PLATFORM_CONFIG='BaseF1Config_F90MHz'
+
+        self.CONFIG = self.accel_name + 'HLSRocketConfig'
+        self.TOP = self.accel_name + 'TopWithHLS'
+
 
     def __str__(self):
         s = """Accelerator SoC Definition: \n"""
@@ -107,11 +120,22 @@ class AccelConfig:
                     int(input_str, 2)
                 except ValueError:
                     raise Exception("Invalid addr is used in accelerator def: {}".format(input_str))
-        
+
+    def update_if_def(self, key, accel_json):
+        if key in list(accel_json.keys()):
+            setattr(self, key, accel_json[key]) 
+
     def parse_json_config(self, accel_json):
         """Parse the JSON config to get accel definitions """
 
         rootLogger.info("Parsing input JSON config")
+
+        # Parse Config Strings
+        self.update_if_def('DESIGN', accel_json);
+        self.update_if_def('TARGET_CONFIG', accel_json);
+        self.update_if_def('PLATFORM_CONFIG', accel_json);
+        self.update_if_def('CONFIG', accel_json);
+        self.update_if_def('TOP', accel_json);
 
         # Parse RoCC Accelerators 
         if 'RoCC' in accel_json.keys():

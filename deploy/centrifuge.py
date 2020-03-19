@@ -24,7 +24,18 @@ def construct_centrifuge_argparser():
     parser = argparse.ArgumentParser(description='Centrifuge Script')
     parser.add_argument('task', 
                         type=str,
-                        help='Management task to run.', 
+                        help="""Management task to run. 
+Options: 
+        generate_all -- Generate all HW/SW interfaces, configs, and scripts for the accelerator SoC
+        clean_all -- Delete accelerator directory
+        generate_hw -- Rerun accelerator HW/SW interface generation  
+        clean_hw -- Clean accelerator hardware directory
+        generate_sw -- Rerun C wrapper generation (triggers accel_hls to run)
+        clean_sw -- Clean accelerator software directory
+        run_firesim -- Run FireSim
+        run_vcs -- Run vcs simulation
+        run_verilator -- Run verilator simulation
+""", 
                         choices=[
                             'generate_all',
                             'clean_all',
@@ -32,8 +43,9 @@ def construct_centrifuge_argparser():
                             'clean_hw',
                             'generate_sw',
                             'clean_sw',
-                            'run_f1',
-                            'run_sim',
+                            'run_firesim',
+                            'run_vcs',
+                            'run_verilator',
                             ], 
                         )
     parser.add_argument('-c', 
@@ -42,8 +54,38 @@ def construct_centrifuge_argparser():
                         help='Path to accelerator SoC config JSON file.',
                         required=True
                         )
+    parser.add_argument('-t', 
+                        '--subtask', 
+                        type=str,
+                        help="""Subtask to run.
+Options:
+    generate_hw 
+        hls -- Run HLS to generate accelerator
+        chisel -- Generate CHISEL wrapper
+        build_sbt -- Generate build.sbt
+        config -- Generate HLSConfig.scala file under chipyard
+
+    generate_sw
+        bm -- Generate baremetal wrappers 
+
+    run_firesim
+        f1_scripts -- Regenerate scripts for including HLS generated Verilog in FireSim
+        xsim_scripts -- Regenerate scripts for including HLS generated Verilog in FireSim XSim
+
+    run_vcs
+        clean -- Clean the simulation files
+        debug -- Enable debug mode for the vcs simulation 
+
+    run_verilator
+        clean -- Clean the simulation files 
+        debug -- Enable debug mode for the verilator simulation 
+
+""",
+                        )
+
     argcomplete.autocomplete(parser)
     return parser.parse_args()
+
 
 def initLogging():
     """Set up logging for this run. Assumes that util.initConfig() has been called already."""
@@ -65,6 +107,7 @@ def initLogging():
     rootLogger.addHandler(consoleHandler)
     return rootLogger
 
+
 def main(args):
     """ Main function for FireSim manager. """
 
@@ -75,17 +118,22 @@ def main(args):
                                     util.getOpt('genhw-dir'))
 
     # print the info
-    # accel_config.info()
+    accel_config.info()
 
     # tasks that have a special config/dispatch setup
     if args.task == 'generate_hw':
-        buildaccel.generate_hw(accel_config)
+        buildaccel.generate_hw(accel_config, args.subtask)
     elif args.task == 'clean_hw':
         buildaccel.clean_hw(accel_config)
     elif args.task == 'generate_sw':
         buildsw.generateSW(accel_config)
+    elif args.task == 'run_vcs':
+        buildaccel.run_vcs(accel_config, args.subtask)
+    elif args.task == 'run_verilator':
+        buildaccel.run_verilator(accel_config, args.subtask)
     else:
         print("Command: " + str(args.task) + " not yet implemented")
+        raise NotImplementedError()
 
 if __name__ == '__main__':
 

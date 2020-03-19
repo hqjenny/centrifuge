@@ -125,7 +125,7 @@ lazy val testchipip = (project in file("generators/testchipip"))
 lazy val chipyard = conditionalDependsOn(project in file("generators/chipyard"))
   .dependsOn(boom, hwacha, sifive_blocks, sifive_cache, utilities,
     sha3, // On separate line to allow for cleaner tutorial-setup patches
-    ${HLS_ACCEL_NAME} // HLS generated accelerators
+    ${HLS_SOC_NAME} // HLS generated accelerators
     gemmini, icenet, tracegen, ariane)
   .settings(commonSettings)
 
@@ -208,4 +208,4 @@ lazy val firechip = conditionalDependsOn(project in file("generators/firechip"))
     testGrouping in Test := isolateAllTests( (definedTests in Test).value )
   )
 
-${HLS_ACCEL_CONFIG}
+${HLS_SOC_CONFIG}
