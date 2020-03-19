@@ -17,6 +17,7 @@ TEST_OBJS=$(patsubst %.c,%.o,$(TEST_SRCS)) $(LIB)
 
 INCLUDES=-I../include
 
+.PHONY: all
 all: $(LIB) $(TEST)
 
 $(TEST): $(TEST_OBJS) $(LIB)
@@ -28,6 +29,11 @@ $(LIB): $(LIB_OBJS)
 %.o: %.c
 	  $(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
+.PHONY: install
+install:
+	cp $(LIB) ../lib/
+
+.PHONY: clean
 clean:
 	rm -f *.o
 	rm -f $(TEST) 

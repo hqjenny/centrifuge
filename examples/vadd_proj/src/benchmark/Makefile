@@ -1,14 +1,21 @@
-CC=gcc
-CFLAGS=--std=c99
+CFLAGS += --std=gnu99
+ifeq ($(ARCH),riscv)
+	CC=riscv64-unknown-linux-gnu-gcc
+	CFLAGS += -DRISCV
+else
+	CC=gcc
+endif
 
+LDFLAGS=-lvadd_tl -lvadd_rocc -L../../../libcf/lib 
+INCLUDE=-I../../../../libcf/include 
 ifdef $(CF_ACCEL)
 # Use centrifuge generated accelerators
-LDFLAGS=-L../../centrifuge_wrappers/rocc0_vadd_vadd/ -lvadd_rocc -L../../centrifuge_wrappers/tl0_vadd_tl_vadd/ -lvadd_tl
-INCLUDE=-I../../centrifuge_wrappers/rocc0_vadd_vadd/ -I../../centrifuge_wrappers/tl0_vadd_tl_vadd/
+LDFLAGS += -L../../centrifuge_wrappers/rocc0_vadd_vadd/ -L../../centrifuge_wrappers/tl0_vadd_tl_vadd/
+INCLUDE += -I../../centrifuge_wrappers/rocc0_vadd_vadd/ -I../../centrifuge_wrappers/tl0_vadd_tl_vadd/
 else
 # Use non-accelerated versions
-LDFLAGS=-L../hls/vadd_rocc/ -lvadd_rocc -L../hls/vadd_tl/ -lvadd_tl
-INCLUDE=-I../hls/vadd_rocc/ -I../hls/vadd_tl/
+LDFLAGS += -L../hls/vadd_rocc/ -L../hls/vadd_tl/
+INCLUDE += -I../hls/vadd_rocc/ -I../hls/vadd_tl/
 endif
 
 vadd: vadd.o
