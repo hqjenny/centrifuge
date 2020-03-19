@@ -1,6 +1,9 @@
 #ifndef CENTRIFUGE_H
 #define CENTRIFUGE_H
 
+#include <stdint.h>
+#include <unistd.h>
+
 // Control state for centrifuge. This must be initialized once per tilelink
 // accelerator and passed to some centrifuge functions and wrappers.
 typedef struct cf_ctl {

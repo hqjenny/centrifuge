@@ -1,6 +1,8 @@
 #ifndef ACCEL_H
 #define ACCEL_H
 
+#include <centrifuge.h>
+
 #ifndef CF_VADD_TL_BASE
 // If this is wrapping the baseline (non-acclerated) version, we fill in a
 // dummy base address.
