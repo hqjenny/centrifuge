@@ -68,7 +68,7 @@ def generate_hls_tcl(accel):
             'prj_name' : 'hls_prj', 
             'pgm' : accel.pgm,
             'func': accel.func,
-            'prj_prefix' : accel.prefix_id + '_',
+            'prj_prefix' : accel.prefix_id + '_' + accel.pgm + '_',
             'srcs' : srcs_str,
             # TODO allow user to specify in json
             # F1 FPGA part #
