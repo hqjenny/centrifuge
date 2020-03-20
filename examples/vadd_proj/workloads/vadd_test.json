@@ -2,6 +2,7 @@
     "name": "vadd_test",
     "workdir": ".",
     "base": "cf-buildroot.json",
+    "host-init" : "build_vadd.sh",
     "files": [["../src/benchmark/vadd", "/root/"]],
     "command" : "/root/vadd",
     "testing" : {
