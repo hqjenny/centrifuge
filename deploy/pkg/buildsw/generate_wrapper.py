@@ -29,7 +29,7 @@ class MmioArg():
         else:
             raise RuntimeError("Unsupported variable size: " + str(self.size))
 
-def generateHeader(signature, fname):
+def generateHeader(fname, body):
     """Given the signature of the accelerated function, return an appropriate
     header file. """
 
@@ -38,7 +38,8 @@ def generateHeader(signature, fname):
               "#define " + prefix + "WRAPPER_H\n")
 
     header += '\n'
-    header += signature + ";\n"
+    header += body + "\n"
+    # header += signature + ";\n"
     header += "#endif"
     return header
 
@@ -203,7 +204,7 @@ def generateWrapperRocc(fname, roccIdx, inputs, retVal):
 
     cWrapper += "}"
 
-    return cWrapper, generateHeader(signature, fname)
+    return cWrapper, generateHeader(fname, signature + ";")
 
 def generateWrapperTL(fname, baseAddr, args, retVal):
     """Given a set of mmio address/varialble pairs, produce the C wrapper
@@ -280,7 +281,10 @@ def generateWrapperTL(fname, baseAddr, args, retVal):
 
     cWrapper += "}"
 
-    return cWrapper, generateHeader(signature, fname)
+    headBody = ("#define " + constPrefix("BASE") + " " + str(baseAddr) + "\n\n"
+            + signature + ";\n")
+
+    return cWrapper, generateHeader(fname, headBody)
 
 def generateSW(accels):
     """Generate all software wrappers for the specified set of accelerators (util.AccelConfig)"""
