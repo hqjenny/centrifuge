@@ -29,12 +29,13 @@ class MmioArg():
         else:
             raise RuntimeError("Unsupported variable size: " + str(self.size))
 
-def generateHeader(signature):
+def generateHeader(signature, fname):
     """Given the signature of the accelerated function, return an appropriate
     header file. """
 
-    header = ("#ifndef ACCEL_WRAPPER_H\n"
-              "#define ACCEL_WRAPPER_H\n")
+    prefix = fname.upper().replace("-", "_") + "_"
+    header = ("#ifndef " + prefix + "WRAPPER_H\n"
+              "#define " + prefix + "WRAPPER_H\n")
 
     header += '\n'
     header += signature + ";\n"
@@ -148,7 +149,7 @@ def generateWrapperRocc(fname, roccIdx, inputs, retVal):
 
     cWrapper = ('#include "rocc.h"\n'
                 '\n'
-                '#define ACCEL_WRAPPER\n'
+                '#define ' + fname.upper().replace("-", "_") + '_WRAPPER\n'
                 '#include "accel.h"\n'
                 '\n')
 
@@ -202,7 +203,7 @@ def generateWrapperRocc(fname, roccIdx, inputs, retVal):
 
     cWrapper += "}"
 
-    return cWrapper, generateHeader(signature)
+    return cWrapper, generateHeader(signature, fname)
 
 def generateWrapperTL(fname, baseAddr, args, retVal):
     """Given a set of mmio address/varialble pairs, produce the C wrapper
@@ -214,19 +215,24 @@ def generateWrapperTL(fname, baseAddr, args, retVal):
     args: List of MmioArg representing the function inputs
     """
 
+    # Prefix to append to all macro constants in the wrapper (note that dashes
+    # are illegal in macro names so they are converted to underscore)
+    def constPrefix(suffix):
+        return "CF_" + fname.upper().replace("-", "_") + "_" + suffix
+
     cWrapper = ('#include "mmio.h"\n'
-                '#define ACCEL_WRAPPER\n'
+                '#define ' + constPrefix("WRAPPER") + "\n"
                 '#include "accel.h"\n'
                 '\n'
                 '#define AP_DONE_MASK 0b10\n')
 
     # MMIO Constants
-    cWrapper += "#define ACCEL_BASE " + str(baseAddr) + "\n"
-    cWrapper += "#define ACCEL_INT 0x4\n"
+    cWrapper += "#define " + constPrefix("BASE") + " " + str(baseAddr) + "\n"
+    cWrapper += "#define " + constPrefix("INT") + " 0x4\n"
     for arg in args + ([retVal] if retVal is not None else []):
-        cWrapper += "#define ACCEL_"+arg.name+"_0 "+ hex(arg.addr) + "\n"
+        cWrapper += "#define " + constPrefix(arg.name) + "_0 "+ hex(arg.addr) + "\n"
         if arg.size == 2:
-            cWrapper += "#define ACCEL_"+arg.name+"_1 " + hex(arg.addr + 0x4) + "\n"
+            cWrapper += "#define " + constPrefix(arg.name) + "_1 " + hex(arg.addr + 0x4) + "\n"
     cWrapper += "\n"
 
     # Create the function signature
@@ -248,33 +254,33 @@ def generateWrapperTL(fname, baseAddr, args, retVal):
 
     # Pass Args to MMIO
     cWrapper += "    //Disable Interrupts\n"
-    cWrapper += "    reg_write32(ACCEL_BASE + ACCEL_INT, 0x0);\n"
+    cWrapper += "    reg_write32(" + constPrefix("BASE") + " + " + constPrefix("INT") + ", 0x0);\n"
     for arg in args:
-        cWrapper += "    reg_write32(ACCEL_BASE + ACCEL_"+arg.name+"_0, (uint32_t) "+arg.name+");\n"
+        cWrapper += "    reg_write32(" + constPrefix("BASE") + " + " + constPrefix(arg.name) + "_0, (uint32_t) " + arg.name + ");\n"
         if arg.size == 2:
-            cWrapper += "    reg_write32(ACCEL_BASE + ACCEL_"+arg.name+"_1, (uint32_t) ("+arg.name+" >> 32));\n"
+            cWrapper += "    reg_write32(" + constPrefix("BASE") + " + " + constPrefix(arg.name) + "_1, (uint32_t) (" + arg.name + " >> 32));\n"
 
     # Execute Accelerator
     cWrapper += ("    // Write to ap_start to start the execution \n"
-                 "    reg_write32(ACCEL_BASE, 0x1);\n"
+                 "    reg_write32(" + constPrefix("BASE") + ", 0x1);\n"
                  "\n"
                  "    // Done?\n"
                  "    int done = 0;\n"
                  "    while (!done){\n"
-                 "        done = reg_read32(ACCEL_BASE) & AP_DONE_MASK;\n"
+                 "        done = reg_read32(" + constPrefix("BASE") + ") & AP_DONE_MASK;\n"
                  "    }\n")
 
     # Handle returns (if any)
     if retVal is not None:
         cWrapper += "\n"
         cWrapper += "    " + retVal.cType() + " ret_val = 0;\n"
-        cWrapper += "    ret_val = reg_read32(ACCEL_BASE + ACCEL_"+retVal.name+"_0);\n"
+        cWrapper += "    ret_val = reg_read32(" + constPrefix("BASE") + " + " + constPrefix(retVal.name) + "_0);\n"
         if retVal.size == 2:
-            cWrapper += "    ret_val |= reg_read32(ACCEL_BASE + ACCEL_"+retVal.name+"_1) >> 32;\n"
+            cWrapper += "    ret_val |= reg_read32(" + constPrefix("BASE") + " + " + constPrefix(retVal.name) + "_1) >> 32;\n"
 
     cWrapper += "}"
 
-    return cWrapper, generateHeader(signature)
+    return cWrapper, generateHeader(signature, fname)
 
 def generateSW(accels):
     """Generate all software wrappers for the specified set of accelerators (util.AccelConfig)"""
