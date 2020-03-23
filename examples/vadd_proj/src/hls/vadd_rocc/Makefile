@@ -6,8 +6,6 @@ else
 	CC=gcc
 endif
 
-INCLUDE=-I../../../../../libcf/include
-
 LIB=libvadd_rocc.a
 TEST=vadd_rocc_test
 

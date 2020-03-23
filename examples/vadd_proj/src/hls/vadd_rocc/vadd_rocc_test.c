@@ -1,5 +1,6 @@
 #include<stdio.h>
 #include<stdint.h>
+#include <stdlib.h>
 #define LENGTH 80
 #include "vadd_rocc.h"
 
@@ -11,6 +12,10 @@ void print_vec(int* vec, int length){
 }
 
 int main () {
+    // RoCC has a limited number of arguments so we must pack all the
+    // information into two arrays:
+    // length_a contains [length, a0, a1, ..., aN]
+    // b_c contains [b0, ..., bN, c0, ..., cN]
     int length_a[LENGTH + 1], b_c[LENGTH + LENGTH];
     //int a[LENGTH], b[LENGTH], c[LENGTH];
     int length = LENGTH;
@@ -36,5 +41,15 @@ int main () {
     print_vec(&b_c[length], length);
     printf("]\n");
 
-    return 0;
+    // Verify:
+    for(i = 0; i < length; i++) {
+        if(b_c[length + i] != length_a[i + 1] + b_c[i]) {
+            printf("Failure: Incorrect output at index %d:\n", i);
+            printf("\tExpected: %d, Got: %d\n", (length_a[i + 1] + b_c[i]), b_c[length + i]);
+            return EXIT_FAILURE;
+        }
+    }
+
+    printf("Success!\n");
+    return EXIT_SUCCESS;
 }

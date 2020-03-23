@@ -2,10 +2,10 @@
 #include<stdint.h>
 #include<stdlib.h>
 #include <centrifuge.h>
-#define LENGTH 80
 #include "vadd_rocc.h"
 #include "vadd_tl.h"
 
+#define LENGTH 80
 void print_vec(int* vec, int length){
     for(int i = 0; i < length; i++){
         if (i != 0 ) printf(", ");
