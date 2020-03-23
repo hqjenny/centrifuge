@@ -1,5 +1,5 @@
-#ifndef ACCEL_H
-#define ACCEL_H
+#ifndef VADD_TL_H
+#define VADD_TL_H
 
 #include <centrifuge.h>
 
