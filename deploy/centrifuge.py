@@ -75,7 +75,7 @@ def main(args):
                                     util.getOpt('genhw-dir'))
 
     # print the info
-    # accel_config.info()
+    accel_config.info()
 
     # tasks that have a special config/dispatch setup
     if args.task == 'generate_hw':

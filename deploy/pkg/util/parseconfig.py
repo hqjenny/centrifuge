@@ -8,14 +8,43 @@ import pathlib
 
 rootLogger = logging.getLogger()
 
-class Accel(object): 
+class funcArgument(object):
+    def __init__(self, cfgDict):
+        self.name = cfgDict['name']
+        self.size = cfgDict['size']
+        self.isPointer = cfgDict['isPointer']
+
+    def __str__(self):
+        if self.isPointer:
+            return self.name + ' Pointer'
+        else:
+            return self.name + ' ' + str(self.size) + 'b scalar'
+
+class funcSignature(object):
+    def __init__(self, cfgDict):
+        self.name = cfgDict['name']
+        self.retSize = cfgDict['retSize']
+        self.args = [funcArgument(argDict) for argDict in cfgDict['args']]
+
+    def __str__(self):
+        # argStr = '[ '
+        # for arg in self.args:
+        #     if arg['isPointer']:
+        #         argStr += arg['name'] + ' Pointer, '
+        #     else:
+        # argStr += ']'
+        #         argStr += arg['name'] + ' ' + str(arg['size']) + 'b scalar, '
+        argStr = ', '.join([str(arg) for arg in self.args])
+        return '{{name = {}, return = {}b, args=[{}] }}'.format(self.name, str(self.retSize), argStr)
+
+class Accel(object):
     """Base Definition of Accelerator"""
     def __init__(self, prefix_id, pgm, func, srcs, hw_accel_dir):
         self.prefix_id = prefix_id
         self.pgm = pgm
-        self.func = func
+        self.func = funcSignature(func)
         self.srcs = srcs
-        self.name = """{}_{}_{}""".format(self.prefix_id, self.pgm, self.func)
+        self.name = """{}_{}_{}""".format(self.prefix_id, self.pgm, self.func.name)
         self.dir = hw_accel_dir / self.name
 
         src_main_path = self.dir / 'src' / 'main'
@@ -27,7 +56,11 @@ class Accel(object):
         rootLogger.info(str(self))
 
     def __str__(self):
-        return """\t\taccel_name: {} srcs: {}""".format(self.name, self.srcs)
+        return '\t\taccel_name: ' + self.name + \
+               '\n\t\tprogram: ' + self.pgm + \
+               '\n\t\tfunction: ' + str(self.func) + \
+               '\n\t\tSources: ' + str( [ str(p) for p in self.srcs] ) + \
+               '\n\t\thw output dir: ' + str(self.dir)
 
 
 class RoCCAccel(Accel): 
@@ -35,6 +68,7 @@ class RoCCAccel(Accel):
     def __init__(self, prefix_id, pgm, func, rocc_insn_id, src_dir, hw_accel_dir):
         super(RoCCAccel, self).__init__(prefix_id, pgm, func, src_dir, hw_accel_dir)
         self.rocc_insn_id = rocc_insn_id
+
     def info(self):
         rootLogger.info("""\tRoCC Accelerator {}""".format(self.prefix_id))
         super(RoCCAccel, self).info()
@@ -45,6 +79,7 @@ class TLAccel(Accel):
     def __init__(self, prefix_id, pgm, func, base_addr, src_dir, hw_accel_dir):
         super(TLAccel, self).__init__(prefix_id, pgm, func, src_dir, hw_accel_dir)
         self.base_addr = base_addr
+
     def info(self):
         rootLogger.info("""\tTL Accelerator {} @ {}""".format(self.prefix_id, self.base_addr))
         super(TLAccel, self).info()
@@ -71,9 +106,9 @@ class AccelConfig:
         s = """Accelerator SoC Definition: \n"""
         s += "Generated SoC Directory: {}\n".format(self.hw_accel_dir)
         for rocc_accel in self.rocc_accels:
-            s += str(rocc_accel) + "\n"
+            s += str(rocc_accel) + "\n\n"
         for tl_accel in self.tl_accels:
-            s += str(tl_accel) + "\n"
+            s += str(tl_accel) + "\n\n"
         return s
 
     def info(self):
@@ -125,7 +160,7 @@ class AccelConfig:
                         pgm = rocc_accel_dict['pgm']
                         func = rocc_accel_dict['func']
                         self.check_str(pgm)
-                        self.check_str(func)
+                        # self.check_str(func)
 
                         srcs = rocc_accel_dict.get('srcs')
                         if srcs is None:
@@ -158,7 +193,7 @@ class AccelConfig:
                     func = tl_accel_dict['func']
                     base_addr = tl_accel_dict['addr']
                     self.check_str(pgm)
-                    self.check_str(func)
+                    self.check_str(func['name'])
                     self.check_addr_str(base_addr)
 
                     srcs = tl_accel_dict.get('srcs')
@@ -179,4 +214,3 @@ class AccelConfig:
                     rootLogger.exception("""Fatal error. TL Accelerator definitions in {} is not valid """.format(self.accel_json_path))
                     assert(False)
 
-        
