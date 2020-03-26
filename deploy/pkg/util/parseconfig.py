@@ -1,10 +1,11 @@
 from __future__ import print_function
 import re
 
-import random
 import logging
 import json
 import pathlib
+
+from ..util import *
 
 rootLogger = logging.getLogger()
 
@@ -65,6 +66,15 @@ class Accel(object):
                '\n\t\tSources: ' + str( [ str(p) for p in self.srcs] ) + \
                '\n\t\thw output dir: ' + str(self.dir)
 
+    def validateFunc(self):
+        """Validate the registered function for properties that all accelerators must meet."""
+        for arg in self.func.args:
+            if not arg.size in [0, 32, 64]:
+                raise ConfigurationOptionError('func.args', "Argument " + arg.name + " has invalid size: " + str(
+                    arg.size))
+            if arg.isPointer and arg.size != 64:
+                raise ConfigurationOptionError('func.args', "Argument " + arg.name + " is pointer but has size: " +
+                                               str(arg.size))
 
 class RoCCAccel(Accel): 
     """Definition of RoCC Accelerator"""
@@ -76,17 +86,28 @@ class RoCCAccel(Accel):
         rootLogger.info("""\tRoCC Accelerator {}""".format(self.prefix_id))
         super(RoCCAccel, self).info()
 
+    def validateFunc(self):
+        """Ensure that the registered function is compatible with RoCC."""
+        Accel.validateFunc(self)
+        if len(self.func.args) > 2:
+            raise ConfigurationOptionError('func', 'RoCC functions must have less than 2 arguments')
+
+
 
 class TLAccel(Accel): 
     """Definition of TL Accelerator"""
     def __init__(self, prefix_id, pgm, func, base_addr, src_dir, hw_accel_dir):
-        super(TLAccel, self).__init__(prefix_id, pgm, func, src_dir, hw_accel_dir)
+        Accel.__init__(self, prefix_id, pgm, func, src_dir, hw_accel_dir)
+        # super(TLAccel, self).__init__(prefix_id, pgm, func, src_dir, hw_accel_dir)
         self.base_addr = base_addr
 
     def info(self):
         rootLogger.info("""\tTL Accelerator {} @ {}""".format(self.prefix_id, self.base_addr))
         super(TLAccel, self).info()
 
+    def validateFunc(self):
+        """Ensure that the registered function is compatible with TileLink."""
+        Accel.validateFunc(self)
 
 class AccelConfig:
     """Configuration for all accelerators to be included in the SoC"""
@@ -176,11 +197,11 @@ class AccelConfig:
                                 self.check_src_path(srcs[i])
 
                         rocc_accel = RoCCAccel(prefix_id, pgm, func, idx, srcs, self.hw_accel_dir)
+                        rocc_accel.validateFunc()
                         self.rocc_accels.append(rocc_accel)
                 except Exception as err:
-                    rootLogger.exception(err)
-                    rootLogger.exception("""Fatal error. RoCC Accelerator definitions in {} is not valid """.format(self.accel_json_path))
-                    assert(False)
+                    raise Exception("""Fatal error. RoCC Accelerator definitions in {} is not valid: {} """.format(
+                        self.accel_json_path, str(err))) from err
 
             if 'custom3' in rocc_accel_def.keys():
                 rootLogger.exception("""Fatal error. custom3 RoCC Accelerator is reserved for Virtual-to-Physical Address Translator""")
@@ -210,10 +231,10 @@ class AccelConfig:
                             self.check_src_path(srcs[i])
 
                     tl_accel = TLAccel(prefix_id, pgm, func, base_addr, srcs, self.hw_accel_dir)
+                    tl_accel.validateFunc()
                     self.tl_accels.append(tl_accel)
                     idx += 1
                 except Exception as err:
-                    rootLogger.exception(err)
-                    rootLogger.exception("""Fatal error. TL Accelerator definitions in {} is not valid """.format(self.accel_json_path))
-                    assert(False)
+                    raise Exception("""Fatal error. TL Accelerator definitions in {} is not valid: {}""".format(
+                        self.accel_json_path, str(err))) from err
 

@@ -161,8 +161,6 @@ def generateWrapperRocc(func: util.funcSignature, roccIdx, hName):
         elif len(func.args) == 2:
             cWrapper += ident(lvl) + "ROCC_INSTRUCTION_DSS(XCUSTOM_ACC, ret_val, " + \
                         func.args[0].name + ", " + func.args[1].name + ", 0);\n"
-        else:
-            raise util.ConfigurationError("Too many inputs. Rocc only supports up to 2 arguments, was passed " + len(func.args))
 
     else:
         if len(func.args) == 0:
@@ -171,8 +169,6 @@ def generateWrapperRocc(func: util.funcSignature, roccIdx, hName):
             cWrapper += ident(lvl) + "ROCC_INSTRUCTION_S(XCUSTOM_ACC, " + func.args[0].name + ", 0);\n"
         elif len(func.args) == 2:
             cWrapper += ident(lvl) + "ROCC_INSTRUCTION_SS(XCUSTOM_ACC, " + func.args[0].name + ", 0);\n"
-        else:
-            raise ValueError("Too many inputs. Rocc only supports up to 2 arguments, was passed " + len(func.args))
 
     cWrapper += ident(lvl) + "ROCC_BARRIER();\n"
 
