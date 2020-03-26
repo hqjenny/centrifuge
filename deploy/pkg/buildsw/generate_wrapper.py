@@ -6,39 +6,19 @@ import collections
 import logging
 from .. import util
 
-# class MmioArg():
-#     def __init__(self, name, addr, size=1):
-#         self.name = name
-#         self.addr = int(addr, 0)
-#         self.size = size
-#
-#     def incrementSize(self):
-#         if self.size < 2:
-#             self.size += 1
-#         else:
-#             raise RuntimeError("Invalid size for argument " + self.name + ": " + str(self.size + 1))
-#
-#     def cType(self):
-#         """Returns a string representing the C type of this argument"""
-#         if self.size == 0:
-#             return "void"
-#         elif self.size == 1:
-#             return "uint32_t"
-#         elif self.size == 2:
-#             return "uint64_t"
-#         else:
-#             raise RuntimeError("Unsupported variable size: " + str(self.size))
-
-def cType(size):
+def cType(arg: util.funcArgument, tilelink=False):
     """Returns a string representing the C type of this argument based on size (assumes uint)"""
-    if size == 0:
-        return "void"
-    elif size == 32:
-        return "uint32_t"
-    elif size == 64:
-        return "uint64_t"
+    if tilelink and arg.isPointer:
+        return "cf_buf_t"
     else:
-        raise RuntimeError("Unsupported variable size: " + str(size))
+        if arg.size == 0:
+            return "void"
+        elif arg.size == 32:
+            return "uint32_t"
+        elif arg.size == 64:
+            return "uint64_t"
+        else:
+            raise ValueError("Unsupported variable size: " + str(arg.size))
 
 def generateHeader(fname, body):
     """Given the signature of the accelerated function, return an appropriate
@@ -54,31 +34,25 @@ def generateHeader(fname, body):
     header += "#endif"
     return header
 
-def generateSignature(func):
+def generateSignature(func, tilelink=False):
     signature = ""
-    if func.retSize == 64:
-        retStr = "uint64_t"
-    elif func.retSize == 32:
-        retStr = "uint32_t"
-    elif func.retSize == 0:
-        retStr = "void"
-    else:
-        raise util.ConfigurationError(
-            "Invalid return size (" + str(func.retSize) + "b): must be either 0, 32, or 64")
+    retStr = cType(func.ret)
 
     signature += retStr + " " + func.name + "_cf_accel("
     argStrs = []
     for arg in func.args:
-        argStrs.append("uint" + str(arg.size) + "_t " + arg.name)
+        argStrs.append(cType(arg, tilelink) + " " + arg.name)
 
     signature += ", ".join(argStrs)
     signature += ")"
 
     return signature
 
+
 def ident(level):
     """Return a string of spaces representing an indentation to level 'level'"""
     return "    "*level
+
 
 def cleanRoccArg(body):
     """Cleans up a RoccArg. Returns True if the argument was cleaned and can be
@@ -96,44 +70,13 @@ def cleanRoccArg(body):
 
     return m.group(m.lastindex)
 
-def parseVerilogRocc(vpath):
-    """Parse a centrifuge-generated verilog file to extract the information
-    needed to generate a RoCC wrapper.
-
-    vpath: Path to main verilog function file
-
-    Returns: (inputs, retVal)
-        inputs - list of argument names
-        retVal - boolean indicating whether or not a return value is present
-    """
-
-    # Input/Output statements in the verilog. We assume only one module in the file.
-    reInput = re.compile('^\s*input\s+\[.*:.*\]\s*(.*)')
-    reReturnVal = re.compile('^\s*output\s+\[(.*):(.*)\]\s*ap_return;')
-
-    print("Parsing: ",vpath)
-    inputs = []
-    retVal = False
-    with open(vpath, 'r') as vf:
-        for line in vf.readlines():
-            inMatch = reInput.match(line)
-            if inMatch:
-                argName = cleanRoccArg(inMatch.group(1))
-                if argName: 
-                    inputs.append(argName)
-            else:
-                if reReturnVal.match(line):
-                    retVal = True
-
-        return inputs, retVal
-
 
 def parseVerilogTL(vpath, func: util.funcSignature) -> util.funcSignature:
     """Parse a centrifuge-generated verilog file to extract the information
     needed to generate tilelink wrappers.
 
     This information is added to func as additional fields:
-        func.retAddr : MMIO address used to return values
+        func.ret.addr : MMIO address used to return values
         func.args[N].addr : MMIO address used to pass each argument
 
     If func already contains these fields, they will be overwritten
@@ -145,10 +88,7 @@ def parseVerilogTL(vpath, func: util.funcSignature) -> util.funcSignature:
     returns the modified func
     """
 
-    if hasattr(func, 'retAddr'):
-        del func.retAddr
-
-    for arg in func.args:
+    for arg in func.args + [func.ret]:
         if hasattr(arg, 'addr'):
             del arg.addr
 
@@ -173,8 +113,8 @@ def parseVerilogTL(vpath, func: util.funcSignature) -> util.funcSignature:
                         name = m.group(2)
                         addr = int(m.group(1), 16)
                         if name == 'ap_return':
-                            if not hasattr(func, 'retAddr'):
-                                func.retAddr = addr
+                            if not hasattr(func.ret, 'addr'):
+                                func.ret.addr = addr
                         else:
                             for arg in func.args:
                                 if arg.name == name:
@@ -210,7 +150,7 @@ def generateWrapperRocc(func: util.funcSignature, roccIdx, hName):
     cWrapper += "{\n"
 
     lvl = 1
-    if func.retSize != 0:
+    if func.ret.size != 0:
         cWrapper += ident(lvl) + "uint64_t ret_val;\n"
         cWrapper += "\n"
 
@@ -237,8 +177,8 @@ def generateWrapperRocc(func: util.funcSignature, roccIdx, hName):
     cWrapper += ident(lvl) + "ROCC_BARRIER();\n"
 
     cWrapper += '\n'
-    if func.retSize != 0:
-        cWrapper += ident(lvl) + "return (uint" + str(func.retSize) + "_t)ret_val;\n"
+    if func.ret.size != 0:
+        cWrapper += ident(lvl) + "return (uint" + str(func.ret.size) + "_t)ret_val;\n"
 
     cWrapper += "}"
 
@@ -253,7 +193,7 @@ def generateWrapperTL(func: util.funcSignature, baseAddr, hName):
     """
 
     # name of return signal
-    retName = 'ap_return'
+    func.ret.name = 'ap_return'
 
     # Prefix to append to all macro constants in the wrapper
     def constPrefix(suffix):
@@ -273,26 +213,14 @@ def generateWrapperTL(func: util.funcSignature, baseAddr, hName):
         cWrapper += "#define " + constPrefix(arg.name) + "_0 "+ hex(arg.addr) + "\n"
         if arg.size == 64:
             cWrapper += "#define " + constPrefix(arg.name) + "_1 " + hex(arg.addr + 0x4) + "\n"
-    if func.retSize != 0:
-        cWrapper += "#define " + constPrefix(retName) + "_0 " + hex(func.retAddr) + "\n"
-        if func.retSize == 64:
-            cWrapper += "#define " + constPrefix(retName) + "_1 " + hex(func.retAddr + 0x4) + "\n"
+    if func.ret.size != 0:
+        cWrapper += "#define " + constPrefix(func.ret.name) + "_0 " + hex(func.ret.addr) + "\n"
+        if func.ret.size == 64:
+            cWrapper += "#define " + constPrefix(func.ret.name) + "_1 " + hex(func.ret.addr + 0x4) + "\n"
     cWrapper += "\n"
 
     # Create the function signature
-    signature = generateSignature(func)
-    # signature = ""
-    # if func.retSize == 0:
-    #     retStr = "void"
-    # else:
-    #     retStr = retVal.cType()
-    #
-    # signature += retStr + " " + fname + "_cf_accel("
-    # argStrs = []
-    # for arg in args:
-    #     argStrs.append(arg.cType() + " " + arg.name)
-    # signature += ", ".join(argStrs)
-    # signature += ")"
+    signature = generateSignature(func, tilelink=True)
 
     cWrapper += signature + "\n"
     cWrapper += "{\n"
@@ -301,9 +229,16 @@ def generateWrapperTL(func: util.funcSignature, baseAddr, hName):
     cWrapper += "    //Disable Interrupts\n"
     cWrapper += "    reg_write32(" + constPrefix("BASE") + " + " + constPrefix("INT") + ", 0x0);\n"
     for arg in func.args:
-        cWrapper += "    reg_write32(" + constPrefix("BASE") + " + " + constPrefix(arg.name) + "_0, (uint32_t) " + arg.name + ");\n"
+        if arg.isPointer:
+            argVal = arg.name + ".paddr"
+        else:
+            argVal = arg.name
+
+        cWrapper += "    reg_write32(" + constPrefix("BASE") + " + " + constPrefix(arg.name) + "_0, (uint32_t) " + \
+                    argVal + ");\n"
         if arg.size == 64:
-            cWrapper += "    reg_write32(" + constPrefix("BASE") + " + " + constPrefix(arg.name) + "_1, (uint32_t) (" + arg.name + " >> 32));\n"
+            cWrapper += "    reg_write32(" + constPrefix("BASE") + " + " + constPrefix(arg.name) + "_1, (uint32_t) ("\
+                        + argVal + " >> 32));\n"
 
     # Execute Accelerator
     cWrapper += ("    // Write to ap_start to start the execution \n"
@@ -316,12 +251,12 @@ def generateWrapperTL(func: util.funcSignature, baseAddr, hName):
                  "    }\n")
 
     # Handle returns (if any)
-    if func.retSize != 0:
+    if func.ret.size != 0:
         cWrapper += "\n"
-        cWrapper += "    " + cType(func.retSize) + " ret_val = 0;\n"
-        cWrapper += "    ret_val = reg_read32(" + constPrefix("BASE") + " + " + constPrefix(retName) + "_0);\n"
-        if func.retSize == 64:
-            cWrapper += "    ret_val |= reg_read32(" + constPrefix("BASE") + " + " + constPrefix(retName) + "_1) " + \
+        cWrapper += "    " + cType(func.ret) + " ret_val = 0;\n"
+        cWrapper += "    ret_val = reg_read32(" + constPrefix("BASE") + " + " + constPrefix(func.ret.name) + "_0);\n"
+        if func.ret.size == 64:
+            cWrapper += "    ret_val |= reg_read32(" + constPrefix("BASE") + " + " + constPrefix(func.ret.name) + "_1) " + \
                         ">> 32;\n"
 
     cWrapper += "}"
@@ -341,8 +276,6 @@ def generateSW(accels):
 
     for accel in accels.rocc_accels:
         headerName = accel.name + '_rocc_wrapper.h'
-        # inputs, retVal = parseVerilogRocc(accel.verilog_dir / (accel.name + ".v"))
-        # cWrapper, hWrapper = generateWrapperRocc(accel.func, accel.rocc_insn_id, inputs, retVal, headerName)
         cWrapper, hWrapper = generateWrapperRocc(accel.func, accel.rocc_insn_id, headerName)
         accel.wrapper_dir = accels.gensw_dir / accel.name
         accel.wrapper_dir.mkdir(exist_ok=True)
@@ -361,7 +294,6 @@ def generateSW(accels):
 
     for accel in accels.tl_accels:
         headerName = accel.name + '_tl_wrapper.h'
-        # cWrapper, hWrapper = generateWrapperTL(accel.func, accel.base_addr, funcArgs, retVal, headerName)
         accel.func = parseVerilogTL(accel.verilog_dir / (accel.name + "_control_s_axi.v"), accel.func)
         cWrapper, hWrapper = generateWrapperTL(accel.func, accel.base_addr, headerName)
         accel.wrapper_dir = accels.gensw_dir / accel.name

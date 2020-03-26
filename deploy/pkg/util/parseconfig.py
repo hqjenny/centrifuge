@@ -9,10 +9,20 @@ import pathlib
 rootLogger = logging.getLogger()
 
 class funcArgument(object):
-    def __init__(self, cfgDict):
-        self.name = cfgDict['name']
-        self.size = cfgDict['size']
-        self.isPointer = cfgDict['isPointer']
+    """funcArgument represents an individual argument (or return) for a function."""
+
+    def __init__(self, cfgDict=None, name='', size=0, isPointer=False):
+        """Initialize a funcArgument using either a cfgDict or explicit values.
+           it is an error to initialize with both.
+        """
+        if cfgDict is not None:
+            self.name = cfgDict['name']
+            self.size = cfgDict['size']
+            self.isPointer = cfgDict['isPointer']
+        else:
+            self.name = name
+            self.size = size
+            self.isPointer = isPointer
 
     def __str__(self):
         if self.isPointer:
@@ -23,19 +33,12 @@ class funcArgument(object):
 class funcSignature(object):
     def __init__(self, cfgDict):
         self.name = cfgDict['name']
-        self.retSize = cfgDict['retSize']
+        self.ret = funcArgument(size=cfgDict['retSize'])
         self.args = [funcArgument(argDict) for argDict in cfgDict['args']]
 
     def __str__(self):
-        # argStr = '[ '
-        # for arg in self.args:
-        #     if arg['isPointer']:
-        #         argStr += arg['name'] + ' Pointer, '
-        #     else:
-        # argStr += ']'
-        #         argStr += arg['name'] + ' ' + str(arg['size']) + 'b scalar, '
         argStr = ', '.join([str(arg) for arg in self.args])
-        return '{{name = {}, return = {}b, args=[{}] }}'.format(self.name, str(self.retSize), argStr)
+        return '{{name = {}, return = {}b, args=[{}] }}'.format(self.name, str(self.ret.size), argStr)
 
 class Accel(object):
     """Base Definition of Accelerator"""
