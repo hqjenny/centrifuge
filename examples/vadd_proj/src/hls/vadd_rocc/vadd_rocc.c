@@ -1,6 +1,6 @@
-#include "accel.h"
+#include "vadd_rocc.h"
 
-int vadd(int* length_a, int* b_c) {
+int vadd_rocc(int* length_a, int* b_c) {
 #pragma HLS INTERFACE ap_bus depth=10 port=length_a
 #pragma HLS INTERFACE ap_bus depth=10 port=b_c
  
@@ -32,5 +32,3 @@ int * a = & length_a[1];
     }
     return 0;
 }
-
-
