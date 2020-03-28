@@ -1,5 +1,4 @@
-from __future__ import print_function
-import re
+
 
 import subprocess
 import random
@@ -7,6 +6,7 @@ import logging
 import json
 import os
 import shutil
+import pathlib
 from .. import util
 
 import errno    
@@ -16,6 +16,18 @@ from string import Template
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.NOTSET) 
 
+
+def modify_verilog(accel):
+    """ Update Verilog to make it compatible with our infrastructure
+        1. Add abs path to readmemh 
+        2. Replace undefined 'bx signals to 1'b0
+    """
+    verilog_dir = accel.verilog_dir
+    # list all verilog file
+    verilog_files = list(verilog_dir.glob('**/*.v'))
+    for verilog_file in verilog_files:
+        util.replace_str(verilog_file, '$readmemh("', "$readmemh(\"{}/".format(str(verilog_dir)))
+        util.replace_str(verilog_file, "'bx", "1'b0")
 
 def generate_hls_tcl(accel):
     """Generate TCL script to run Vivado HLS"""
@@ -77,4 +89,5 @@ def run_hls(accel_conf):
         generate_hls_tcl(accel)
         run_hls_cmd(accel)
         copy_verilog(accel)
-   
+        modify_verilog(accel)
+

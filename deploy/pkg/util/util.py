@@ -2,8 +2,15 @@ import shutil
 import os
 import pathlib
 import errno
+import fileinput
+import sys
 from string import Template
 
+def replace_str(file_path, pattern, subst):
+    for line in fileinput.input(str(file_path), inplace=True):
+        if pattern in line:
+            line = line.replace(pattern, subst)
+        sys.stdout.write(line)
 
 def mkdir_p(path):
     try:
