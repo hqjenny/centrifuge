@@ -20,6 +20,7 @@ class Accel(object):
 
         src_main_path = self.dir / 'src' / 'main'
         self.c_dir = src_main_path / 'c'
+        #self.verilog_dir = src_main_path / 'resources' / 'vsrc' 
         self.verilog_dir = src_main_path / 'verilog' 
         self.scala_dir = src_main_path / 'scala' 
 
@@ -58,11 +59,13 @@ class AccelConfig:
         self.chipyard_dir = chipyard_dir
         self.centrifuge_dir = centrifuge_dir
 
+        self.chipyard_scala_dir = self.chipyard_dir / 'generators' / 'chipyard' / 'src' / 'main' / 'scala' 
+        self.firechip_scala_dir = self.chipyard_dir / 'generators' / 'firechip' / 'src' / 'main' / 'scala'
         self.accel_name = self.accel_json_path.stem
         self.accel_json_dir = accel_json_path.parent
         self.gensw_dir = self.accel_json_dir / 'centrifuge_wrappers'
         self.hw_accel_dir = genhw_dir / self.accel_name
-        self.hw_scala_dir = self.hw_accel_dir / 'src' / 'main' / 'scala' 
+        self.hw_accel_scala_dir = self.hw_accel_dir / 'src' / 'main' / 'scala' 
         self.accel_json = self.parse_json(self.accel_json_path)
         self.rocc_accels = []
         self.tl_accels = []

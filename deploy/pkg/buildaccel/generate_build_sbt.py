@@ -37,8 +37,9 @@ lazy val ${ACCEL} = (project in file("${DIR}"))
     accel_config_str += accel_template.substitute(d) 
 
     template_path = util.getOpt('template-dir') / 'build_sbt_template'
+    hls_soc_name_str = accel_conf.accel_name + ',' 
     config_dict = {
-        'HLS_SOC_NAME': accel_conf.accel_name,  
+        'HLS_SOC_NAME': hls_soc_name_str,  
         'HLS_SOC_CONFIG': accel_config_str
     }
     chipyard_dir = util.getOpt('chipyard-dir')

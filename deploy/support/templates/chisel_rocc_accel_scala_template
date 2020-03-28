@@ -1,6 +1,6 @@
 package hls_${FUNC}
 import Chisel._
-import chisel3.experimental.dontTouch
+import chisel3.dontTouch
 import freechips.rocketchip.config.{Parameters, Field}
 import freechips.rocketchip.tile._
 import freechips.rocketchip.config._
@@ -89,7 +89,7 @@ val rspBufferLen = 4
 val maxReqBytes = xLen/8
 val roccAddrWidth = coreMaxAddrBits
 val roccDataWidth = coreDataBits
-val roccTagWidth = coreDCacheReqTagBits
+val roccTagWidth = coreParams.dcacheReqTagBits
 val roccCmdWidth = M_SZ
 val roccTypWidth = log2Ceil(coreDataBytes.log2 + 1) 
 //val numTags = p(RoccMaxTaggedMemXacts)

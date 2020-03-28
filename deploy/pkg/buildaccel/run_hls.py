@@ -18,13 +18,14 @@ logger.setLevel(logging.NOTSET)
 
 
 def modify_verilog(accel):
-    """ Update Verilog to make it compatible with our infrastructure
+    """ Update Verilog to make it compatible with chipyard simulators
         1. Add abs path to readmemh 
         2. Replace undefined 'bx signals to 1'b0
     """
     verilog_dir = accel.verilog_dir
     # list all verilog file
     verilog_files = list(verilog_dir.glob('**/*.v'))
+    logger.info("\t\tUpdate Verilog Files in {}".format(verilog_dir))
     for verilog_file in verilog_files:
         util.replace_str(verilog_file, '$readmemh("', "$readmemh(\"{}/".format(str(verilog_dir)))
         util.replace_str(verilog_file, "'bx", "1'b0")

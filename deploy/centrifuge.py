@@ -21,7 +21,7 @@ from os.path import dirname as up
 
 def construct_centrifuge_argparser():
     # parse command line args
-    parser = argparse.ArgumentParser(description='Centrifuge Script')
+    parser = argparse.ArgumentParser(description='Centrifuge Script', formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('task', 
                         type=str,
                         help="""Management task to run. 

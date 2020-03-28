@@ -654,8 +654,10 @@ def generate_tl_module_stmt(inputs, outputs, buses):
                     "out_{0}.{1}.bits.last := " + out_str)
             elif matchWID: 
                 # TODO check if this is needed
-                assign_str = generate_AXI_signal(matchWID, 
-                    "out_{0}.{1}.bits.id := " + out_str)
+                #assign_str = generate_AXI_signal(matchWID, 
+                #    "out_{0}.{1}.bits.id := " + out_str)
+                # No such signal in TLtoAXI4
+                assign_str = ""
             elif matchWUSER: 
                 assign_str = ""
             elif matchAWWARREADY: 

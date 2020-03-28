@@ -7,7 +7,6 @@ import freechips.rocketchip.system._
 import freechips.rocketchip.config.Parameters
 import freechips.rocketchip.devices.tilelink._
 
-${HLS_SOC_IMPORT}
 // ------------------------------------
 // BOOM and/or Rocket Top Level Systems
 // ------------------------------------
@@ -23,8 +22,7 @@ class Top(implicit p: Parameters) extends System
   with icenet.CanHavePeripheryIceNIC // Enables optionally adding the IceNIC for FireSim
   with chipyard.example.CanHavePeripheryInitZero // Enables optionally adding the initzero example widget
   with chipyard.example.CanHavePeripheryGCD // Enables optionally adding the GCD example widget
-${TL_TRAIT}
-{
+${TL_TRAIT}{
   override lazy val module = new TopModule(this)
 }
 
@@ -37,4 +35,5 @@ class TopModule[+L <: Top](l: L) extends SystemModule(l)
   with icenet.CanHavePeripheryIceNICModuleImp
   with chipyard.example.CanHavePeripheryGCDModuleImp
   with freechips.rocketchip.util.DontTouch
+${TL_TRAIT_IMP}
 // DOC include end: Top

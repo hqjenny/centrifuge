@@ -40,7 +40,6 @@ def init_accel(accel_conf):
         logger.info("\tInitialize {}:".format(accel.prefix_id))
         init_proj_dir(accel)
         cp_src(accel)
-    util.mkdir_p(accel_conf.hw_scala_dir)
 
 def rm_accel(accel_conf):
     """Remove directories for the accel SoC"""
