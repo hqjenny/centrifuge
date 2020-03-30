@@ -54,6 +54,11 @@ Options:
                         help='Path to accelerator SoC config JSON file.',
                         required=True
                         )
+    parser.add_argument('-p', 
+                        '--swfile', 
+                        type=pathlib.Path,
+                        help='Path to bare-metal software binary.',
+                        )
     parser.add_argument('-t', 
                         '--subtask', 
                         type=str,
@@ -72,13 +77,18 @@ Options:
         f1_scripts -- Regenerate scripts for including HLS generated Verilog in FireSim
         xsim_scripts -- Regenerate scripts for including HLS generated Verilog in FireSim XSim
 
-    run_vcs
+    run_vcs / run_verilator
         clean -- Clean the simulation files
         debug -- Enable debug mode for the vcs simulation 
+        append_verilog -- Append HLS-generated Verilog to Top.v for simulation
+        run_bm_sw -- Run bare-metal software binary specified by --swfile/-p to run in compiled vcs simulator 
 
-    run_verilator
-        clean -- Clean the simulation files 
-        debug -- Enable debug mode for the verilator simulation 
+        if --subtask/-t is not specifed, will run 
+            clean
+            debug
+            append_verilog 
+            debug
+
 
 """,
                         )
@@ -128,7 +138,7 @@ def main(args):
     elif args.task == 'generate_sw':
         buildsw.generateSW(accel_config)
     elif args.task == 'run_vcs':
-        buildaccel.run_vcs(accel_config, args.subtask)
+        buildaccel.run_vcs(accel_config, args.subtask, args.swfile)
     elif args.task == 'run_verilator':
         buildaccel.run_verilator(accel_config, args.subtask)
     else:

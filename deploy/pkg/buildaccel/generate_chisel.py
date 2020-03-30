@@ -119,7 +119,7 @@ def get_rocc_scalarIO_count(input_info):
 
 def generate_rocc_scalarIO(num_scalar):
     if num_scalar > 0: 
-        return "    val scalar_io = HeterogeneousBag(scalar_io_dataWidths.map(w => Input(UInt(w))))\n"
+        return "    val scalar_io = HeterogeneousBag(scalar_io_dataWidths.map(w => Input(UInt(w.W))))\n"
     else:
         return ""
 
@@ -150,14 +150,14 @@ def generate_rocc_ap_return_stmt(outputs):
     if 'ap_return' in list(outputs.keys()): 
         return "val ap_return = accel.io.ap.rtn\n"
     else:
-        return "val ap_return = UInt(4)\n"
+        return "val ap_return = UInt(4.W)\n"
 
 
 def generate_vals(io, width):
     if width == 1:
         val = "{}(Bool())".format(io)
     else: 
-        val = "{}(UInt({}))".format(io, width) 
+        val = "{}(UInt({}.W))".format(io, width) 
     return val
 
 

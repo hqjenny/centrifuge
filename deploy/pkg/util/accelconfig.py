@@ -58,7 +58,8 @@ class AccelConfig:
         self.accel_json_path = accel_json_path
         self.chipyard_dir = chipyard_dir
         self.centrifuge_dir = centrifuge_dir
-
+        
+        self.sims_dir = self.chipyard_dir / 'sims'
         self.chipyard_scala_dir = self.chipyard_dir / 'generators' / 'chipyard' / 'src' / 'main' / 'scala' 
         self.firechip_scala_dir = self.chipyard_dir / 'generators' / 'firechip' / 'src' / 'main' / 'scala'
         self.accel_name = self.accel_json_path.stem
@@ -79,8 +80,8 @@ class AccelConfig:
         self.TARGET_CONFIG = self.accel_name + 'HLSFireSimRocketChipConfig'
         self.PLATFORM_CONFIG='BaseF1Config_F90MHz'
 
-        self.CONFIG = self.accel_name + 'HLSRocketConfig'
-        self.TOP = self.accel_name + 'TopWithHLS'
+        self.CONFIG = 'HLSRocketConfig'
+        self.TOP = 'Top'
 
 
     def __str__(self):

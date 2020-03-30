@@ -1,5 +1,3 @@
-
-
 import subprocess
 import random
 import logging
@@ -29,6 +27,7 @@ def modify_verilog(accel):
     for verilog_file in verilog_files:
         util.replace_str(verilog_file, '$readmemh("', "$readmemh(\"{}/".format(str(verilog_dir)))
         util.replace_str(verilog_file, "'bx", "1'b0")
+
 
 def generate_hls_tcl(accel):
     """Generate TCL script to run Vivado HLS"""
