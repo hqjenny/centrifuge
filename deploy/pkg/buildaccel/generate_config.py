@@ -68,21 +68,8 @@ def generate_config(accel_conf):
     util.generate_file(template_path, config_dict, output_path)
     logger.info("\t\tGenerate Top.scala: {}".format(output_path))
 
-
-    firesim_str ="""package firesim.firesim
-
-import java.io.File
-
-import chisel3._
-import chisel3.util.{log2Up}
-import freechips.rocketchip.config.{Parameters, Config}
-class HLSFireSimRocketChipConfig extends Config(
-    new WithDefaultFireSimBridges ++
-    new WithDefaultMemModel ++
-    new WithFireSimConfigTweaks ++
-    new chipyard.HLSRocketConfig)
-"""
+    d = {}
+    template_path = template_dir / 'HLSTargetConfig_scala_template'
     output_path = accel_conf.firechip_scala_dir / 'HLSTargetConfig.scala'
-    with open(output_path, 'w') as f:
-        f.write(firesim_str)
-
+    util.generate_file(template_path, d, output_path)
+    logger.info("\t\tGenerate HLSTargetConfig.scala: {}".format(output_path))

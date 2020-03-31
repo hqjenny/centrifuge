@@ -19,7 +19,7 @@ def compile_sim_cmd(accel_conf, simulator, cmd=""):
     clean_str = "";
     
     sims_dir = accel_conf.sims_dir / simulator
-    cmd = "make {} CONFIG={} TOP={}".format(cmd, accel_conf.CONFIG, accel_conf.TOP);
+    cmd = "make {} CONFIG={} TOP={}".format(cmd, accel_conf.CONFIG, accel_conf.TOP)
     logger.info("\t\tCompiling {} Simulation in {}".format(simulator, sims_dir))
     logger.info("\t\tCommand: {}".format(cmd))
 
@@ -69,7 +69,3 @@ def run_vcs(accel_conf, subtask, bm_sw_path):
 
 def run_verilator(accel_conf, subtask, bm_sw_path):
     run_sim(accel_conf, 'verilator', subtask, bm_sw_path)
-
-
-def run_firesim(accel_conf):
-    pass

@@ -69,6 +69,7 @@ Options:
         chisel -- Generate CHISEL wrapper
         build_sbt -- Generate build.sbt
         config -- Generate HLSConfig.scala file under chipyard
+        f1_scripts -- Generate scripts to run FireSim on Amazon F1 FPGAs
 
     generate_sw
         bm -- Generate baremetal wrappers 
@@ -76,6 +77,17 @@ Options:
     run_firesim
         f1_scripts -- Regenerate scripts for including HLS generated Verilog in FireSim
         xsim_scripts -- Regenerate scripts for including HLS generated Verilog in FireSim XSim
+        build/build_recipes/hwdb/runtime -- Generate corresponding example FireSim configurations 
+        task -- Run FireSim task with generated configurations. 
+                Options:
+                        buildafi/shareagfi/launchrunfarm/terminaterunfarm/infrasetup/boot/kill/runworkload/runcheck
+
+        if --subtask/-t is not specifed, will run 
+            fl_scripts
+            build_recipes
+            build
+            hwdb
+            runtime
 
     run_vcs / run_verilator
         clean -- Clean the simulation files
@@ -92,6 +104,22 @@ Options:
 
 """,
                         )
+
+    parser.add_argument('--with_nic', help='FireSim Config with NIC',
+        action='store_true')
+    parser.add_argument('--s3_bucket', help='FireSim S3 Bucket Name',
+        type=str,
+        default='firesim-978989785248')
+    parser.add_argument('--agfi', help='FireSim AGFI ID',
+        type=str,
+        default='PLACEHOLDER')
+    parser.add_argument('--workload', help='FireSim SW Workload Definition JSON',
+        type=str,
+        default='PLACEHOLDER')
+    parser.add_argument('-a', '--firesim_task', help='FireSim Task',
+        type=str)
+
+
 
     argcomplete.autocomplete(parser)
     return parser.parse_args()
@@ -141,6 +169,8 @@ def main(args):
         buildaccel.run_vcs(accel_config, args.subtask, args.swfile)
     elif args.task == 'run_verilator':
         buildaccel.run_verilator(accel_config, args.subtask)
+    elif args.task == 'run_firesim':
+        buildaccel.run_firesim(accel_config, args)
     else:
         print("Command: " + str(args.task) + " not yet implemented")
         raise NotImplementedError()

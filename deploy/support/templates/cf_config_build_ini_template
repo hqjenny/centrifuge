@@ -1,0 +1,22 @@
+# BUILDTIME/AGFI management configuration for the FireSim Simulation Manager
+# See docs/Advanced-Usage/Manager/Manager-Configuration-Files.rst for documentation of all of these params.
+
+[afibuild]
+
+s3bucketname=${S3_BUCKET_NAME}
+buildinstancemarket=ondemand
+spotinterruptionbehavior=terminate
+spotmaxprice=ondemand
+postbuildhook=
+
+[builds]
+# this section references builds defined in config_build_recipes.ini
+# if you add a build here, it will be built when you run buildafi
+${RECIPE}
+
+[agfistoshare]
+
+
+[sharewithaccounts]
+# somebodysname=123456789012
+
