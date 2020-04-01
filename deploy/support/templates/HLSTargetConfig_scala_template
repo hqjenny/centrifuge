@@ -30,7 +30,7 @@ import chipyard.config.ConfigValName._
 class WithHLSFireSimConfigTweaks extends Config(
   new WithBootROM ++ // needed to support FireSim-as-top
   new WithPeripheryBusFrequency(BigInt(3200000000L)) ++ // 3.2 GHz 
-  //new WithoutClockGating ++
+  new WithoutClockGating ++
   new WithTraceIO ++
   new freechips.rocketchip.subsystem.WithExtMemSize((1 << 30) * 16L) ++ // 16 GB
   new testchipip.WithTSI ++
@@ -42,5 +42,6 @@ class HLSFireSimRocketChipConfig extends Config(
     new WithDefaultFireSimBridges ++
     new WithDefaultMemModel ++
     new WithHLSFireSimConfigTweaks ++
-    new chipyard.HLSRocketConfig)
+    new chipyard.HLSRocketConfig
+)
 
