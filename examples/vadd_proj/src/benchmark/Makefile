@@ -1,4 +1,4 @@
-include ../common.mk
+include ../../common.mk
 
 LDFLAGS=-lvadd_tl_$(SUFFIX) -lvadd_rocc_$(SUFFIX) -L../../../../libcf/lib -lcf_$(SUFFIX)
 INCLUDE=-I../../../../libcf/include 

@@ -1,8 +1,8 @@
-include ../../common.mk
+include ../../../common.mk
 
 INCLUDE=-I../../../../../libcf/include
 
-LIB=libvadd_tl.$(SUFFIX).a
+LIB=libvadd_tl_$(SUFFIX).a
 LIB_SRCS=vadd_tl.c
 LIB_OBJS=$(patsubst %.c,%.$(SUFFIX).o,$(LIB_SRCS))
 

@@ -1,11 +1,13 @@
+include common.mk
+
 TL_ACCEL_DIR=src/hls/vadd_tl
-TL_ACCEL_LIB=$(TL_ACCEL_DIR)/libvadd_tl.a
+TL_ACCEL_LIB=$(TL_ACCEL_DIR)/libvadd_tl_$(SUFFIX).a
 
 ROCC_ACCEL_DIR=src/hls/vadd_rocc
-ROCC_ACCEL_LIB=$(ROCC_ACCEL_DIR)/libvadd_rocc.a
+ROCC_ACCEL_LIB=$(ROCC_ACCEL_DIR)/libvadd_rocc_$(SUFFIX).a
 
 BENCHMARK_DIR=src/benchmark
-BENCHMARK=$(BENCHMARK_DIR)/vadd
+BENCHMARK=$(BENCHMARK_DIR)/vadd.$(SUFFIX)
 
 hardware: vadd_soc.json
 	centrifuge generate_hw -c vadd_soc.json
@@ -23,13 +25,15 @@ clean_wrappers:
 bench: $(BENCHMARK)
 
 $(BENCHMARK): $(TL_ACCEL_LIB) $(ROCC_ACCEL_LIB)
-	make -C $(BENCHMARK_DIR) vadd
+	make -C $(BENCHMARK_DIR) $(notdir $@)
 
 $(TL_ACCEL_LIB):
-	make -C $(TL_ACCEL_DIR) libvadd_tl.a
+	make -C $(TL_ACCEL_DIR) $(notdir $@)
 
 $(ROCC_ACCEL_LIB):
-	make -C $(ROCC_ACCEL_DIR) libvadd_rocc.a
+	make -C $(ROCC_ACCEL_DIR) $(notdir $@)
 
-clean: clean_hw clean_sw
-	
+clean:
+	make -C $(BENCHMARK_DIR) clean 
+	make -C $(TL_ACCEL_DIR) clean 
+	make -C $(ROCC_ACCEL_DIR) clean
