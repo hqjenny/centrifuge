@@ -5,10 +5,14 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <string.h>
-#include <sys/mman.h>
 #include "centrifuge.h"
 #include "os_utils.h"
 
+#ifdef CF_LINUX
+#include <sys/mman.h>
+#endif
+
+#if defined(CF_LINUX) && defined(CF_ACCEL)
 cf_ctl_t cf_init(uintptr_t gpio_base)
 {
     cf_ctl_t ctl;
@@ -32,7 +36,9 @@ cf_ctl_t cf_init(uintptr_t gpio_base)
     close(fd);
     return ctl;
 }
+#endif
 
+#ifdef CF_LINUX
 cf_buf_t cf_malloc(size_t size)
 {
     cf_buf_t b = (cf_buf_t){0};
@@ -80,3 +86,4 @@ void cf_free(cf_buf_t b)
 {
     munmap(b.vaddr, b.size);
 }
+#endif

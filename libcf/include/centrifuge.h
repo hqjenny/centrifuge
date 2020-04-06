@@ -21,7 +21,7 @@ typedef struct cf_buf {
 
 //cf_init initializes centrifuge. This must be called once per tilelink
 //accelerator before interacting with other centrifuge utilities or wrappers.
-#ifdef CF_LINUX
+#if defined(CF_LINUX) && defined(CF_ACCEL)
 cf_ctl_t cf_init(uintptr_t mmio_base);
 #else
 // bare-metal applications don't need to register anything (everything is
