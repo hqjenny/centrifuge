@@ -1,29 +1,27 @@
-CFLAGS += --std=gnu99
-ifeq ($(ARCH),riscv)
-	CC=riscv64-unknown-linux-gnu-gcc
-	CFLAGS += -DRISCV
-else
-	CC=gcc
-endif
+include ../../common.mk
 
 INCLUDE=-I../../../../../libcf/include
 
-LIB=libvadd_tl.a
-TEST=vadd_tl_test
+LIB=libvadd_tl.$(SUFFIX).a
+LIB_SRCS=vadd_tl.c
+LIB_OBJS=$(patsubst %.c,%.$(SUFFIX).o,$(LIB_SRCS))
 
+TEST=vadd_tl_test.$(SUFFIX)
+TEST_SRCS=vadd_tl_test.c vadd_tl.c
+TEST_OBJS=$(patsubst %.c,%.$(SUFFIX).o,$(TEST_SRCS))
 
 all: $(LIB) $(TEST)
 
-$(TEST): vadd_tl.o vadd_tl_test.o
+$(TEST): $(TEST_OBJS) 
 	$(CC) $(CFLAGS) $(INCLUDE) $^ -o $@
 
-$(LIB): vadd_tl.o
+$(LIB): $(LIB_OBJS) 
 	ar rcs $@ $^
 
-%.o: %.c
+%.$(SUFFIX).o: %.c
 	  $(CC) $(CFLAGS) $(INCLUDE) -c $< -o $@
 
 clean:
 	rm -f *.o
-	rm -f $(TEST) 
-	rm -f $(LIB)
+	rm -f libvadd_tl.*.a
+	rm -f vadd_tl_test.riscv_linux vadd_tl_test.riscv_bare vadd_tl_test.x86 

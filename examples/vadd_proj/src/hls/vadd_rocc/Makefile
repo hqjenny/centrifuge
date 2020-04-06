@@ -1,26 +1,27 @@
-CFLAGS += --std=gnu99
-ifeq ($(ARCH),riscv)
-	CC=riscv64-unknown-linux-gnu-gcc
-	CFLAGS += -DRISCV
-else
-	CC=gcc
-endif
+include ../../common.mk
 
-LIB=libvadd_rocc.a
-TEST=vadd_rocc_test
+INCLUDE=-I../../../../../libcf/include
+
+LIB=libvadd_rocc.$(SUFFIX).a
+LIB_SRCS=vadd_rocc.c
+LIB_OBJS=$(patsubst %.c,%.$(SUFFIX).o,$(LIB_SRCS))
+
+TEST=vadd_rocc_test.$(SUFFIX)
+TEST_SRCS=vadd_rocc_test.c vadd_rocc.c
+TEST_OBJS=$(patsubst %.c,%.$(SUFFIX).o,$(TEST_SRCS))
 
 all: $(LIB) $(TEST)
 
-$(TEST): vadd_rocc.o vadd_rocc_test.o
+$(TEST): $(TEST_OBJS) 
 	$(CC) $(CFLAGS) $(INCLUDE) $^ -o $@
 
-$(LIB): vadd_rocc.o
+$(LIB): $(LIB_OBJS) 
 	ar rcs $@ $^
 
-%.o: %.c
+%.$(SUFFIX).o: %.c
 	  $(CC) $(CFLAGS) $(INCLUDE) -c $< -o $@
 
 clean:
 	rm -f *.o
-	rm -f $(TEST) 
-	rm -f $(LIB)
+	rm -f libvadd_rocc.*.a
+	rm -f vadd_rocc_test.riscv_linux vadd_rocc_test.riscv_bare vadd_rocc_test.x86 

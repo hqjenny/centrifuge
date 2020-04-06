@@ -1,1 +1,3 @@
-vadd_tl_test
+vadd_tl_test.riscv_bare
+vadd_tl_test.riscv_linux
+vadd_tl_test.x86
