@@ -2,13 +2,13 @@ include ../../../common.mk
 
 INCLUDE=-I../../../../../libcf/include
 
-LIB=libvadd_rocc_$(SUFFIX).a
+LIB=libvadd_rocc.a
 LIB_SRCS=vadd_rocc.c
-LIB_OBJS=$(patsubst %.c,%.$(SUFFIX).o,$(LIB_SRCS))
+LIB_OBJS=$(patsubst %.c,%.o,$(LIB_SRCS))
 
-TEST=vadd_rocc_test.$(SUFFIX)
+TEST=vadd_rocc_test
 TEST_SRCS=vadd_rocc_test.c vadd_rocc.c
-TEST_OBJS=$(patsubst %.c,%.$(SUFFIX).o,$(TEST_SRCS))
+TEST_OBJS=$(patsubst %.c,%.o,$(TEST_SRCS))
 
 all: $(LIB) $(TEST)
 
@@ -18,7 +18,7 @@ $(TEST): $(TEST_OBJS)
 $(LIB): $(LIB_OBJS) 
 	ar rcs $@ $^
 
-%.$(SUFFIX).o: %.c
+%.o: %.c
 	  $(CC) $(CFLAGS) $(INCLUDE) -c $< -o $@
 
 clean:

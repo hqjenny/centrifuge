@@ -19,3 +19,6 @@ CC=gcc
 CFLAGS += -DCF_LINUX
 endif
 
+ifdef $(CF_ACCEL)
+	SUFFIX=$(SUFFIX)_accel
+endif
