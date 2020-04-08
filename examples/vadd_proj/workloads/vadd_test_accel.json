@@ -3,8 +3,8 @@
     "workdir": ".",
     "base": "cf-buildroot.json",
     "host-init" : "build_vadd.sh",
-    "files": [["../src/benchmark/vadd", "/root/"]],
-    "command" : "/root/vadd",
+    "files": [["../src/benchmark/vadd.riscv_bare", "/root/"]],
+    "command" : "/root/vadd.riscv_bare",
     "testing" : {
         "refDir" : "testOutput/vadd_test"
     }
