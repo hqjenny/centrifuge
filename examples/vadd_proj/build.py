@@ -3,6 +3,7 @@ import pathlib
 import subprocess as sp
 import shutil
 import argparse
+import os
 
 """Build the various libraries and benchmarks for the example vadd project."""
 
@@ -10,7 +11,7 @@ buildDir = pathlib.Path("./build")
 srcDirs = {
         "tl_base" : pathlib.Path("src/hls/vadd_tl"),
         "rocc_base" : pathlib.Path("src/hls/vadd_rocc"),
-        "tl_wrapper" : pathlib.Path("centrifuge_wrappers/tl0_vadd_tl_vadd"),
+        "tl_wrapper" : pathlib.Path("centrifuge_wrappers/tl0_vadd_tl_vadd_tl"),
         "rocc_wrapper" : pathlib.Path("centrifuge_wrappers/rocc0_vadd_rocc_vadd_rocc"),
         "benchmark" : pathlib.Path("src/benchmark")
         }
@@ -55,6 +56,10 @@ def install(opts: buildOpts, objPath):
     shutil.copy(objPath, dstPath)
 
 if __name__ == "__main__":
+    # This script uses lots of relative paths, it's safest to run from where
+    # the file is stored.
+    os.chdir(pathlib.Path(__file__).parent)
+
     parser = argparse.ArgumentParser(
             description="Build the example vadd project for different architectures and configurations.")
     parser.add_argument('--arch', '-a', help="Architecture to target.", choices=['x86', 'riscv'], default='x86')
@@ -89,5 +94,7 @@ if __name__ == "__main__":
         targets.pop('rocc_wrapper')
 
     for target in targets:
+        print("Building " + str(target) + " from: " + str(srcDirs[target]))
         make(opts, srcDirs[target], outputs[target].name)
+        print("")
         install(opts, outputs[target])

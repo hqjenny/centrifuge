@@ -1,10 +1,10 @@
 {
-    "name": "vadd_test",
+    "name": "vadd_test_baseline",
     "workdir": ".",
     "base": "cf-buildroot.json",
-    "host-init" : "build_vadd.sh",
-    "files": [["../src/benchmark/vadd.riscv_bare", "/root/"]],
-    "command" : "/root/vadd.riscv_bare",
+    "host-init" : "../build.py -a riscv",
+    "files": [["../build/vadd_riscv_linux", "/root/"]],
+    "command" : "/root/vadd_riscv_linux",
     "testing" : {
         "refDir" : "testOutput/vadd_test"
     }

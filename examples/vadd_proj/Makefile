@@ -6,7 +6,7 @@ TL_BASE_LIB=$(TL_BASE_DIR)/libvadd_tl.a
 ROCC_BASE_DIR=src/hls/vadd_rocc
 ROCC_BASE_LIB=$(ROCC_BASE_DIR)/libvadd_rocc.a
 
-TL_WRAPPER_DIR=centrifuge_wrappers/tl0_vadd_tl_vadd
+TL_WRAPPER_DIR=centrifuge_wrappers/tl0_vadd_tl_vadd_tl
 TL_WRAPPER_LIB=$(TL_WRAPPER_DIR)/libvadd_tl_accel.a
 
 ROCC_WRAPPER_DIR=centrifuge_wrappers/rocc0_vadd_rocc_vadd_rocc
@@ -27,8 +27,8 @@ clean_hardward:
 
 wrappers: vadd_soc.json
 	centrifuge generate_sw -c vadd_soc.json
-	cd $(ROCC_WRAPPER_DIR) && ln -s ../../wrapper.mk Makefile
-	cd $(TL_WRAPPER_DIR) && ln -s ../../wrapper.mk Makefile
+	cd $(ROCC_WRAPPER_DIR) && ln -sf ../../wrapper.mk Makefile
+	cd $(TL_WRAPPER_DIR) && ln -sf ../../wrapper.mk Makefile
 
 clean_wrappers:
 	rm -rf centrifuge_wrappers

@@ -35,7 +35,11 @@ int test_rocc(int *c, int *a, int *b, int len) {
     }
 
     uint64_t begin, end, dur;
+#ifdef CF_ACCEL
+    vadd_rocc_cf_accel(length_a, b_c); 
+#else
     vadd_rocc(length_a, b_c); 
+#endif
 
     // Get output into form expected by test
     for(int i = 0; i < len; i++){
@@ -47,7 +51,11 @@ int test_rocc(int *c, int *a, int *b, int len) {
 
 int test_tl(cf_ctl_t *ctl, cf_buf_t *c, cf_buf_t *a, cf_buf_t *b, int len)
 {
-  cf_vadd_tl(ctl, a, b, c, len);
+#ifdef CF_ACCEL
+  vadd_tl_cf_accel(ctl, a, b, c, len);
+#else
+  vadd_tl_cf_em(ctl, a, b, c, len);
+#endif
   return 0;
 }
 
@@ -57,12 +65,12 @@ int main(int argc, char *argv[])
 
     /*=========================================================================
      * MEMORY ALLOCATION
-     *=======================================================================*/
+    *=======================================================================*/
 #ifdef CF_LINUX
     // Dynamically allocate memory that is compatible with tilelink.
-    a = cf_malloc(LENGTH);
-    b = cf_malloc(LENGTH);
-    tl_out = cf_malloc(LENGTH);
+    a = cf_malloc(LENGTH*sizeof(int));
+    b = cf_malloc(LENGTH*sizeof(int));
+    tl_out = cf_malloc(LENGTH*sizeof(int));
 #else
     //Allocate bare-metal buffers on the stack. This only works with
     //direct-mapped memory (no virtual memory).
@@ -70,7 +78,7 @@ int main(int argc, char *argv[])
     int tl_out_buf[LENGTH] = {0};
 
     a = cf_buf_init((uint8_t*)abuf, LENGTH);
-    b = cf_buf_init((uint8_t*)abuf, LENGTH);
+    b = cf_buf_init((uint8_t*)bbuf, LENGTH);
     tl_out = cf_buf_init((uint8_t*)tl_out_buf, LENGTH);
 #endif //CF_LINUX
 
@@ -80,7 +88,6 @@ int main(int argc, char *argv[])
     // rocc-only memory can be allocated however you please, it respects
     // virtual memory and has no additional restrictions.
     int rocc_out[LENGTH] = {0};
-
     int golden_out[LENGTH] = {0};
 
     for(int i = 0; i < LENGTH; i++){
@@ -101,7 +108,7 @@ int main(int argc, char *argv[])
       printf("Test Failure: rocc output does not match\n");
       printf("Expected:\n");
       print_vec(golden_out, LENGTH);
-      printf("Got:\n");
+      printf("\nGot:\n");
       print_vec(rocc_out, LENGTH);
       return EXIT_FAILURE;
     }
@@ -121,8 +128,9 @@ int main(int argc, char *argv[])
       printf("Test Failure: tilelink output does not match\n");
       printf("Expected:\n");
       print_vec(golden_out, LENGTH);
-      printf("Got:\n");
+      printf("\nGot:\n");
       print_vec((int*)(tl_out.vaddr), LENGTH);
+      printf("\n");
       return EXIT_FAILURE;
     }
 

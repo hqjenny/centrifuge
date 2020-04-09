@@ -295,13 +295,13 @@ def generateSW(accels):
     accels.gensw_dir.mkdir(exist_ok=True)
 
     for accel in accels.rocc_accels:
-        headerName = accel.name + '_rocc_wrapper.h'
+        headerName = accel.name + '_wrapper.h'
         inputs, retVal = parseVerilogRocc(accel.verilog_dir / (accel.name + ".v"))
         cWrapper, hWrapper = generateWrapperRocc(accel.func, accel.rocc_insn_id, inputs, retVal, headerName)
         accel.wrapper_dir = accels.gensw_dir / accel.name 
         accel.wrapper_dir.mkdir(exist_ok=True)
 
-        cPath = accel.wrapper_dir / (accel.name + '_rocc_wrapper.c')
+        cPath = accel.wrapper_dir / (accel.name + '_wrapper.c')
         if cPath.exists():
             cPath.unlink()
         with open(cPath , 'w') as cF:
@@ -314,13 +314,13 @@ def generateSW(accels):
             hF.write(hWrapper)
 
     for accel in accels.tl_accels:
-        headerName = accel.name + '_tl_wrapper.h'
+        headerName = accel.name + '_wrapper.h'
         funcArgs, retVal = parseVerilogTL(accel.verilog_dir / (accel.name + "_control_s_axi.v"))
         cWrapper, hWrapper = generateWrapperTL(accel.func, accel.base_addr, funcArgs, retVal, headerName)
         accel.wrapper_dir = accels.gensw_dir / accel.name
         accel.wrapper_dir.mkdir(exist_ok=True)
 
-        cPath = accel.wrapper_dir / (accel.name + '_tl_wrapper.c')
+        cPath = accel.wrapper_dir / (accel.name + '_wrapper.c')
         if cPath.exists():
             cPath.unlink()
         with open(cPath , 'w') as cF:

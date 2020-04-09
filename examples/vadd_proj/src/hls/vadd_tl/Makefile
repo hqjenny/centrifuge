@@ -23,5 +23,5 @@ $(LIB): $(LIB_OBJS)
 
 clean:
 	rm -f *.o
-	rm -f libvadd_tl.*.a
-	rm -f vadd_tl_test.riscv_linux vadd_tl_test.riscv_bare vadd_tl_test.x86 
+	rm -f libvadd_tl.a
+	rm -f vadd_tl_test 

@@ -36,9 +36,7 @@ cf_ctl_t cf_init(uintptr_t gpio_base)
     close(fd);
     return ctl;
 }
-#endif
 
-#ifdef CF_LINUX
 cf_buf_t cf_malloc(size_t size)
 {
     cf_buf_t b = (cf_buf_t){0};

@@ -20,7 +20,7 @@ int vadd_tl(int * a, int * b, int* c, int length);
 // baseline implementations.
 // NOTE: this is not required by centrifuge, it is purely for the convenience
 // of our benchmark application.
-static inline int cf_vadd_tl(cf_ctl_t *ctl, cf_buf_t *a, cf_buf_t *b, cf_buf_t *c, int length) {
+static inline int vadd_tl_cf_em(cf_ctl_t *ctl, cf_buf_t *a, cf_buf_t *b, cf_buf_t *c, int length) {
     return vadd_tl((int*)a->vaddr, (int*)b->vaddr, (int*)c->vaddr, length);
 }
 
