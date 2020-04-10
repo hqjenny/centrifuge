@@ -1,0 +1,11 @@
+{
+    "name": "vadd_test_accel",
+    "workdir": ".",
+    "base": "cf-buildroot.json",
+    "host-init" : "../build.py -a riscv --accel",
+    "files": [["../build/vadd_riscv_linux_accel", "/root/"]],
+    "command" : "/root/vadd_riscv_linux_accel",
+    "testing" : {
+        "refDir" : "testOutput/vadd_test"
+    }
+}
