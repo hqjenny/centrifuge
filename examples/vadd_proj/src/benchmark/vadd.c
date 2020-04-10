@@ -2,8 +2,14 @@
 #include<stdint.h>
 #include<stdlib.h>
 #include <centrifuge.h>
+
+#ifdef CF_ACCEL
+#include "tl0_vadd_tl_vadd_tl_wrapper.h"
+#include "rocc0_vadd_rocc_vadd_rocc_wrapper.h"
+#else
 #include "vadd_rocc.h"
 #include "vadd_tl.h"
+#endif
 
 #define LENGTH 80
 void print_vec(int* vec, int length){
@@ -36,9 +42,9 @@ int test_rocc(int *c, int *a, int *b, int len) {
 
     uint64_t begin, end, dur;
 #ifdef CF_ACCEL
-    vadd_rocc_cf_accel(length_a, b_c); 
+    vadd_rocc_cf_accel((uint64_t)length_a, (uint64_t)b_c); 
 #else
-    vadd_rocc(length_a, b_c); 
+    vadd_rocc_em((uint64_t)length_a, (uint64_t)b_c); 
 #endif
 
     // Get output into form expected by test
@@ -51,10 +57,15 @@ int test_rocc(int *c, int *a, int *b, int len) {
 
 int test_tl(cf_ctl_t *ctl, cf_buf_t *c, cf_buf_t *a, cf_buf_t *b, int len)
 {
+    /* NOTE: libcf integration with wrapper generation doesn't work quite yet
+     * so we are falling back to a more direct approach (that will only work on
+     * bare metal in accelerated mode. */
 #ifdef CF_ACCEL
-  vadd_tl_cf_accel(ctl, a, b, c, len);
+    /* vadd_tl_cf_accel(ctl, a, b, c, len); */
+    vadd_tl_cf_accel((uint64_t)a->vaddr, (uint64_t)b, (uint64_t)c, len);
 #else
-  vadd_tl_cf_em(ctl, a, b, c, len);
+    /* vadd_tl_cf_em(ctl, a, b, c, len); */
+    vadd_tl_cf_em((uint64_t)a->vaddr, (uint64_t)b, (uint64_t)c, len);
 #endif
   return 0;
 }

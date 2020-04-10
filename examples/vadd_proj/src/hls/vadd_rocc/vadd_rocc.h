@@ -6,4 +6,7 @@
 // length_a[1:] represents vector a.
 int vadd_rocc(int* length_a, int* b_c);
 
+static inline uint64_t vadd_rocc_cf_em(uint64_t length_a, uint64_t b_c) {
+    return (uint64_t)vadd_rocc((int*)length_a, (int*)b_c);
+}
 #endif

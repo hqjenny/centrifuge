@@ -2,7 +2,7 @@ COMMON_PATH=../..
 include $(COMMON_PATH)/common.mk
 
 LDFLAGS += -L$(COMMON_PATH)/build/ -lvadd_tl_$(SUFFIX) -lvadd_rocc_$(SUFFIX) -lcf_$(SUFFIX)
-INCLUDES += -I../../centrifuge_wrappers/rocc0_vadd_vadd_rocc/ -I../../centrifuge_wrappers/tl0_vadd_tl_vadd_tl/
+INCLUDES += -I../../centrifuge_wrappers/rocc0_vadd_rocc_vadd_rocc/ -I../../centrifuge_wrappers/tl0_vadd_tl_vadd_tl/
 INCLUDES += -I../hls/vadd_rocc/ -I../hls/vadd_tl/
 
 BENCH=vadd
