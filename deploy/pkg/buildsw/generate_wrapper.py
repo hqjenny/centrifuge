@@ -163,7 +163,7 @@ def generateWrapperRocc(fname, roccIdx, inputs, retVal, hName):
     else:
         retStr = "void"
 
-    signature += retStr + " " + fname + "cf_accel("
+    signature += retStr + " " + fname + "_cf_accel("
     argStrs = []
     for arg in inputs:
         argStrs.append("uint64_t " + arg)

@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <limits.h>
 #include <sys/signal.h>
-#include "util.h"
+#include "baremetal_util.h"
 
 #define SYS_write 64
 

@@ -1,6 +1,7 @@
-include ../../../common.mk
-
-INCLUDE=-I../../../../../libcf/include
+# This must be defined before including common.mk so that it knows how to
+# construct relative paths
+COMMON_PATH=../../..
+include $(COMMON_PATH)/common.mk
 
 LIB=libvadd_tl.a
 LIB_SRCS=vadd_tl.c
@@ -13,13 +14,13 @@ TEST_OBJS=$(patsubst %.c,%.o,$(TEST_SRCS))
 all: $(LIB) $(TEST)
 
 $(TEST): $(TEST_OBJS) 
-	$(CC) $(CFLAGS) $(INCLUDE) $^ -o $@
+	$(CC) $(CFLAGS) $(INCLUDES) $(LDFLAGS) $^ -o $@
 
 $(LIB): $(LIB_OBJS) 
 	ar rcs $@ $^
 
 %.o: %.c
-	  $(CC) $(CFLAGS) $(INCLUDE) -c $< -o $@
+	  $(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 clean:
 	rm -f *.o

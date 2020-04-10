@@ -4,12 +4,12 @@ LIB_SRCS=centrifuge.c os_utils.c
 
 TEST_SRCS=libcf_test.c
 
-INCLUDES=-I../include
+INCLUDES=-I../../include
 
 ifeq ($(ARCH),riscv)
 
 ifeq ($(HOST),baremetal) # RISCV BAREMETAL
-SUFFIX=riscv_bare
+SUFFIX=riscv_baremetal
 CC=riscv64-unknown-elf-gcc
 CFLAGS+=-mcmodel=medany -fno-common -fno-builtin-printf -DRISCV -static
 
@@ -23,6 +23,11 @@ else #x86 LINUX
 SUFFIX=x86
 CC=gcc
 CFLAGS += -DCF_LINUX
+endif
+
+ifdef ACCEL
+CFLAGS += -DCF_ACCEL
+SUFFIX:=$(SUFFIX)_accel
 endif
 
 LIB=libcf_$(SUFFIX).a
@@ -51,7 +56,7 @@ $(LIB): $(LIB_OBJS)
 
 .PHONY: install
 install: $(LIB)
-	cp $(LIB) ../lib/
+	cp $(LIB) ../../lib/
 
 .PHONY: clean
 clean:
