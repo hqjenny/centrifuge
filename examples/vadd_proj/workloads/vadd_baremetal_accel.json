@@ -1,0 +1,10 @@
+{
+    "name" : "vadd_riscv_baremetal_accel",
+    "workdir" : ".",
+    "base" : "bare",
+    "host-init" : "../build.py -a riscv -s baremetal --accel",
+    "bin" : "../build/vadd_riscv_baremetal_accel",
+    "testing" : {
+        "refDir" : "testOutput/riscv_baremetal_accel"
+    }
+}

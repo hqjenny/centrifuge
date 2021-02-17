@@ -29,15 +29,17 @@ class MmioArg():
         else:
             raise RuntimeError("Unsupported variable size: " + str(self.size))
 
-def generateHeader(signature):
+def generateHeader(fname, body):
     """Given the signature of the accelerated function, return an appropriate
     header file. """
 
-    header = ("#ifndef ACCEL_WRAPPER_H\n"
-              "#define ACCEL_WRAPPER_H\n")
+    prefix = fname.upper().replace("-", "_") + "_"
+    header = ("#ifndef " + prefix + "WRAPPER_H\n"
+              "#define " + prefix + "WRAPPER_H\n")
 
     header += '\n'
-    header += signature + ";\n"
+    header += body + "\n"
+    # header += signature + ";\n"
     header += "#endif"
     return header
 
@@ -135,7 +137,7 @@ def parseVerilogTL(vpath):
 
         return (list(args.values()), retVal)
 
-def generateWrapperRocc(fname, roccIdx, inputs, retVal):
+def generateWrapperRocc(fname, roccIdx, inputs, retVal, hName):
     """Returns a Rocc C wrapper given a function.
     
     fname - name of the function
@@ -148,8 +150,8 @@ def generateWrapperRocc(fname, roccIdx, inputs, retVal):
 
     cWrapper = ('#include "rocc.h"\n'
                 '\n'
-                '#define ACCEL_WRAPPER\n'
-                '#include "accel.h"\n'
+                '#define ' + fname.upper().replace("-", "_") + '_WRAPPER\n'
+                '#include ' + '"' + hName + '"\n'
                 '\n')
 
     cWrapper += ident(lvl) + "#define XCUSTOM_ACC " + str(roccIdx) + "\n"
@@ -161,7 +163,7 @@ def generateWrapperRocc(fname, roccIdx, inputs, retVal):
     else:
         retStr = "void"
 
-    signature += retStr + " " + fname + "("
+    signature += retStr + " " + fname + "_cf_accel("
     argStrs = []
     for arg in inputs:
         argStrs.append("uint64_t " + arg)
@@ -202,9 +204,9 @@ def generateWrapperRocc(fname, roccIdx, inputs, retVal):
 
     cWrapper += "}"
 
-    return cWrapper, generateHeader(signature)
+    return cWrapper, generateHeader(fname, signature + ";")
 
-def generateWrapperTL(fname, baseAddr, args, retVal):
+def generateWrapperTL(fname, baseAddr, args, retVal, hname):
     """Given a set of mmio address/varialble pairs, produce the C wrapper
     (returned as a string).
 
@@ -214,19 +216,24 @@ def generateWrapperTL(fname, baseAddr, args, retVal):
     args: List of MmioArg representing the function inputs
     """
 
+    # Prefix to append to all macro constants in the wrapper (note that dashes
+    # are illegal in macro names so they are converted to underscore)
+    def constPrefix(suffix):
+        return "CF_" + fname.upper().replace("-", "_") + "_" + suffix
+
     cWrapper = ('#include "mmio.h"\n'
-                '#define ACCEL_WRAPPER\n'
-                '#include "accel.h"\n'
+                '#define ' + constPrefix("WRAPPER") + "\n"
+                '#include ' + '"' + hname + '"\n'
                 '\n'
                 '#define AP_DONE_MASK 0b10\n')
 
     # MMIO Constants
-    cWrapper += "#define ACCEL_BASE " + str(baseAddr) + "\n"
-    cWrapper += "#define ACCEL_INT 0x4\n"
+    cWrapper += "#define " + constPrefix("BASE") + " " + str(baseAddr) + "\n"
+    cWrapper += "#define " + constPrefix("INT") + " 0x4\n"
     for arg in args + ([retVal] if retVal is not None else []):
-        cWrapper += "#define ACCEL_"+arg.name+"_0 "+ hex(arg.addr) + "\n"
+        cWrapper += "#define " + constPrefix(arg.name) + "_0 "+ hex(arg.addr) + "\n"
         if arg.size == 2:
-            cWrapper += "#define ACCEL_"+arg.name+"_1 " + hex(arg.addr + 0x4) + "\n"
+            cWrapper += "#define " + constPrefix(arg.name) + "_1 " + hex(arg.addr + 0x4) + "\n"
     cWrapper += "\n"
 
     # Create the function signature
@@ -236,7 +243,7 @@ def generateWrapperTL(fname, baseAddr, args, retVal):
     else:
         retStr = retVal.cType()
 
-    signature += retStr + " " + fname + "("
+    signature += retStr + " " + fname + "_cf_accel("
     argStrs = []
     for arg in args:
         argStrs.append(arg.cType() + " " + arg.name)
@@ -248,33 +255,36 @@ def generateWrapperTL(fname, baseAddr, args, retVal):
 
     # Pass Args to MMIO
     cWrapper += "    //Disable Interrupts\n"
-    cWrapper += "    reg_write32(ACCEL_BASE + ACCEL_INT, 0x0);\n"
+    cWrapper += "    reg_write32(" + constPrefix("BASE") + " + " + constPrefix("INT") + ", 0x0);\n"
     for arg in args:
-        cWrapper += "    reg_write32(ACCEL_BASE + ACCEL_"+arg.name+"_0, (uint32_t) "+arg.name+");\n"
+        cWrapper += "    reg_write32(" + constPrefix("BASE") + " + " + constPrefix(arg.name) + "_0, (uint32_t) " + arg.name + ");\n"
         if arg.size == 2:
-            cWrapper += "    reg_write32(ACCEL_BASE + ACCEL_"+arg.name+"_1, (uint32_t) ("+arg.name+" >> 32));\n"
+            cWrapper += "    reg_write32(" + constPrefix("BASE") + " + " + constPrefix(arg.name) + "_1, (uint32_t) (" + arg.name + " >> 32));\n"
 
     # Execute Accelerator
     cWrapper += ("    // Write to ap_start to start the execution \n"
-                 "    reg_write32(ACCEL_BASE, 0x1);\n"
+                 "    reg_write32(" + constPrefix("BASE") + ", 0x1);\n"
                  "\n"
                  "    // Done?\n"
                  "    int done = 0;\n"
                  "    while (!done){\n"
-                 "        done = reg_read32(ACCEL_BASE) & AP_DONE_MASK;\n"
+                 "        done = reg_read32(" + constPrefix("BASE") + ") & AP_DONE_MASK;\n"
                  "    }\n")
 
     # Handle returns (if any)
     if retVal is not None:
         cWrapper += "\n"
         cWrapper += "    " + retVal.cType() + " ret_val = 0;\n"
-        cWrapper += "    ret_val = reg_read32(ACCEL_BASE + ACCEL_"+retVal.name+"_0);\n"
+        cWrapper += "    ret_val = reg_read32(" + constPrefix("BASE") + " + " + constPrefix(retVal.name) + "_0);\n"
         if retVal.size == 2:
-            cWrapper += "    ret_val |= reg_read32(ACCEL_BASE + ACCEL_"+retVal.name+"_1) >> 32;\n"
+            cWrapper += "    ret_val |= reg_read32(" + constPrefix("BASE") + " + " + constPrefix(retVal.name) + "_1) >> 32;\n"
 
     cWrapper += "}"
 
-    return cWrapper, generateHeader(signature)
+    headBody = ("#define " + constPrefix("BASE") + " " + str(baseAddr) + "\n\n"
+            + signature + ";\n")
+
+    return cWrapper, generateHeader(fname, headBody)
 
 def generateSW(accels):
     """Generate all software wrappers for the specified set of accelerators (util.AccelConfig)"""
@@ -285,36 +295,38 @@ def generateSW(accels):
     accels.gensw_dir.mkdir(exist_ok=True)
 
     for accel in accels.rocc_accels:
+        headerName = accel.name + '_wrapper.h'
         inputs, retVal = parseVerilogRocc(accel.verilog_dir / (accel.name + ".v"))
-        cWrapper, hWrapper = generateWrapperRocc(accel.func, accel.rocc_insn_id, inputs, retVal)
+        cWrapper, hWrapper = generateWrapperRocc(accel.func, accel.rocc_insn_id, inputs, retVal, headerName)
         accel.wrapper_dir = accels.gensw_dir / accel.name 
         accel.wrapper_dir.mkdir(exist_ok=True)
 
-        cPath = accel.wrapper_dir / (accel.name + '_rocc_wrapper.c')
+        cPath = accel.wrapper_dir / (accel.name + '_wrapper.c')
         if cPath.exists():
             cPath.unlink()
         with open(cPath , 'w') as cF:
             cF.write(cWrapper)
 
-        hPath = accel.wrapper_dir / (accel.name + '_rocc_wrapper.h')
+        hPath = accel.wrapper_dir / headerName
         if hPath.exists():
             hPath.unlink()
         with open(hPath , 'w') as hF:
             hF.write(hWrapper)
 
     for accel in accels.tl_accels:
+        headerName = accel.name + '_wrapper.h'
         funcArgs, retVal = parseVerilogTL(accel.verilog_dir / (accel.name + "_control_s_axi.v"))
-        cWrapper, hWrapper = generateWrapperTL(accel.func, accel.base_addr, funcArgs, retVal)
+        cWrapper, hWrapper = generateWrapperTL(accel.func, accel.base_addr, funcArgs, retVal, headerName)
         accel.wrapper_dir = accels.gensw_dir / accel.name
         accel.wrapper_dir.mkdir(exist_ok=True)
 
-        cPath = accel.wrapper_dir / (accel.name + '_tl_wrapper.c')
+        cPath = accel.wrapper_dir / (accel.name + '_wrapper.c')
         if cPath.exists():
             cPath.unlink()
         with open(cPath , 'w') as cF:
             cF.write(cWrapper)
 
-        hPath = accel.wrapper_dir / (accel.name + '_tl_wrapper.h')
+        hPath = accel.wrapper_dir / headerName
         if hPath.exists():
             hPath.unlink()
         with open(hPath , 'w') as hF:
