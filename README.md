@@ -25,7 +25,7 @@ popd
 3) Set up the Centrifuge dependencies. 
 This sets up the required scripting packages and applies patches to existing tools. 
 ```
-./tools/centrifuge/scripts/hls-setup.sh
+source tools/centrifuge/scripts/hls-setup.sh
 ```
 
 ## 2. Running Centrifuge
