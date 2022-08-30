@@ -4,11 +4,12 @@
 1) Set up the Chipyard repo. For more Chipyard related info, 
 please refer to the Chipyard Tutorial (https://chipyard.readthedocs.io/en/latest/) 
 ```
-git clone https://github.com/hqjenny/chipyard.git
+git clone https://github.com/ucb-bar/chipyard.git
 cd chipyard
+git checkout tags/1.7.1
 ./scripts/init-submodules-no-riscv-tools.sh
-./scripts/build-toolchains.sh #
-source ./scripts/env.sh
+./scripts/build-toolchains.sh
+source ./env.sh
 ```
 
 2) (OPTIONAL for FPGA-accelerated simulation) Set up the FireSim repo. 
@@ -23,6 +24,12 @@ popd
 ```
 
 3) Set up the Centrifuge dependencies. 
+```
+mkdir -p tools 
+cd tools
+git clone https://github.com/hqjenny/centrifuge.git
+```
+
 This sets up the required scripting packages and applies patches to existing tools. 
 ```
 ./tools/centrifuge/scripts/hls-setup.sh
