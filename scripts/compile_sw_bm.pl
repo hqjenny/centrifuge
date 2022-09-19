@@ -16,9 +16,11 @@ sub compile_sw_bm{
     my @accel_tuples= @{$_[0]};
     my %tasks = %{$_[1]};
   
+    print("test\n");
     foreach my $accel_tuple_ref (@accel_tuples) {
       print($accel_tuple_ref);
       my @accel_tuple = @{$accel_tuple_ref};
+      print($accel_tuple[2]);
 
       my $pgm = $accel_tuple[0];
       my $func = $accel_tuple[1];

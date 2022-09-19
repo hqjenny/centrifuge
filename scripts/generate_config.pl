@@ -5,6 +5,7 @@ use Cwd;
 use File::Copy;
 
 sub generate_config {
+    print "line 8\n";
 
     my $rdir = $ENV{'RDIR'};
     print $rdir;

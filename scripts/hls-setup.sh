@@ -5,7 +5,7 @@
 
 # go to top-level dir
 pushd $(git rev-parse --show-toplevel)
-export RDIR=$(git rev-parse --show-toplevel)/../../
+export RDIR=$(git rev-parse --show-toplevel)
 
 # Set RDIR (path to top of firesim repo) globally since our scripts use it
 #sed -i 's/RDIR=/export RDIR=/' sourceme-f1-manager.sh
@@ -27,7 +27,7 @@ popd
 
 # Patch Generator.scala and Rocketchip Fragmentator code for HLS
 # pushd $RDIR/sim/src/main/scala
-# git apply $RDIR/hls/patches/Generator.scala.patch 
+# git apply $RDIR/hls/patches/Generator.scala.patch
 # cd $RDIR/sim/target-rtl/firechip/rocket-chip/src/main/scala
 # git apply $RDIR/hls/patches/Fragmenter.scala.patch
 # popd
@@ -40,12 +40,12 @@ popd
 
 # Enable custom instruction and loadable kernel modules on riscv-linux
 #pushd $RDIR/sw/firesim-software/riscv-linux
-#touch arch/riscv/include/asm/module.h && touch arch/riscv/kernel/module-sections.c && touch arch/riscv/kernel/module.lds   
+#touch arch/riscv/include/asm/module.h && touch arch/riscv/kernel/module-sections.c && touch arch/riscv/kernel/module.lds
 #git apply $RDIR/hls/patches/riscv-linux.patch
 #popd
 #
 pushd $CL_DIR/verif/scripts
-git apply $RDIR/tools/centrifuge/patches/XSim_Makefile.patch 
+git apply $RDIR/tools/centrifuge/patches/XSim_Makefile.patch
 touch top.vivado.vhd.f
 popd
 
@@ -74,7 +74,7 @@ popd
 if wget -T 1 -t 3 -O /dev/null http://169.254.169.254/; then
   # # Update Makefiles for Xsim to support VHDL simluation.
   pushd $CL_DIR/verif/scripts
-  git apply $RDIR/hls/patches/XSim_Makefile.patch 
+  git apply $RDIR/hls/patches/XSim_Makefile.patch
   touch top.vivado.vhd.f
   popd
 
