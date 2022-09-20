@@ -50,8 +50,7 @@ class WithHLSRoCCExample extends Config((site, here, up) => {
     #if (@rocc_func_names > 0) { 
         $rocc .= "\n})\n";
     #}
-
-    open CONFIG, ">$rdir/generators/example/src/main/scala/HLSConfig.scala" or die "$!\n";
+    open CONFIG, ">$rdir/generators/chipyard/src/main/scala/config/HLSConfig.scala" or die "$!\n";
     my $config="package example
 import chisel3._
 import freechips.rocketchip.diplomacy.{LazyModule, ValName}
