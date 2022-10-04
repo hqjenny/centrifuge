@@ -41,6 +41,7 @@ def init_accel(accel_conf):
         init_proj_dir(accel)
         cp_src(accel)
 
+
 def rm_accel(accel_conf):
     """Remove directories for the accel SoC"""
     shutil.rmtree(accel_conf.hw_accel_dir)
@@ -49,8 +50,6 @@ def rm_accel(accel_conf):
 def generate_hw(accel_conf, subtask):
     """Generate hardware SoC """
 
-    #print("gernerate_hw not implemented. Called with config: ", accel_conf)
-    # init project repos
     if subtask is None:
         logger.info("Initialize Generated Hardware Repository {}".format(accel_conf.hw_accel_dir))
         init_accel(accel_conf) 
