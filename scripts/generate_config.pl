@@ -68,7 +68,6 @@ import sifive.blocks.devices.uart.{PeripheryUARTKey,UARTParams}
 
 import sifive.blocks.devices.uart._
 import java.io.File
-import ConfigValName._
 ";
     foreach my $func_name (@rocc_func_names) {
         $config .= "import hls_$func_name.HLS$func_name"."Control\n";
@@ -80,12 +79,9 @@ import ConfigValName._
     $config .= $rocc;
     $config .="
 class HLSRocketConfig extends Config(
-  new WithHLSTop ++
-  new WithBootROM ++
-  new freechips.rocketchip.subsystem.WithInclusiveCache ++
   new WithHLSRoCCExample ++ 
   new freechips.rocketchip.subsystem.WithNBigCores(1) ++
-  new freechips.rocketchip.system.BaseConfig)
+  new chipyard.config.AbstractConfig)
 ";
 
     $config .="

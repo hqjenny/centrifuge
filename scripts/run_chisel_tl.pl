@@ -277,8 +277,7 @@ for( $i = 0; $i < @m_axi_data_widths; $i = $i + 1 ){
         id = IdRange(0, numInFlight),
         aligned = true,
         maxFlight = Some(8)
-      )),
-      userBits = 0
+      ))
       )
     ))";
 }
@@ -322,7 +321,7 @@ if ($ap_rst eq 1){
     $control1 .= "\tbb.io.ap_rst := reset\n";
 }
 if ($ap_rst_n eq 1){
-    $control1 .= "\tbb.io.ap_rst_n := !reset.toBool()  \n";
+    $control1 .= "\tbb.io.ap_rst_n := !reset.asBool()  \n";
 }
 
 $control1 =~ s/test_c/$func_name/g;
