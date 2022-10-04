@@ -15,7 +15,8 @@ def run_bm_sw(accel_conf, simulator, bm_sw_path):
     cmd_arr = cmd.split()
     subprocess.check_call(cmd_arr, cwd=sims_dir)
 
-def compile_sim_cmd(accel_conf, simulator, cmd=""):
+
+def compile_sim_cmd(accel_conf, simulator, cmd="", check_call=True):
     clean_str = "";
     
     sims_dir = accel_conf.sims_dir / simulator
@@ -24,13 +25,17 @@ def compile_sim_cmd(accel_conf, simulator, cmd=""):
     logger.info("\t\tCommand: {}".format(cmd))
 
     cmd_arr = cmd.split()
-    subprocess.check_call(cmd_arr, cwd=sims_dir)
+    try:
+        subprocess.check_call(cmd_arr, cwd=sims_dir)
+    except Exception:
+        if check_call:
+            raise()
 
 
 def run_sim(accel_conf, simulator, subtask, bm_sw_path=None):
     if subtask is None:
         compile_sim_cmd(accel_conf, simulator, 'clean')
-        compile_sim_cmd(accel_conf, simulator, 'debug')
+        compile_sim_cmd(accel_conf, simulator, 'debug', False)
         append_verilog_to_top_v(accel_conf, simulator)
         compile_sim_cmd(accel_conf, simulator, 'debug')
     else:
