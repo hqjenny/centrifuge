@@ -267,7 +267,7 @@ sub compile_vcs{
     my $clean = $_[0];
     chdir("$rdir/sims/vcs");
     # print("make $clean CONFIG=$CONFIG TOP=$TOP debug -j16");
-    system("make $clean CONFIG=$CONFIG TOP=$TOP debug -j16");
+    system("make $clean CONFIG=$CONFIG debug -j16");
 }
 
 sub copy_verilog{
