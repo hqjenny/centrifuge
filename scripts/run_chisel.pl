@@ -98,14 +98,15 @@ open BB, ">$scala_dir/$func_name"."_blackbox.scala";
 
 my $blackbox1 = "
 package hls_test_c
+import chisel3.util._
+import chisel3.experimental.{IntParam, BaseModule}
 import Chisel._
-import chisel3.experimental.dontTouch
 import freechips.rocketchip.config.{Parameters, Field}
 import freechips.rocketchip.tile._
 import freechips.rocketchip.util._
 import vivadoHLS._
 
-class test_c() extends BlackBox() {
+class test_c() extends BlackBox() with HasBlackBoxResource {
 ";
 $blackbox1 =~ s/test_c/$func_name/g;
 
@@ -225,7 +226,8 @@ if ($ap_rst eq 1){
 	$bb_body = $bb_body.'renameReset("ap_rst")'."\n";
 }
 
-print BB "\t}\n";
+print BB '\t})
+    addResource("/vsrc/test_c.v")\n';
 #print BB "$bb_body\n";
 #print BB "moduleName = "."\"$func_name\"\n";
 print BB "}\n";
@@ -364,8 +366,9 @@ print "Generating Control file ...\n";
 open CT, ">$scala_dir/$func_name"."_accel.scala";
 my $control1 = '
 package hls_test_c
+import chisel3.util._
+import chisel3.experimental.{IntParam, BaseModule}
 import Chisel._
-import chisel3.experimental.dontTouch
 import freechips.rocketchip.config.{Parameters, Field}
 import freechips.rocketchip.tile._
 import freechips.rocketchip.config._

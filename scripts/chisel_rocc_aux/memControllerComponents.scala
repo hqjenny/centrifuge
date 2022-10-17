@@ -19,7 +19,6 @@ class RequestParserIO(dataWidth: Int, addrWidth: Int) extends Bundle{
   val reqOut = new ApBusReq(dataWidth, addrWidth)
   val offsetAddr = UInt(INPUT, width=addrWidth)
   val loadOffset = Bool(INPUT)
-  override def cloneType: this.type = new RequestParserIO(dataWidth, addrWidth).asInstanceOf[this.type]
 }
 class RequestParser(dataWidth: Int, addrWidth: Int) extends Module{
   val io = IO(new RequestParserIO(dataWidth, addrWidth))
@@ -42,7 +41,6 @@ class RequestParser(dataWidth: Int, addrWidth: Int) extends Module{
 class TimestampedRequestIO(dataWidth:Int, addrWidth:Int, counterSize: Int) extends Bundle{
   val req = new ApBusReq(dataWidth, addrWidth)
   val timestamp = UInt(INPUT, log2Up(counterSize))
-  override def cloneType: this.type = new TimestampedRequestIO(dataWidth, addrWidth, counterSize).asInstanceOf[this.type]
 }
 
 class ApBusReqType (dataWidth:Int, addrWidth:Int) extends Bundle{
@@ -54,15 +52,11 @@ class ApBusReqType (dataWidth:Int, addrWidth:Int) extends Bundle{
   val address     = UInt(width = addrWidth)
   val dataout     = UInt(width = dataWidth)
   val size        = UInt(width = addrWidth)
-
-  override def cloneType: this.type = new ApBusReqType(dataWidth, addrWidth).asInstanceOf[this.type]
 }
 
 class TimestampedRequestIOType(dataWidth:Int, addrWidth:Int, counterSize: Int) extends Bundle{
   val req = new ApBusReqType(dataWidth, addrWidth)
   val timestamp = UInt(width = log2Up(counterSize))
-
-  override def cloneType: this.type = new TimestampedRequestIOType(dataWidth, addrWidth, counterSize).asInstanceOf[this.type]
 }
 
 
@@ -86,7 +80,6 @@ class RequestIngestIO(dataWidth: Seq[Int], addrWidth: Seq[Int], counterSize: Int
   //The widths are the maximums of all of the input widths
   val reqOut = Decoupled(new ApBusReq(if (dataWidth.length > 0) dataWidth.max else 0, if (addrWidth.length > 0) addrWidth.max else 0))
   val selectedBus = UInt(OUTPUT, log2Up(dataWidth.length))
-  override def cloneType: this.type = new RequestIngestIO(dataWidth, addrWidth, counterSize, inputBufferLen).asInstanceOf[this.type]
 }
 
 class RequestIngest(dataWidth: Seq[Int], addrWidth: Seq[Int], inputBufferLen: Int) extends Module{
@@ -183,8 +176,6 @@ class RequestIssuerIO(dataWidth: Int, addrWidth:Int, maxReqWidth:Int, numBus:Int
   val reqWidth     = UInt(OUTPUT, width = maxReqWidth) //Pass to table to specify width of request
 
   val reqSent      = Bool(OUTPUT)
-
-  override def cloneType: this.type = new RequestIssuerIO(dataWidth, addrWidth, maxReqWidth, numBus, roccAddrWidth, roccDataWidth, roccTagWidth, roccCmdWidth, roccTypWidth).asInstanceOf[this.type]
 }
 
 //maxReqBytes = 8 (64 bit) in our case
@@ -235,7 +226,6 @@ class RoutingTableIO(tagWidth:Int, numBus:Int, addrWidth: Int, maxReqWidth: Int)
   val respTag  = UInt(INPUT, width = tagWidth)
   val respVaid = Bool(INPUT)
   val respBus =  UInt(OUTPUT, width = log2Up(numBus))
-  override def cloneType: this.type = new RoutingTableIO(tagWidth, numBus, addrWidth, maxReqWidth).asInstanceOf[this.type]
 }
 
 //maxReqBytes = 8 (64 bit) in our case
@@ -324,7 +314,6 @@ class MemControllerIO(dataWidth:Seq[Int], addrWidth:Seq[Int], roccAddrWidth:Int,
   val roCCRspData  = UInt(INPUT, width = roccDataWidth) //MT_SZ)
   //val roCCRespTyp   = UInt(INPUT, width = roccTypWidth) //MT_SZ)
   val roCCRspValid = Bool(INPUT)
-  override def cloneType: this.type = new MemControllerIO(dataWidth, addrWidth, roccAddrWidth, roccDataWidth, roccTagWidth, roccCmdWidth, roccTypWidth).asInstanceOf[this.type]
 }
 
 class MemController(dataWidth:Seq[Int], addrWidth:Seq[Int], reqBufferLen:Int, rspBufferLen:Int, maxReqBytes:Int, roccAddrWidth:Int, roccDataWidth:Int, roccTagWidth:Int, roccCmdWidth:Int, roccTypWidth:Int, numTags:Int, tagOffset:Int ) extends Module{

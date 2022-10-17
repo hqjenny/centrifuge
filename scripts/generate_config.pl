@@ -51,7 +51,7 @@ class WithHLSRoCCExample extends Config((site, here, up) => {
         $rocc .= "\n})\n";
     #}
     open CONFIG, ">$rdir/generators/chipyard/src/main/scala/config/HLSConfig.scala" or die "$!\n";
-    my $config="package example
+    my $config="package chipyard
 import chisel3._
 import freechips.rocketchip.diplomacy.{LazyModule, ValName}
 import freechips.rocketchip.config.{Parameters, Config}
@@ -83,31 +83,7 @@ class HLSRocketConfig extends Config(
   new freechips.rocketchip.subsystem.WithNBigCores(1) ++
   new chipyard.config.AbstractConfig)
 ";
-
-    $config .="
-class WithHLSTop extends Config((site, here, up) => {
-  case BuildTop => (clock: Clock, reset: Bool, p: Parameters) =>
-      Module(LazyModule(new TopWithHLS()(p)).module)
-      })
-
-class TopWithHLS(implicit p: Parameters) extends Top ";
-
-    foreach my $func_name (@tll2_func_names) {
-        $config .= "\n    with HasPeripheryHLS$func_name"."AXI";
-    }
-
-  $config .=' {
-  override lazy val module = new TopWithHLSModule(this)
-}
-
-class TopWithHLSModule(l: TopWithHLS) extends TopModule(l)
-';
-    foreach my $func_name (@tll2_func_names) {
-        $config .= "    with HasPeripheryHLS$func_name"."AXIImp\n";
-    }
-
     print CONFIG $config;
-
     close CONFIG;
 
 ##############################FireSim Config Generation ##############################

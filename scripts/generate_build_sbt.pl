@@ -27,8 +27,10 @@ sub generate_build_sbt {
     my $build_sbt = do { local $/; <$fh> };
 
     # print list of hls accels 
-    my $dep_template='lazy val BM = (project in file("PATH"))
+    my $dep_template='
+lazy val BM = (project in file("generators/SOC/FN"))
   .dependsOn(rocketchip, testchipip, midasTargetUtils, icenet)
+  .settings(chiselSettings)
   .settings(commonSettings)
     ';
 
@@ -36,8 +38,9 @@ sub generate_build_sbt {
     
     while(my($bm, $path) = each %bm_path) {
         my $dep = $dep_template;
-        $dep =~ s/BM/$bm/; 
-        $dep =~ s/PATH/$path/; 
+        $dep =~ s/BM/$bm/;
+        $dep =~ s/SOC/$soc_name/;
+        $dep =~ s/FN/$bm/;
         $build_sbt = $build_sbt."\n".$dep;
     }
     
@@ -50,7 +53,8 @@ sub generate_build_sbt {
 
     my $soc_template = '
 lazy val SOC_NAME = conditionalDependsOn(project in file("generators/SOC_NAME"))
-  .dependsOn(boom, hwacha, sifive_blocks, sifive_cache, utilitiesBMS)
+  .dependsOn(boom, hwacha, sifive_blocks, sifive_cacheBMS)
+  .settings(chiselSettings)
   .settings(commonSettings)
 ';
     my $soc = $soc_template;
@@ -59,16 +63,17 @@ lazy val SOC_NAME = conditionalDependsOn(project in file("generators/SOC_NAME"))
     $build_sbt = $build_sbt.$soc;
     my $firechip_template = '
 lazy val example = conditionalDependsOn(project in file("generators/example"))
-  .dependsOn(boom, hwacha, sifive_blocks, sifive_cache, utilities, sha3, SOC_NAME)
+  .dependsOn(boom, hwacha, sifive_blocks, sifive_cache, chipyard, sha3, SOC_NAME)
+  .settings(chiselSettings)
   .settings(commonSettings)
-
-lazy val firechip = (project in file("generators/firechip"))
-  .dependsOn(SOC_NAME, example, icenet, testchipip, tracegen, midasTargetUtils, midas, firesimLib % "test->test;compile->compile")
-  .settings(
-    commonSettings,
-    testGrouping in Test := isolateAllTests( (definedTests in Test).value )
-  )
 ';
+# lazy val firechip = (project in file("generators/firechip"))
+#   .dependsOn(SOC_NAME, example, icenet, testchipip, tracegen, midasTargetUtils, midas, firesimLib % "test->test;compile->compile")
+#   .settings(
+#     commonSettings,
+#     testGrouping in Test := isolateAllTests( (definedTests in Test).value )
+#   )
+# ';
     my $firechip_dep = $firechip_template;
     $firechip_dep =~ s/SOC_NAME/$soc_name/g;
     $build_sbt = $build_sbt.$firechip_dep;
