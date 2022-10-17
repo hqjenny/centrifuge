@@ -70,7 +70,7 @@ sub generate_accel{
 
       if ($is_rocc) {
           system("cp -H $RDIR/tools/centrifuge/scripts/run_chisel.pl $bm_path_c");
-          system("cp -H $RDIR/tools/centrifuge/scripts/generate_wrapper.pl $bm_path_c");
+          system("cp -H $RDIR/tools/centrifuge/scripts/generate_wrapper.py $bm_path_c");
           if ($tasks{'accel_chisel'}){
             system("perl run_chisel.pl ${PGM} ${FUNC} $prefix");
           }
