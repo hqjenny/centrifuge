@@ -75,7 +75,7 @@ def main(args):
                                     util.getOpt('genhw-dir'))
 
     # print the info
-    # accel_config.info()
+    accel_config.info()
 
     # tasks that have a special config/dispatch setup
     if args.task == 'generate_hw':
@@ -101,9 +101,9 @@ if __name__ == '__main__':
     exitcode = 0
     try:
         main(args)
-    except:
+    except Exception as e:
         # log all exceptions that make it this far
-        rootLogger.exception("Fatal error.")
+        rootLogger.exception("Fatal error: " + str(e))
         exitcode = 1
     finally:
         rootLogger.info("""The full log of this run is:\n{logdir}/{runname}.log""".format(logdir=util.getOpt('log-dir'), runname=util.getOpt('run-name')))
