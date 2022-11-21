@@ -73,10 +73,22 @@ This command generates a simulation executable called `simv-example-HLSRocketCon
 This executable is a simulator that has been compiled based on the design that was built. 
 
 You can then use this executable to run any compatible RV64 code. 
-For instance, to invoke the accelerator in bare-metal software, run:
+For instance, to invoke the accelerator in bare-metal rocc accelerator software, run:
 ```
 cd $RDIR/sims/vcs/
-./simv-example-HLSRocketConfig-debug $RDIR/generators/accel/hls_vadd_tl_vadd/src/main/c/vadd_tl.bm_accel.rv
+./simv-chipyard-HLSRocketConfig-debug $RDIR/generators/accel/hls_vadd_vadd/src/main/c/vadd.bm_accel.rv
+```
+
+For instance, to invoke the accelerator in bare-metal tilelink accelerator software, run:
+```
+cd $RDIR/sims/vcs/
+./simv-chipyard-HLSRocketConfig-debug $RDIR/generators/accel/hls_vadd_tl_vadd/src/main/c/vadd_tl.bm_accel.rv
+```
+
+We can use either `dve` or `verdi` to view the waveforms. 
+To generate fsdb file for verdi, run:  
+```
+vpd2fsdb <>.vpd -o <>.fsdb 
 ```
 
 5) Run FPGA Simulation 
