@@ -29,6 +29,7 @@ if ((not defined($rdir)) or $rdir eq '') {
 
 
 my $verilog_file = "$dir/../verilog/$func_name".".v";
+# copy( $verilog_file, $rdir."/generators/chipyard/src/main/resources/vsrc/".$func_name.".v") or die "Couldn't copy Verilog file";
 my $line = undef;
 my @verilog_input = ();
 my @verilog_input_size = ();
@@ -112,7 +113,7 @@ $blackbox1 =~ s/test_c/$func_name/g;
 
 print BB $blackbox1;
 
-print BB "\tval io = new Bundle {\n";
+print BB "\tval io = IO(new Bundle {\n";
 my $i = undef;
 my $bb_body = "";
 
@@ -226,8 +227,10 @@ if ($ap_rst eq 1){
 	$bb_body = $bb_body.'renameReset("ap_rst")'."\n";
 }
 
-print BB '\t})
-    addResource("/vsrc/test_c.v")\n';
+my $bb_suffix  = "\t})\n".'addResource("/vsrc/test_c.v")'."\n";
+$bb_suffix =~ s/test_c/$func_name/g;
+print BB $bb_suffix;
+
 #print BB "$bb_body\n";
 #print BB "moduleName = "."\"$func_name\"\n";
 print BB "}\n";
@@ -366,8 +369,8 @@ print "Generating Control file ...\n";
 open CT, ">$scala_dir/$func_name"."_accel.scala";
 my $control1 = '
 package hls_test_c
-import chisel3.util._
-import chisel3.experimental.{IntParam, BaseModule}
+//import chisel3.util._
+//import chisel3.experimental.{IntParam, BaseModule}
 import Chisel._
 import freechips.rocketchip.config.{Parameters, Field}
 import freechips.rocketchip.tile._
@@ -475,7 +478,7 @@ val rspBufferLen = 4
 val maxReqBytes = xLen/8
 val roccAddrWidth = coreMaxAddrBits
 val roccDataWidth = coreDataBits
-val roccTagWidth = coreDCacheReqTagBits
+val roccTagWidth = coreParams.dcacheReqTagBits
 val roccCmdWidth = M_SZ
 val roccTypWidth = log2Ceil(coreDataBytes.log2 + 1) 
 //val numTags = p(RoccMaxTaggedMemXacts)

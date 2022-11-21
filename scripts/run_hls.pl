@@ -6,6 +6,7 @@ use File::Copy;
 
 my $file_name = $ARGV[0];
 my $func_name = $ARGV[1];
+my $rdir = $ENV{'RDIR'};
 
 my $prefix = undef;
 
@@ -105,6 +106,7 @@ foreach my $v_file (@files){
 	print "$v_file\n";
     	if (-f "$vivado_dir/$v_file") {  
 		copy("$vivado_dir/$v_file", $verilog_dir) or die "File cannot be copied! $v_file $verilog_dir\n";
+		copy( "$vivado_dir/$v_file", $rdir."/generators/chipyard/src/main/resources/vsrc/") or die "Couldn't copy Verilog file";
 	}
 }
 

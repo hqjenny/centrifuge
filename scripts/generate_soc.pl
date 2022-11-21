@@ -103,7 +103,6 @@ my $TARGET_CONFIG='HLSFireSimRocketChipConfig';
 my $PLATFORM_CONFIG='BaseF1Config_F90MHz';
 
 my $CONFIG='HLSRocketConfig';
-my $TOP='TopWithHLS';
 
 my $scripts_dir = $rdir.'/tools/centrifuge/scripts/';
 require $scripts_dir.'parse_json.pl';
@@ -205,13 +204,13 @@ if ($tasks{'xsim_scripts'}){
 # Ax machines
 if ($tasks{'run_vcs'}){
     compile_vcs("clean");
-    copy_verilog(\%hls_bm, "$rdir/sims/vcs/generated-src/example.TestHarness.$CONFIG/example.TestHarness.$CONFIG.top.v");
+    copy_verilog(\%hls_bm, "$rdir/sims/vcs/generated-src/chipyard.TestHarness.$CONFIG/chipyard.TestHarness.$CONFIG.top.v");
     compile_vcs("");
 }
 
 if ($tasks{'run_verilator'}){
     compile_verilator("clean");
-    copy_verilog(\%hls_bm, "$rdir/sims/verilator/generated-src/example.TestHarness.$CONFIG/example.TestHarness.$CONFIG.top.v");
+    copy_verilog(\%hls_bm, "$rdir/sims/verilator/generated-src/chipyard.TestHarness.$CONFIG/chipyard.TestHarness.$CONFIG.top.v");
     compile_verilator("");
 }
 
@@ -260,13 +259,13 @@ sub compile_replace_rtl{
 sub compile_verilator{
     my $clean = $_[0];
     chdir("$rdir/sims/verilator");
-    system("make $clean CONFIG=$CONFIG TOP=$TOP debug -j16");
+    system("make $clean CONFIG=$CONFIG debug -j16");
 }
 
 sub compile_vcs{
     my $clean = $_[0];
     chdir("$rdir/sims/vcs");
-    system("make $clean CONFIG=$CONFIG TOP=$TOP debug -j16");
+    system("make $clean CONFIG=$CONFIG debug -j16 USE_FSDB=1");
 }
 
 sub copy_verilog{

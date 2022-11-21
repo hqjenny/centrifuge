@@ -45,6 +45,7 @@ if ((not defined($rdir)) or $rdir eq '') {
 # close BUILD;
 
 my $verilog_file = "$dir/../verilog/$func_name".".v";
+# copy( $verilog_file, $rdir."/generators/chipyard/src/main/resources/vsrc/".$func_name.".v") or die "Couldn't copy Verilog file";
 my $line = undef;
 my @verilog_param = ();
 my @param_val = ();

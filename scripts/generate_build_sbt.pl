@@ -38,9 +38,10 @@ lazy val BM = (project in file("generators/SOC/FN"))
     
     while(my($bm, $path) = each %bm_path) {
         my $dep = $dep_template;
+        my $folder_name = (split '/', $path)[-1];
         $dep =~ s/BM/$bm/;
         $dep =~ s/SOC/$soc_name/;
-        $dep =~ s/FN/$bm/;
+        $dep =~ s/FN/$folder_name/;
         $build_sbt = $build_sbt."\n".$dep;
     }
     
