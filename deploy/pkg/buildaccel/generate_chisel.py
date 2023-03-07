@@ -205,7 +205,7 @@ def generate_opt_ap_signals(inputs, outputs):
     if 'ap_clk' in list(inputs.keys()):
         ret_str += "    bb.io.ap_clk := clock\n"
     if 'ap_rst_n' in list(inputs.keys()):
-        ret_str += "    bb.io.ap_rst_n := !reset.toBool()\n"
+        ret_str += "    bb.io.ap_rst_n := !reset.asBool()\n"
     return ret_str
 
 

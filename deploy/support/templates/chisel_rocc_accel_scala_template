@@ -40,7 +40,7 @@ val rs2_unbuffered = cmd.bits.rs2
 val idle :: working :: Nil = Enum(UInt(),2)
 val state = Reg(init=idle)
 
-when(reset.toBool){
+when(reset.asBool){
   bufferedCmd.inst.funct := 0.asUInt(7.W)
   bufferedCmd.inst.rs1 := 0.asUInt(5.W)
   bufferedCmd.inst.rs2 := 0.asUInt(5.W)
