@@ -11,7 +11,6 @@ class PriorityArbiterIO[T <: Data](gen: T, n: Int, priorityBits: Int) extends Bu
   val priority = Vec(n,Input(UInt(priorityBits.W)))
   //Priority of the outputed value
   val priorityOut = UInt(OUTPUT, width = priorityBits)
-  override def cloneType: this.type = new PriorityArbiterIO(gen, n, priorityBits).asInstanceOf[this.type]
 }
 
 class PriorityArbiter[T <: Data](gen: T, n: Int, priorityBits: Int) extends Module{
@@ -194,8 +193,6 @@ class ValidDemuxIO(fanout:Int) extends Bundle{
   val validSelect = UInt(INPUT, log2Up(fanout))
   val validOut = Vec(fanout, Bool(OUTPUT))
   //val validOut = Vec.fill(fanout)(Bool(OUTPUT))
-
-  override def cloneType: this.type = new ValidDemuxIO(fanout).asInstanceOf[this.type]
 }
 
 class ValidDemux(fanout:Int) extends Module{
