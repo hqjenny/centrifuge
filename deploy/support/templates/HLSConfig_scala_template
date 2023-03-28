@@ -29,27 +29,7 @@ class WithHLSRoCCExample extends Config((site, here, up) => {
 })
 
 class HLSRocketConfig extends Config(
-    // IOBinders specify how to connect to IOs in our TestHarness
-    // These config fragments do not affect
-    new chipyard.iobinders.WithUARTAdapter ++       // Connect a SimUART adapter to display UART on stdout
-    new chipyard.iobinders.WithBlackBoxSimMem ++    // Connect simulated external memory
-    new chipyard.iobinders.WithTieOffInterrupts ++  // Do not simulate external interrupts
-    new chipyard.iobinders.WithTiedOffDebug ++      // Disconnect the debug module, since we use TSI for bring-up
-    new chipyard.iobinders.WithSimSerial ++         // Connect external SimSerial widget to drive TSI
-  
-    // Config fragments below this line affect hardware generation
-    // of the Top
-    new testchipip.WithTSI ++                  // Add a TSI (Test Serial Interface)  widget to bring-up the core
-    new chipyard.config.WithNoGPIO ++          // Disable GPIOs.
-    new chipyard.config.WithBootROM ++         // Use the Chipyard BootROM
-    new chipyard.config.WithRenumberHarts ++   // WithRenumberHarts fixes hartids heterogeneous designs, if design is not heterogeneous, this is a no-op
-    new chipyard.config.WithUART ++            // Add a UART
-    new chipyard.config.WithL2TLBs(1024) ++                        // use L2 TLBs
     // ${TL_PERIPHERY} // Disable due to Error scala.Some cannot be cast to scala.Function1, and our accelerators currently do not have parameters  
     new WithHLSRoCCExample ++ 
-    new freechips.rocketchip.subsystem.WithInclusiveCache ++       // use Sifive L2 cache
-    new freechips.rocketchip.subsystem.WithNoMMIOPort ++           // no top-level MMIO master port (overrides default set in rocketchip)
-    new freechips.rocketchip.subsystem.WithNoSlavePort ++          // no top-level MMIO slave port (overrides default set in rocketchip)
-    new freechips.rocketchip.subsystem.WithNExtTopInterrupts(0) ++ // no external interrupts
     new freechips.rocketchip.subsystem.WithNBigCores(1) ++         // single rocket-core
     new chipyard.config.AbstractConfig)

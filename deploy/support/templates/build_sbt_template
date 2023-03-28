@@ -230,6 +230,12 @@ lazy val iocell = Project(id = "iocell", base = file("./tools/barstools/") / "sr
   .settings(chiselSettings)
   .settings(commonSettings)
 
+lazy val tapeout = (project in file("./tools/barstools/"))
+  .settings(chiselSettings)
+  .settings(chiselTestSettings)
+  .enablePlugins(sbtassembly.AssemblyPlugin)
+  .settings(commonSettings)
+
 lazy val dsptools = freshProject("dsptools", file("./tools/dsptools"))
   .settings(
     chiselSettings,
