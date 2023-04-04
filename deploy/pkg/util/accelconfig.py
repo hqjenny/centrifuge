@@ -8,7 +8,7 @@ import pathlib
 
 rootLogger = logging.getLogger()
 
-class Accel(object): 
+class Accel(object):
     """Base Definition of Accelerator"""
     def __init__(self, prefix_id, pgm, func, srcs, hw_accel_dir):
         self.prefix_id = prefix_id
@@ -20,9 +20,9 @@ class Accel(object):
 
         src_main_path = self.dir / 'src' / 'main'
         self.c_dir = src_main_path / 'c'
-        #self.verilog_dir = src_main_path / 'resources' / 'vsrc' 
-        self.verilog_dir = src_main_path / 'verilog' 
-        self.scala_dir = src_main_path / 'scala' 
+        #self.verilog_dir = src_main_path / 'resources' / 'vsrc'
+        self.verilog_dir = src_main_path / 'verilog'
+        self.scala_dir = src_main_path / 'scala'
 
     def info(self):
         rootLogger.info(str(self))
@@ -31,7 +31,7 @@ class Accel(object):
         return """\t\taccel_name: {} srcs: {}""".format(self.name, self.srcs)
 
 
-class RoCCAccel(Accel): 
+class RoCCAccel(Accel):
     """Definition of RoCC Accelerator"""
     def __init__(self, prefix_id, pgm, func, rocc_insn_id, src_dir, hw_accel_dir):
         super(RoCCAccel, self).__init__(prefix_id, pgm, func, src_dir, hw_accel_dir)
@@ -41,7 +41,7 @@ class RoCCAccel(Accel):
         super(RoCCAccel, self).info()
 
 
-class TLAccel(Accel): 
+class TLAccel(Accel):
     """Definition of TL Accelerator"""
     def __init__(self, prefix_id, pgm, func, base_addr, src_dir, hw_accel_dir):
         super(TLAccel, self).__init__(prefix_id, pgm, func, src_dir, hw_accel_dir)
@@ -58,15 +58,15 @@ class AccelConfig:
         self.accel_json_path = accel_json_path
         self.chipyard_dir = chipyard_dir
         self.centrifuge_dir = centrifuge_dir
-        
+
         self.sims_dir = self.chipyard_dir / 'sims'
-        self.chipyard_scala_dir = self.chipyard_dir / 'generators' / 'chipyard' / 'src' / 'main' / 'scala' 
+        self.chipyard_scala_dir = self.chipyard_dir / 'generators' / 'chipyard' / 'src' / 'main' / 'scala'
         self.firechip_scala_dir = self.chipyard_dir / 'generators' / 'firechip' / 'src' / 'main' / 'scala'
         self.accel_name = self.accel_json_path.stem
         self.accel_json_dir = accel_json_path.parent
         self.gensw_dir = self.accel_json_dir / 'centrifuge_wrappers'
         self.hw_accel_dir = genhw_dir / self.accel_name
-        self.hw_accel_scala_dir = self.hw_accel_dir / 'src' / 'main' / 'scala' 
+        self.hw_accel_scala_dir = self.hw_accel_dir / 'src' / 'main' / 'scala'
         self.accel_json = self.parse_json(self.accel_json_path)
         self.rocc_accels = []
         self.tl_accels = []
@@ -75,13 +75,13 @@ class AccelConfig:
         # NIC
         nonic = 'NoNIC'
 
-        # Default config string 
+        # Default config string
         self.DESIGN= self.accel_name + 'FireSimTopWithHLS' + nonic
         self.TARGET_CONFIG = self.accel_name + 'HLSFireSimRocketChipConfig'
         self.PLATFORM_CONFIG='BaseF1Config_F90MHz'
 
         self.CONFIG = 'HLSRocketConfig'
-        self.TOP = 'Top'
+        self.TOP = 'DigitalTop'
 
 
     def __str__(self):
@@ -108,7 +108,7 @@ class AccelConfig:
 
     def check_str(self, input_str):
         """Throw exception if str is not valid"""
-        if (input_str == '' or input_str.isspace() or 
+        if (input_str == '' or input_str.isspace() or
             bool(re.match('^\s+$', input_str))):
             raise Exception("Empty string is used in accelerator def: {}".format(input_str))
 
@@ -117,7 +117,7 @@ class AccelConfig:
         try:
             int(input_str)
         except ValueError:
-            try: 
+            try:
                 int(input_str, 16)
             except ValueError:
                 try:
@@ -127,7 +127,7 @@ class AccelConfig:
 
     def update_if_def(self, key, accel_json):
         if key in list(accel_json.keys()):
-            setattr(self, key, accel_json[key]) 
+            setattr(self, key, accel_json[key])
 
     def parse_json_config(self, accel_json):
         """Parse the JSON config to get accel definitions """
@@ -141,14 +141,14 @@ class AccelConfig:
         self.update_if_def('CONFIG', accel_json);
         self.update_if_def('TOP', accel_json);
 
-        # Parse RoCC Accelerators 
+        # Parse RoCC Accelerators
         if 'RoCC' in accel_json.keys():
             rocc_accel_def = accel_json['RoCC']
             idx = 0
             for idx in range(3):
-                try: 
+                try:
                     if 'custom'+str(idx) in rocc_accel_def.keys():
-                        rocc_accel_dict = rocc_accel_def['custom'+str(idx)] 
+                        rocc_accel_dict = rocc_accel_def['custom'+str(idx)]
                         prefix_id = 'rocc'+str(idx)
                         pgm = rocc_accel_dict['pgm']
                         func = rocc_accel_dict['func']
@@ -174,13 +174,13 @@ class AccelConfig:
 
             if 'custom3' in rocc_accel_def.keys():
                 rootLogger.exception("""Fatal error. custom3 RoCC Accelerator is reserved for Virtual-to-Physical Address Translator""")
-                    
+
         # Parse TL Accelerators
         if 'TL' in accel_json.keys():
             tl_accel_arr = accel_json['TL']
             idx = 0
             for tl_accel_dict in tl_accel_arr:
-                try: 
+                try:
                     prefix_id = 'tl'+str(idx)
                     pgm = tl_accel_dict['pgm']
                     func = tl_accel_dict['func']
@@ -207,4 +207,4 @@ class AccelConfig:
                     rootLogger.exception("""Fatal error. TL Accelerator definitions in {} is not valid """.format(self.accel_json_path))
                     assert(False)
 
-        
+
