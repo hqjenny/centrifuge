@@ -1,0 +1,41 @@
+CC = clang
+LDFLAGS =
+ARCH = riscv64
+CPU = generic-rv64
+ATTR = +m
+CSRCS := $(TARGET).c
+COBJS := $(CSRCS:%.c=%.c.o)
+BCOBJS := $(CSRCS:%.c=%.bc)
+
+# XXX This hasn't been tested with clang yet.
+# This defines a pre-processor flag called WRAP_funcname that benchmarks can
+# use to automatically select which function(s) to use the wrapper for.
+CFLAGS := -DWRAP_$(FUNC)
+
+CPU :=
+LLVM_LIB_PATH = /scratch/qijing.huang/llvm_lowrisc/llvm/build/lib/LLVMReplaceFunctionCall.so
+
+all: $(TARGET).rv
+
+$(TARGET).rv: $(CSRCS) 
+	clang $(CFLAGS) -emit-llvm $^ -c -o $(TARGET).pre.bc
+	#llvm-dis <$(TARGET).pre.bc> $(TARGET).pre.ll
+ifdef ACCEL 
+	opt -load $(LLVM_LIB_PATH) -rfc -replace ${FUNC} <$(TARGET).pre.bc> $(TARGET).bc
+else 
+	cp $(TARGET).pre.bc $(TARGET).bc
+endif
+	llvm-dis <$(TARGET).bc> $(TARGET).ll
+	llc -march=$(ARCH) -mcpu=$(CPU) -mattr=$(ATTR) $(TARGET).bc -o $(TARGET).rv.s
+	$(ARCH)-unknown-elf-as -c $(TARGET).rv.s -o $(TARGET).o
+	$(ARCH)-unknown-elf-gcc $(TARGET).o $(LDFLAGS) -o $(TARGET).rv
+	$(ARCH)-unknown-elf-objdump -D $@ > $(TARGET).asm
+
+rfc:
+	opt -load $(LLVM_LIB_PATH) -rfc -replace ${FUNC} <$(TARGET).bc> $(TARGET).rfc.bc
+
+run:
+	spike pk $(TARGET).rv
+
+clean:
+	rm  -f $(BCOBJS) $(OBJECTS) $(TARGET).rv $(TARGET).rv.s $(TARGET).o $(TARGET).bc $(TARGET).ll $(TARGET).asm
