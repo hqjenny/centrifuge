@@ -36,11 +36,11 @@ else
 OBJ_BASE = $(OBJ_ORIG)
 endif
 
-ifdef CUSTOM_DRIVER 
-OBJ_BASE = $(OBJ_ACCEL)
-else
-OBJ_BASE = $(OBJ_ORIG)
-endif
+# ifdef CUSTOM_DRIVER 
+# OBJ_BASE = $(OBJ_ACCEL)
+# else
+# OBJ_BASE = $(OBJ_ORIG)
+# endif
 
 .PHONY: clean
 

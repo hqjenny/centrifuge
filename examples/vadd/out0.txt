@@ -1,0 +1,5 @@
+riscv64-unknown-elf-gcc -fno-common -fno-builtin-printf -specs=htif_nano.specs -DWRAP_vadd -I/scratch/james.shi/chipyard/tools/centrifuge/scripts/sw_aux/sw_helper -c accel.c -o accel.o
+riscv64-unknown-elf-gcc -fno-common -fno-builtin-printf -specs=htif_nano.specs -DWRAP_vadd -I/scratch/james.shi/chipyard/tools/centrifuge/scripts/sw_aux/sw_helper -c accel_wrapper.c -o accel_wrapper.o
+riscv64-unknown-elf-gcc -fno-common -fno-builtin-printf -specs=htif_nano.specs -DWRAP_vadd -I/scratch/james.shi/chipyard/tools/centrifuge/scripts/sw_aux/sw_helper -c vadd.c -o vadd.o
+riscv64-unknown-elf-gcc -static -specs=htif_nano.specs -I/scratch/james.shi/chipyard/tools/centrifuge/scripts/sw_aux/sw_helper accel.o vadd.o -o vadd.bm.rv
+riscv64-unknown-elf-gcc -static -specs=htif_nano.specs -I/scratch/james.shi/chipyard/tools/centrifuge/scripts/sw_aux/sw_helper accel_wrapper.o vadd.o -o vadd.bm_accel.rv
