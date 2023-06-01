@@ -284,6 +284,7 @@ def generateSW(accels):
     # this directory as-needed.
     accels.gensw_dir.mkdir(exist_ok=True)
 
+    logger.info('Generate software wrappers...')
     for accel in accels.rocc_accels:
         inputs, retVal = parseVerilogRocc(accel.verilog_dir / (accel.name + ".v"))
         cWrapper, hWrapper = generateWrapperRocc(accel.func, accel.rocc_insn_id, inputs, retVal)
@@ -301,6 +302,7 @@ def generateSW(accels):
             hPath.unlink()
         with open(hPath , 'w') as hF:
             hF.write(hWrapper)
+        logger.info('RoCC accelerator path: {} {}'.format(cPath, hPath))
 
     for accel in accels.tl_accels:
         funcArgs, retVal = parseVerilogTL(accel.verilog_dir / (accel.name + "_control_s_axi.v"))
@@ -319,6 +321,7 @@ def generateSW(accels):
             hPath.unlink()
         with open(hPath , 'w') as hF:
             hF.write(hWrapper)
+        logger.info('TL accelerator path: {} {}'.format(cPath, hPath))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
