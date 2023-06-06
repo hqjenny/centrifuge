@@ -13,7 +13,8 @@ void print_vec(int* vec, int length){
 }
 
 int main () {
-    int length_a[LENGTH + 1], b_c[LENGTH + LENGTH];
+    int length_a[LENGTH + 1] __attribute__((aligned(64)));
+    int b_c[LENGTH + LENGTH] __attribute__((aligned(64)));
     //int a[LENGTH], b[LENGTH], c[LENGTH];
     int length = LENGTH;
     length_a[0] = length;
@@ -23,6 +24,7 @@ int main () {
       b_c[i] = i + 5;
     }
 
+    printf("length_a ptr: %X", length_a);
     uint64_t begin, end, dur;
     begin = read_cycle();
     vadd(length_a, b_c); 

@@ -60,6 +60,9 @@ io.resp.bits.data := result
 io.busy := busy
 cmd.ready := rdy
 
+// Set the HellaCache req privilege to rocc command privilege
+io.mem.req.bits.dprv := io.cmd.bits.status.dprv
+
 //===== Begin Accelerator =====
 val accel = Module(new HLS${FUNC}Blackbox())
 
