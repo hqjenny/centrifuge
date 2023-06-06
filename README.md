@@ -40,7 +40,11 @@ Run the following command to invoke compilation for bare-metal.
 ```
 ./centrifuge generate_sw -c ../examples/vadd_proj/vadd_soc.json 
 ```
-We currently 
+We currently have the vadd RoCC example code and Makefile under example directory and are working on migrating the compilation flow from perl to python.
+```
+cd $RDIR/tools/centrifuge/examples/vadd && make
+```
+The generated `vadd.bm.rv` is a software only reference code for vadd and `vadd.bm_accel.rv` is the baremetal code for calling the RoCC vadd accelerator
 
 5) Run VCS/Verilator Simulation 
 To run VCS simulation, 
