@@ -20,7 +20,7 @@ def compile_sim_cmd(accel_conf, simulator, cmd="", check_call=True):
     clean_str = "";
     
     sims_dir = accel_conf.sims_dir / simulator
-    cmd = "make {} CONFIG={} TOP={}".format(cmd, accel_conf.CONFIG, accel_conf.TOP)
+    cmd = "make {} CONFIG={}".format(cmd, accel_conf.CONFIG)
     logger.info("\t\tCompiling {} Simulation in {}".format(simulator, sims_dir))
     logger.info("\t\tCommand: {}".format(cmd))
 
