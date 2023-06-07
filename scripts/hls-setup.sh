@@ -71,15 +71,15 @@ popd
 #fi
 #
 # Only on AWS FPGA AMI machines (see firesim/build-setup-nolog.sh for how this trick works):
-if wget -T 1 -t 3 -O /dev/null http://169.254.169.254/; then
+# if wget -T 1 -t 3 -O /dev/null http://169.254.169.254/; then
   # # Update Makefiles for Xsim to support VHDL simluation.
-  pushd $CL_DIR/verif/scripts
-  git apply $RDIR/hls/patches/XSim_Makefile.patch 
-  touch top.vivado.vhd.f
-  popd
+#  pushd $CL_DIR/verif/scripts
+#  git apply $RDIR/hls/patches/XSim_Makefile.patch 
+#  touch top.vivado.vhd.f
+#  popd
 
   # Setup perl modules
-  sudo yum install -y cpan
-  sudo cpan JSON
-  sudo yum install -y perl-Tie-IxHash
-fi
+#  sudo yum install -y cpan
+#  sudo cpan JSON
+#  sudo yum install -y perl-Tie-IxHash
+# fi
