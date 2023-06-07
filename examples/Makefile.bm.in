@@ -5,10 +5,8 @@ OBJDUMP=riscv64-unknown-elf-objdump
 CFLAGS+=-fno-common -fno-builtin-printf -specs=htif_nano.specs -DWRAP_$(FUNC)
 LDFLAGS=-static -specs=htif_nano.specs
 
-# BM_LIB_DIR=${RDIR}/tools/centrifuge/scripts/sw_aux/bm_linker_scripts/
-BM_LIB_DIR=/scratch/james.shi/chipyard/tools/centrifuge/scripts/sw_aux/bm_linker_scripts
-# BM_INC_DIR=${RDIR}/tools/centrifuge/scripts/sw_aux/sw_helper/
-BM_INC_DIR=/scratch/james.shi/chipyard/tools/centrifuge/scripts/sw_aux/sw_helper
+BM_LIB_DIR=${RDIR}/tools/centrifuge/scripts/sw_aux/bm_linker_scripts/
+BM_INC_DIR=${RDIR}/tools/centrifuge/scripts/sw_aux/sw_helper/
 
 # INCLUDES=-I${BM_LIB_DIR} -I${BM_INC_DIR}
 INCLUDES=-I${BM_INC_DIR}
