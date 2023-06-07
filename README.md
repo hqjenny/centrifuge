@@ -14,7 +14,7 @@ pushd chipyard/tools && git clone -b python-dev-new git@github.com:hqjenny/centr
 ```
 Set up riscv-pk for accelerator calls and applies patches to existing tools. 
 ```
-pushd tools/centrifuge && source scripts/hls-setup-a-machine.sh && popd
+cd tools/centrifuge && source scripts/hls-setup-a-machine.sh && cd ../..
 pushd tools/centrifuge && pip3 install -r python-requirements.txt && popd
 ```
 
