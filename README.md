@@ -1,7 +1,7 @@
 # Centrifuge - A Unified Approach to Generate RISC-V Accelerator SoC 
 
 ## 1. Centrifuge Setup 
-1) Set up the Chipyard repo following the instruction [here](https://chipyard.readthedocs.io/en/latest/Chipyard-Basics/Initial-Repo-Setup.html#initial-repository-setup). For more Chipyard related info, visit the Chipyard page (https://chipyard.readthedocs.io/en/latest/). 
+1) Set up the Chipyard repo following the instruction [here](https://chipyard.readthedocs.io/en/latest/Chipyard-Basics/Initial-Repo-Setup.html#initial-repository-setup). For more Chipyard related info, visit the Chipyard page (https://chipyard.readthedocs.io/en/latest/). Please check out Chipyard version 1.8.1. 
 
 2) (OPTIONAL for FPGA-accelerated simulation) Set up the FireSim repo. 
 For more FireSim related info, please refer to FireSim’s documentation (https://docs.fires.im/en/latest/index.html). 
