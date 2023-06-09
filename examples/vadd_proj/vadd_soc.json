@@ -1,6 +1,7 @@
 {
   "RoCC":{
-    "custom0":{"pgm": "vadd", "func":"vadd", "srcs":["./src/hls/vadd/vadd.c", "./src/hls/vadd/accel.c", "./src/hls/vadd/accel.h"]}
+    "custom0":{"pgm": "vadd", "func":"vadd", "srcs":["./src/hls/vadd/vadd.c", "./src/hls/vadd/accel.c", "./src/hls/vadd/accel.h"]},
+    "custom1":{"pgm": "addc", "func":"addc", "srcs":["./src/hls/addc/addc.c", "./src/hls/addc/accel.c", "./src/hls/addc/accel.h"]}
   },
   "TL":[
     {"pgm":"vadd_tl", "func": "vadd", "addr":"0x30000", "srcs":["./src/hls/vadd_tl/vadd_tl.c", "./src/hls/vadd_tl/accel.c", "./src/hls/vadd_tl/accel.h"]}
