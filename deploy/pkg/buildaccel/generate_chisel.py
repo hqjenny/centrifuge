@@ -688,13 +688,18 @@ def generate_tl_module_stmt(inputs, outputs, buses):
 def generate_tl_trait_stmt(func, buses):
     ret_str = ""
     template = Template("""
-    sbus.fromPort(Some(axi_m_portName)) {
-            (TLWidthWidget(${M_AXI_DATA_WIDTH} >> 3 )
-            := AXI4ToTL()
-            := AXI4UserYanker(Some(8))
-            := AXI4Fragmenter()
-            := AXI4IdIndexer(1))
-    }:=* hls_${FUNC}_accel.node_${BUS_NAME}
+    sbus.coupleFrom(s"port_named_$$axi_m_portName") {
+      ( _
+        := TLBuffer(BufferParams.default)
+        := TLFIFOFixer(TLFIFOFixer.all)
+        := TLWidthWidget(${M_AXI_DATA_WIDTH} >> 3)
+        := AXI4ToTL()
+        := AXI4UserYanker(Some(8))
+        := AXI4Fragmenter()
+        := AXI4IdIndexer(1)
+        := hls_tl0_vadd_tl_vadd_accel.node_gmem0
+      )
+    }
 """)
 
     for k, v in buses.items():

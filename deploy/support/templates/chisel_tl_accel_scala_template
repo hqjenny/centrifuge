@@ -74,17 +74,17 @@ trait CanHavePeripheryHLS${FUNC}AXI { this: BaseSubsystem =>
       
         ${AXI_TRAIT_STMT}
 
-        hls_${FUNC}_accel.slave_node :=* sbus.toFixedWidthPort(Some(axilite_s_portName)) {
-                        (AXI4Buffer()    
-                             := AXI4UserYanker() 
-                             //:= AXI4IdIndexer(params.idBits)
-                             //:= AXI4Deinterleaver(sbus.blockBytes) // Assume there is no iterleaved requests, iterleaveId = Some(0) 
-                             := TLToAXI4() 
-                             := TLBuffer()      
-                             //:= TLWidthWidget(${S_AXI_DATA_WIDTH} >> 3)
-                             // Compared to TLWidthWidget, TLFragmenter saves the id info?
-                             := TLFragmenter(${S_AXI_DATA_WIDTH} >> 3, 64, alwaysMin=true, holdFirstDeny=true))
-        }
+		mmioPortParamsOpt.map { params =>
+		sbus.coupleTo(s"port_named_$$axilite_s_portName") {
+		  (hls_tl0_vadd_accel.slave_node
+			:= AXI4Buffer()
+			:= AXI4UserYanker()
+			:= AXI4Deinterleaver(sbus.blockBytes)
+			:= AXI4IdIndexer(params.idBits)
+			:= TLToAXI4()
+			:= TLWidthWidget(sbus.beatBytes)
+			:= _)
+		}
     //}
 }
 
