@@ -74,7 +74,7 @@ trait CanHavePeripheryHLS${FUNC}AXI { this: BaseSubsystem =>
       
         ${AXI_TRAIT_STMT}
 
-		mmioPortParamsOpt.map { params =>
+	//	mmioPortParamsOpt.map { params =>
 		sbus.coupleTo(s"port_named_$$axilite_s_portName") {
 		  (hls_tl0_vadd_accel.slave_node
 			:= AXI4Buffer()
