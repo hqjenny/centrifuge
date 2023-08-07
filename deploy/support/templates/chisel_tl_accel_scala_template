@@ -76,12 +76,13 @@ trait CanHavePeripheryHLS${FUNC}AXI { this: BaseSubsystem =>
 
 	//	mmioPortParamsOpt.map { params =>
 		sbus.coupleTo(s"port_named_$$axilite_s_portName") {
-		  (hls_tl0_vadd_accel.slave_node
+		  (hls_${FUNC}_accel.slave_node
 			:= AXI4Buffer()
 			:= AXI4UserYanker()
 			:= AXI4Deinterleaver(sbus.blockBytes)
-			:= AXI4IdIndexer(params.idBits)
+			:= AXI4IdIndexer(1)
 			:= TLToAXI4()
+            := TLFragmenter(${S_AXI_DATA_WIDTH} >> 3, 64, alwaysMin=true, holdFirstDeny=true)
 			:= TLWidthWidget(sbus.beatBytes)
 			:= _)
 		}
