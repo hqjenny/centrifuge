@@ -1,0 +1,5 @@
+{
+  "TL":[
+    {"pgm":"chatgpt_tl", "func": "tryDecode", "addr":"0x30000", "srcs":["./src/hls/chatgpt_tl.c", "./src/hls/accel.c", "./src/hls/accel.h"]}
+  ]
+}
