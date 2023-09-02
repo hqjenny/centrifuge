@@ -55,7 +55,6 @@ def parse_verilog_input_info(inputs):
             else:
                 logger.critical("Unexpected Signal {}!".format(k))
                 raise
-
             if arg_name in list(input_info.keys()):
                 if 'num_signal' in list(input_info[arg_name].keys()):
                     input_info[arg_name]['num_signal'] += 1
@@ -65,6 +64,20 @@ def parse_verilog_input_info(inputs):
                 # arg should be created
                 logger.critical("Unexpected Signal {}!".format(k))
                 raise
+
+        matchApSignals = reApSignals.match(k)
+        if not matchApSignals and not matchPointerSignals:
+            arg_name = k
+            if arg_name in list(input_info.keys()):
+                if 'num_signal' in list(input_info[arg_name].keys()):
+                    input_info[arg_name]['num_signal'] += 1
+                else:
+                    input_info[arg_name]['num_signal'] = 1
+            else:
+                # arg should be created
+                logger.critical("Unexpected Signal {}!".format(k))
+                raise
+
     for k, v in input_info.items():
         if v['type'] == 'pointer':
             if v['num_signal'] != 3:
