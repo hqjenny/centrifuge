@@ -1,0 +1,12 @@
+{
+  "TL": [
+    {
+      "pgm": "adpcm_tl",
+      "func": "encode",
+      "addr": "0x30000",
+      "srcs": [
+        "adpcm_tl.c"
+      ]
+    }
+  ]
+}
