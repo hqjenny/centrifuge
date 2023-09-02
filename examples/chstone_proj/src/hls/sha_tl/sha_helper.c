@@ -228,14 +228,14 @@ sha_stream ()
   //int sha_info_count_hi = 0L;
   int sha_info_count[2]={0L, 0L};
 
+  uint64_t begin, end, dur;
+
   sha_init ();
   begin = read_cycle();
   for (j = 0; j < VSIZE; j++)
     {
       i = in_i[j];
       p = &indata[j][0];
-
-uint64_t begin, end, dur;
 
   #ifdef CUSTOM_DRIVER
     sha_update_wrapper(p, i, sha_info_digest, sha_info_data, sha_info_count);

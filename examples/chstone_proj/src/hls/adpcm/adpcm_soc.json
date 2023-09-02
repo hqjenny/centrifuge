@@ -1,0 +1,11 @@
+{
+  "RoCC": {
+    "custom0": {
+      "pgm": "adpcm",
+      "func": "encode",
+      "srcs": [
+        "adpcm.c"
+      ]
+    }
+  }
+}

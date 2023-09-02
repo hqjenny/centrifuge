@@ -1,0 +1,11 @@
+{
+  "RoCC": {
+    "custom0": {
+      "pgm": "aes",
+      "func": "encrypt",
+      "srcs": [
+        "aes.c"
+      ]
+    }
+  }
+}

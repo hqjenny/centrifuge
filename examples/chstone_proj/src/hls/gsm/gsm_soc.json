@@ -1,0 +1,11 @@
+{
+  "RoCC": {
+    "custom0": {
+      "pgm": "gsm",
+      "func": "lpc",
+      "srcs": [
+        "gsm.c"
+      ]
+    }
+  }
+}
