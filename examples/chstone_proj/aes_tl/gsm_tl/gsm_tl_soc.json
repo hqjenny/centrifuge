@@ -1,0 +1,12 @@
+{
+  "TL": [
+    {
+      "pgm": "gsm_tl",
+      "func": "lpc",
+      "addr": "0x30000",
+      "srcs": [
+        "gsm_tl.c"
+      ]
+    }
+  ]
+}

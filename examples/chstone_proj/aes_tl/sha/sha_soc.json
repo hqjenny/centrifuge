@@ -1,0 +1,11 @@
+{
+  "RoCC": {
+    "custom0": {
+      "pgm": "sha",
+      "func": "sha_updatet",
+      "srcs": [
+        "sha.c"
+      ]
+    }
+  }
+}
