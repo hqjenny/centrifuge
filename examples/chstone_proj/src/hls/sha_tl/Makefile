@@ -1,7 +1,7 @@
 VERBOSE= 1
 TARGET ?=sha_tl
 
-FUNC=sha_updatet
+FUNC=sha_update
 
 LDFLAGS=
 CFLAGS=

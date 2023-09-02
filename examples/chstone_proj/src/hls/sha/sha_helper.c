@@ -232,7 +232,7 @@ sha_stream ()
   sha_info_data[16+5 +1] = 0;
 
   //sha_init ();
-  uint64_t begin, end, dur;
+  int begin, end, dur;
 
   for (j = 0; j < VSIZE; j++)
   {

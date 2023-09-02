@@ -2,7 +2,7 @@
   "TL": [
     {
       "pgm": "sha_tl",
-      "func": "sha_updatet",
+      "func": "sha_update",
       "addr": "0x30000",
       "srcs": [
         "sha_tl.c"
