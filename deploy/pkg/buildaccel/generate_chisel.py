@@ -353,7 +353,7 @@ def generate_chisel_rocc(func, idx, inputs, outputs, scala_dir, template_dir):
         'PTR_ADDR_WIDTH_ARR': info_dict['PTR_ADDR_WIDTH_ARR'],
         'PTR_DATA_WIDTH_ARR': info_dict['PTR_DATA_WIDTH_ARR'],
         'PTR_IDX_ARR': info_dict['PTR_IDX_ARR'],
-        'RETURN_WIDTH': outputs['ap_return']['width'],
+        'RETURN_WIDTH': return_width,
         'SCALAR_IO': scalar_io_str,
         'AP_RETURN_RST_CLK': ap_return_rst_clk_str,
         'SIGNAL_ASSIGNMENT': signal_assignment_str,
