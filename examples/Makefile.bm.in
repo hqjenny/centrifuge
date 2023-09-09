@@ -14,7 +14,7 @@ INCLUDES=-I${BM_INC_DIR}
 BM_LIB_FLAG=-lriscvbm
 BM_LIB=$(BM_LIB_DIR)/libriscvbm.a
 
-SRC = $(wildcard *.c)
+SRC ?= $(wildcard *.c)
 SRC_S = $(wildcard *.S)
 # Transforms the contents of the src variable, 
 # changing all file suffixes from .c to .o, 
