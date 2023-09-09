@@ -50,7 +50,7 @@ def cleanRoccArg(body):
     used, returns False if the argument should be ignored."""
 
     reIgnore = re.compile('ap_clk.*|ap_rst.*|\S+_req_full_n|\S+_rsp_empty_n')
-    reBaseName = re.compile('ap_(\S+)|(\S+)_datain')
+    reBaseName = re.compile('ap_(\S+)|(\S+)_datain|(\S+);')
 
     if reIgnore.match(body):
         return None
