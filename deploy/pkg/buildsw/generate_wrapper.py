@@ -324,7 +324,7 @@ def generateSW(accels):
         logger.info('TL accelerator path: {} {}'.format(cPath, hPath))
 
     # Creates the Makefile for the last accel in the json if there is more than one
-    with open(accels.accel_json_dir / 'Makefile2', 'w') as f:
+    with open(accels.accel_json_dir / 'Makefile', 'w') as f:
         makefile_vars = {
             'VERBOSE': '1',
             'TARGET': accel.pgm,
