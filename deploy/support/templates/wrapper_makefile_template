@@ -1,0 +1,36 @@
+# Find all .c files in the current directory
+
+CC=riscv64-unknown-elf-gcc
+AR=riscv64-unknown-elf-ar
+BM_LIB_DIR=${RDIR}/tools/centrifuge/scripts/sw_aux/bm_linker_scripts/
+BM_INC_DIR=${RDIR}/tools/centrifuge/scripts/sw_aux/sw_helper/
+
+INCLUDES=-I${BM_INC_DIR}
+CFLAGS+= -static -fno-common -fno-builtin-printf -specs=htif_nano.specs -DWRAP_$(FUNC)
+
+LIBRARY := libaccel_wrapper.a
+
+BM_LIB_FLAG=-lriscvbm
+BM_LIB=$(BM_LIB_DIR)/libriscvbm.a
+
+SRC_FILES := $(wildcard *.c)
+
+# Generate a list of .o files from the list of .c files
+OBJ_FILES := $(SRC_FILES:.c=.o)
+
+# Specify the compiler and the compilation flags
+
+# The default rule
+all: $(LIBRARY)  # $(OBJ_FILES)
+
+$(LIBRARY): $(OBJ_FILES)
+	$(AR) rcs $(LIBRARY) $(OBJ_FILES)
+
+# Rule to build the object files from the source files
+%.o: %.c
+	$(CC) $(CFLAGS) $(INCLUDES) $(BM_LIB) -c $< -o $@
+
+# Clean rule to remove the object files
+clean:
+	rm -f $(OBJ_FILES) $(LIBRARY)
+
