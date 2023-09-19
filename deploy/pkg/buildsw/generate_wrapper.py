@@ -54,7 +54,7 @@ def cleanRoccArg(body):
 
     if reIgnore.match(body):
         return None
-    
+
     m = reBaseName.match(body)
     if not m:
         raise ValueError("Could not parse argument name: " + body)
@@ -84,7 +84,7 @@ def parseVerilogRocc(vpath):
             inMatch = reInput.match(line)
             if inMatch:
                 argName = cleanRoccArg(inMatch.group(1))
-                if argName: 
+                if argName:
                     inputs.append(argName)
             else:
                 if reReturnVal.match(line):
@@ -95,9 +95,9 @@ def parseVerilogRocc(vpath):
 def parseVerilogTL(vpath):
     """Parse a centrifuge-generated verilog file to extract the information
     needed to generate tilelink wrappers.
-    
+
     vpath: Path to the verilog file containing control signal info (path-like object)
-    
+
     returns: (returnSize, Args)
         retVal: MmioArg representing the return value (or None if no return).
         Args: List of MmioArg representing the arguments to the accelerated function
@@ -107,7 +107,7 @@ def parseVerilogTL(vpath):
         reStart = re.compile("^//------------------------Address Info------------------")
         reEnd = re.compile("^//------------------------Parameter----------------------")
         reAddr = re.compile("(0x\S+) : Data signal of (\S+)")
-        
+
         inHeader = False
         args = collections.OrderedDict()
         retVal = None
@@ -137,7 +137,7 @@ def parseVerilogTL(vpath):
 
 def generateWrapperRocc(fname, roccIdx, inputs, retVal):
     """Returns a Rocc C wrapper given a function.
-    
+
     fname - name of the function
     inputs - list of argument names
     retVal - boolean indicating whether or not a value is returned
@@ -288,7 +288,7 @@ def generateSW(accels):
     for accel in accels.rocc_accels:
         inputs, retVal = parseVerilogRocc(accel.verilog_dir / (accel.name + ".v"))
         cWrapper, hWrapper = generateWrapperRocc(accel.func, accel.rocc_insn_id, inputs, retVal)
-        accel.wrapper_dir = accels.gensw_dir / accel.name 
+        accel.wrapper_dir = accels.gensw_dir / accel.name
         accel.wrapper_dir.mkdir(exist_ok=True)
 
         cPath = accel.wrapper_dir / (accel.name + '_rocc_wrapper.c')
@@ -323,6 +323,40 @@ def generateSW(accels):
             hF.write(hWrapper)
         logger.info('TL accelerator path: {} {}'.format(cPath, hPath))
 
+    # Creates the Makefile for the last accel in the json if there is more than one
+    with open(accels.accel_json_dir / 'Makefile', 'w') as f:
+        makefile_vars = {
+            'VERBOSE': '1',
+            'TARGET': accel.pgm,
+            'FUNC': accel.func,
+            'LDFLAGS': '',
+            'CFLAGS': '',
+            'SRC': ' '.join(str(src) for src in accel.srcs),
+        }
+        for var, val in makefile_vars.items():
+            print(var + '=' + val, file=f)
+
+        s = """
+ifeq ($(CUSTOM_INST), 1)
+	CFLAGS+=-DCUSTOM_INST
+endif
+
+ifeq ($(CUSTOM_DRIVER), 1)
+	CFLAGS+=-DCUSTOM_DRIVER
+endif
+
+ifeq ($(LLVM), 1)
+	ACCEL ?=0
+	include ../../../../Makefile.llvm.in
+else
+ifeq ($(GCC), 1)
+	include ../../../../Makefile.gcc.in
+else
+	include ../../../../Makefile.bm.in
+endif
+endif"""
+        print(s, file=f)
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
             description="Generate software wrappers for a given centrifuge-generated function.")
@@ -352,7 +386,7 @@ if __name__ == '__main__':
 
     with open(args.source / 'src' / 'main' / 'c' / 'accel_wrapper.c', 'w') as cF:
         cF.write(cWrapper)
-    
+
     with open(args.source / 'src' / 'main' / 'c' / 'accel_wrapper.h', 'w') as hF:
         hF.write(hWrapper)
 
