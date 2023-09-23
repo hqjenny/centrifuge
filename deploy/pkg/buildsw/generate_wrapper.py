@@ -5,6 +5,7 @@ import pathlib
 import collections
 import logging
 from .. import util
+import shutil
 
 class MmioArg():
     def __init__(self, name, addr, size=1):
@@ -92,6 +93,7 @@ def parseVerilogRocc(vpath):
 
         return inputs, retVal
 
+
 def parseVerilogTL(vpath):
     """Parse a centrifuge-generated verilog file to extract the information
     needed to generate tilelink wrappers.
@@ -135,7 +137,7 @@ def parseVerilogTL(vpath):
 
         return (list(args.values()), retVal)
 
-def generateWrapperRocc(fname, roccIdx, inputs, retVal):
+def generateWrapperRocc(fname, roccIdx, inputs, retVal, fname_header):
     """Returns a Rocc C wrapper given a function.
 
     fname - name of the function
@@ -149,7 +151,7 @@ def generateWrapperRocc(fname, roccIdx, inputs, retVal):
     cWrapper = ('#include "rocc.h"\n'
                 '\n'
                 '#define ACCEL_WRAPPER\n'
-                '#include "accel.h"\n'
+                f'#include "{fname_header}"\n'
                 '\n')
 
     cWrapper += ident(lvl) + "#define XCUSTOM_ACC " + str(roccIdx) + "\n"
@@ -204,7 +206,7 @@ def generateWrapperRocc(fname, roccIdx, inputs, retVal):
 
     return cWrapper, generateHeader(signature)
 
-def generateWrapperTL(fname, baseAddr, args, retVal):
+def generateWrapperTL(fname, baseAddr, args, retVal, fname_header):
     """Given a set of mmio address/varialble pairs, produce the C wrapper
     (returned as a string).
 
@@ -216,7 +218,7 @@ def generateWrapperTL(fname, baseAddr, args, retVal):
 
     cWrapper = ('#include "mmio.h"\n'
                 '#define ACCEL_WRAPPER\n'
-                '#include "accel.h"\n'
+                f'#include "{fname_header}"\n'
                 '\n'
                 '#define AP_DONE_MASK 0b10\n')
 
@@ -284,19 +286,23 @@ def generateSW(accels):
     # this directory as-needed.
     accels.gensw_dir.mkdir(exist_ok=True)
 
+    template_dir = util.getOpt('template-dir')
+    static_lib_makefile = template_dir / 'wrapper_makefile_template'
+
     logger.info('Generate software wrappers...')
     for accel in accels.rocc_accels:
         inputs, retVal = parseVerilogRocc(accel.verilog_dir / (accel.name + ".v"))
-        cWrapper, hWrapper = generateWrapperRocc(accel.func, accel.rocc_insn_id, inputs, retVal)
+        fname_header = accel.name + '_rocc_wrapper.h'
+        cWrapper, hWrapper = generateWrapperRocc(accel.func, accel.rocc_insn_id, inputs, retVal, fname_header)
         accel.wrapper_dir = accels.gensw_dir / accel.name
         accel.wrapper_dir.mkdir(exist_ok=True)
+        shutil.copy(static_lib_makefile, accel.wrapper_dir / 'Makefile')
 
         cPath = accel.wrapper_dir / (accel.name + '_rocc_wrapper.c')
         if cPath.exists():
             cPath.unlink()
         with open(cPath , 'w') as cF:
             cF.write(cWrapper)
-
         hPath = accel.wrapper_dir / (accel.name + '_rocc_wrapper.h')
         if hPath.exists():
             hPath.unlink()
@@ -306,9 +312,11 @@ def generateSW(accels):
 
     for accel in accels.tl_accels:
         funcArgs, retVal = parseVerilogTL(accel.verilog_dir / (accel.name + "_control_s_axi.v"))
-        cWrapper, hWrapper = generateWrapperTL(accel.func, accel.base_addr, funcArgs, retVal)
+        fname_header = accel.name + '_tl_wrapper.h'
+        cWrapper, hWrapper = generateWrapperTL(accel.func, accel.base_addr, funcArgs, retVal, fname_header)
         accel.wrapper_dir = accels.gensw_dir / accel.name
         accel.wrapper_dir.mkdir(exist_ok=True)
+        shutil.copy(static_lib_makefile, accel.wrapper_dir / 'Makefile')
 
         cPath = accel.wrapper_dir / (accel.name + '_tl_wrapper.c')
         if cPath.exists():
