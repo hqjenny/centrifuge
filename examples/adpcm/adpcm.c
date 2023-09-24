@@ -66,7 +66,7 @@
 #include <stdint.h>
 #include "time.h"
 #ifdef CUSTOM_INST
-#include "bm_wrapper.h"
+#include "rocc0_adpcm_encode_rocc_wrapper.h"
 #endif
 
 int encode (int, int);
@@ -1168,7 +1168,7 @@ adpcm_main ()
 #ifdef CUSTOM_INST
   for (i = 0; i < IN_END; i += 2)
   {
-      compressed[i / 2] = encode_wrapper(test_data[i], test_data[i + 1]); 
+      compressed[i / 2] = encode(test_data[i], test_data[i + 1]); 
   }
 #else
   for (i = 0; i < IN_END; i += 2)
