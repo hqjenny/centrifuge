@@ -163,7 +163,7 @@ def generateWrapperRocc(fname, roccIdx, inputs, retVal, fname_header):
     else:
         retStr = "void"
 
-    signature += retStr + " " + fname + "("
+    signature += retStr + " " + fname + "_wrapper("
     argStrs = []
     for arg in inputs:
         argStrs.append("uint64_t " + arg)
@@ -238,7 +238,7 @@ def generateWrapperTL(fname, baseAddr, args, retVal, fname_header):
     else:
         retStr = retVal.cType()
 
-    signature += retStr + " " + fname + "("
+    signature += retStr + " " + fname + "_wrapper("
     argStrs = []
     for arg in args:
         argStrs.append(arg.cType() + " " + arg.name)

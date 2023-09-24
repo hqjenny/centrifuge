@@ -66,7 +66,7 @@
 #include <stdint.h>
 #include "time.h"
 #ifdef CUSTOM_INST
-#include "bm_wrapper.h"
+#include "rocc0_adpcm_encode_rocc_wrapper.h"
 #endif
 
 int encode (int, int);
