@@ -92,13 +92,12 @@ Options:
     run_vcs / run_verilator
         clean -- Clean the simulation files
         debug -- Enable debug mode for the vcs simulation 
-        append_verilog -- Append HLS-generated Verilog to Top.v for simulation
+        append_verilog -- [DEPRECATED] Append HLS-generated Verilog to Top.v for simulation
         run_bm_sw -- Run bare-metal software binary specified by --swfile/-p to run in compiled vcs simulator 
 
         if --subtask/-t is not specifed, will run 
             clean
             debug
-            append_verilog 
             debug
 
 

@@ -3,7 +3,7 @@ package memControl
 import Chisel._
 import Chisel.ImplicitConversions._
 import freechips.rocketchip.tile._
-import freechips.rocketchip.config._
+import org.chipsalliance.cde.config._
 import freechips.rocketchip.diplomacy._
 import freechips.rocketchip.rocket._
 import freechips.rocketchip.tilelink._
@@ -62,7 +62,7 @@ class TimestampedRequestIOType(dataWidth:Int, addrWidth:Int, counterSize: Int) e
 
 class RequestIngestIO(dataWidth: Seq[Int], addrWidth: Seq[Int], counterSize: Int, inputBufferLen: Int) extends Bundle{
   //val reqsIn  = Vec.tabulate(dataWidth.length)((i) => Wire(new ApBusReq(dataWidth(i), addrWidth(i)).flip))
-  val reqsIn = HeterogeneousBag(dataWidth.zip(addrWidth).map {
+  val reqsIn = HeterogeneousBag.apply(dataWidth.zip(addrWidth).map {
     case (dw, aw) => new ApBusReq(dw, aw)
   }).flip
  
@@ -70,8 +70,8 @@ class RequestIngestIO(dataWidth: Seq[Int], addrWidth: Seq[Int], counterSize: Int
   //val reqsWrite = Vec(dataWidth.length, Bool(INPUT)).flip
   val reqsWrite = Vec(dataWidth.length, Input(Bool()))
   //val offsetAddrs = Vec.tabulate(dataWidth.length)((i) => UInt(INPUT, width=addrWidth(i)))
-  //val offsetAddrs = HeterogeneousBag(addrWidth.map(aw => UInt(INPUT, width = aw)))
-  val offsetAddrs = HeterogeneousBag(addrWidth.map(aw => Input(UInt(aw.W))))
+  //val offsetAddrs = HeterogeneousBag.apply(addrWidth.map(aw => UInt(INPUT, width = aw)))
+  val offsetAddrs = HeterogeneousBag.apply(addrWidth.map(aw => Input(UInt(aw.W))))
   //val loadOffsets = Vec(dataWidth.length, Bool(INPUT)).flip
   val loadOffsets = Vec(dataWidth.length, Input(Bool()))
 
@@ -99,7 +99,7 @@ class RequestIngest(dataWidth: Seq[Int], addrWidth: Seq[Int], inputBufferLen: In
 
   //val queues = Vec.tabulate(busCount)((i) => Module(new Queue(new TimestampedRequestIOType(dataWidth(i), addrWidth(i), log2Up(counterSize)), inputBufferLen)))
   val queues = Seq.tabulate(busCount)((i) => Module(new Queue(new TimestampedRequestIOType(dataWidth(i), addrWidth(i), log2Up(counterSize)), inputBufferLen)).io)
-  /*val queues = HeterogeneousBag(dataWidth.zip(addrWidth).map{ 
+  /*val queues = HeterogeneousBag.apply(dataWidth.zip(addrWidth).map{ 
       case (dw, aw) => Module(new Queue(new TimestampedRequestIOType(dw, aw, log2Up(counterSize)), inputBufferLen))
   })*/ 
   //Vec.tabulate(busCount)((i) => Module(new Queue(new TimestampedRequestIO(dataWidth(i), addrWidth(i), log2Up(counterSize)), inputBufferLen)).io)
@@ -277,7 +277,7 @@ if (addrWidth > 0) {
 
 class MemControllerIO(dataWidth:Seq[Int], addrWidth:Seq[Int], roccAddrWidth:Int, roccDataWidth:Int, roccTagWidth:Int, roccCmdWidth:Int, roccTypWidth:Int) extends Bundle{
   //----ap_bus requests----
-  val reqsIn = HeterogeneousBag(dataWidth.zip(addrWidth).map {
+  val reqsIn = HeterogeneousBag.apply(dataWidth.zip(addrWidth).map {
     case (dw, aw) => new ApBusReq(dw, aw)
   }).flip
   //Decoupled signals for requests
@@ -286,7 +286,7 @@ class MemControllerIO(dataWidth:Seq[Int], addrWidth:Seq[Int], roccAddrWidth:Int,
   val reqsWrite = Vec(dataWidth.length, Input(Bool()))
 //Offset address lines
   //val offsetAddrs = Vec.tabulate(dataWidth.length)((i) => UInt(INPUT, width=addrWidth(i)))
-  val offsetAddrs = HeterogeneousBag(addrWidth.map(aw => UInt(INPUT, width = aw)))
+  val offsetAddrs = HeterogeneousBag.apply(addrWidth.map(aw => UInt(INPUT, width = aw)))
   //val loadOffsets = Vec(dataWidth.length, Bool(INPUT)).flip
   val loadOffsets = Vec(dataWidth.length,Input(Bool()))
 
@@ -295,7 +295,7 @@ class MemControllerIO(dataWidth:Seq[Int], addrWidth:Seq[Int], roccAddrWidth:Int,
 
   //----ap_bus response----
   //val rspOut  = Vec.tabulate(dataWidth.length)((i) => new ApBusRsp(dataWidth(i)).flip)
-  val rspOut = HeterogeneousBag(dataWidth.map(dw => new ApBusRsp(dw))).flip
+  val rspOut = HeterogeneousBag.apply(dataWidth.map(dw => new ApBusRsp(dw))).flip
   val rsp_empty_n = Vec(dataWidth.length, Output(Bool())) //This is the same as valid
   val rsp_read    = Vec(dataWidth.length, Input(Bool())) //This is the same as ready
 

@@ -1,8 +1,8 @@
 package chipyard
 import chisel3._
 import freechips.rocketchip.diplomacy.{LazyModule, ValName}
-import freechips.rocketchip.config.{Parameters, Config}
-import testchipip.{WithBlockDevice, BlockDeviceKey, BlockDeviceConfig}
+import org.chipsalliance.cde.config.{Parameters, Config}
+import testchipip.iceblk.{WithBlockDevice, BlockDeviceKey, BlockDeviceConfig}
 import freechips.rocketchip.tile._
 import freechips.rocketchip.subsystem._
 import freechips.rocketchip.system._
