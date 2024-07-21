@@ -4,6 +4,10 @@ CFLAGS+=-mcmodel=medany -std=gnu99 -O2 -fno-common -fno-builtin-printf -Wall -DW
 LDFLAGS=-static -nostdlib -nostartfiles -lgcc
 
 BM_LIB_DIR=${RDIR}/tools/centrifuge/scripts/sw_aux/bm_linker_scripts/
+BM_INC_DIR=${RDIR}/tools/centrifuge/scripts/sw_aux/sw_helper/
+
+INCLUDES=-I${BM_LIB_DIR} -I${BM_INC_DIR}
+
 BM_LIB_FLAG=-lriscvbm
 BM_LIB=$(BM_LIB_DIR)/libriscvbm.a
 
@@ -41,23 +45,23 @@ all: $(addsuffix .bm.rv,$(TARGET)) bm_accel
 
 dumps: $(addsuffix .dump,$(TARGET))
 
-.s.o: $(SRC_S)
-	$(CC) $(CFLAGS) -D__ASSEMBLY__=1 -c $< -o $@
+%.s.o: %.S
+	$(CC) $(CFLAGS) $(INCLUDES) -D__ASSEMBLY__=1 -c $< -o $@
 
-.o: $(SRC) 
-	$(CC) $(CFLAGS) -c $< -o $@
+%.o: %.c
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 #%.rv: %.o crt.o syscalls.o $(BM_LIB_DIR)/bm_linker_scripts/link.ld
 # Use $info to debug
 #$(TARGET).rv: $(OBJ) $(BM_LIB) $(BM_LIB_DIR)/link.ld $(info $(OBJ))
 $(TARGET).bm.rv: Makefile $(OBJ) $(BM_LIB) $(BM_LIB_DIR)/link.ld 
-	$(CC) -T $(BM_LIB_DIR)/link.ld $(LDFLAGS) -I$(BM_LIB_DIR) -L$(BM_LIB_DIR) $(BM_LIB_FLAG) $(OBJ_BASE) -o $@
+	$(CC) -T $(BM_LIB_DIR)/link.ld $(LDFLAGS) $(INCLUDES) -L$(BM_LIB_DIR) $(BM_LIB_FLAG) $(OBJ_BASE) -o $@
 
 # Add new target
 bm_accel: $(addsuffix .bm_accel.rv,$(TARGET))
 
 $(TARGET).bm_accel.rv: $(OBJ) $(BM_LIB) $(BM_LIB_DIR)/link.ld 
-	$(CC) -T $(BM_LIB_DIR)/link.ld $(LDFLAGS) -I$(BM_LIB_DIR) -L$(BM_LIB_DIR) $(BM_LIB_FLAG) $(OBJ_ACCEL) -o $@
+	$(CC) -T $(BM_LIB_DIR)/link.ld $(LDFLAGS) $(INCLUDES) -L$(BM_LIB_DIR) $(BM_LIB_FLAG) $(OBJ_ACCEL) -o $@
 
 %.dump: %.rv
 	$(OBJDUMP) -D $< > $@

@@ -1,0 +1,98 @@
+package hls_${FUNC}
+
+import chisel3._
+import chisel3.util._
+
+import freechips.rocketchip.config.{Parameters, Field, Config}
+import freechips.rocketchip.diplomacy._
+import freechips.rocketchip.tilelink._
+import freechips.rocketchip.amba.axi4._
+import freechips.rocketchip.util._ 
+import freechips.rocketchip.subsystem._
+
+//case class ${FUNC}Config()
+//case object ${FUNC}Key extends Field[Option[${FUNC}Config]](None)
+
+class HLS${FUNC}AXI (address: BigInt = 0x20000, beatBytes: Int = 8) (implicit p: Parameters) extends LazyModule {  
+
+    val numInFlight = 8
+
+    ${AXI_MASTER_STMT} 
+    val slave_node = AXI4SlaveNode(Seq(AXI4SlavePortParameters(
+        slaves = Seq(AXI4SlaveParameters(
+            address = List(AddressSet(address,0x4000-1)),
+            regionType = RegionType.UNCACHED,
+            supportsWrite = TransferSizes(1, beatBytes),
+            supportsRead = TransferSizes(1, beatBytes),
+            interleavedId = Some(0)
+        )),
+        beatBytes = beatBytes
+    )))
+
+    lazy val module = new HLS${FUNC}AXIModule(this)
+}
+
+class HLS${FUNC}AXIModule(outer: HLS${FUNC}AXI) extends LazyModuleImp(outer) {  
+
+    //val (out, edge) = outer.node.out(0)
+    val (slave_in, slave_edge) = outer.slave_node.in(0)
+
+    val bId = Reg(UInt(32.W))
+    val rId = Reg(UInt(32.W))
+
+    val bb = Module(new ${FUNC}())
+
+    ${AXI_MODULE_STMT}
+
+    // For AXI4lite, these two signals are always True
+    slave_in.r.bits.last := true.B 
+
+    when(slave_in.aw.fire()){
+        bId := slave_in.aw.bits.id
+    }
+
+    when(slave_in.ar.fire()){
+        rId := slave_in.ar.bits.id 
+    }
+    slave_in.r.bits.id := rId
+    slave_in.b.bits.id := bId
+}
+
+trait CanHavePeripheryHLS${FUNC}AXI { this: BaseSubsystem =>
+    //implicit val p: Parameters
+
+    private val address = BigInt(${BASE_ADDR})
+    private val axi_m_portName = "HLS-Accelerator-${FUNC}-master"
+    private val axilite_s_portName = "HLS-Accelerator-${FUNC}-slave"
+
+    // Disable Config 
+    //p(${FUNC}Key).map { k =>
+      
+        //val accel_s_axi_width = ${S_AXI_DATA_WIDTH} 
+        //val hls_${FUNC}_accel = LazyModule(new HLS${FUNC}AXI(address, sbus.beatBytes))
+        val hls_${FUNC}_accel = LazyModule(new HLS${FUNC}AXI(address, ${S_AXI_DATA_WIDTH} >> 3))
+      
+        ${AXI_TRAIT_STMT}
+
+	//	mmioPortParamsOpt.map { params =>
+		sbus.coupleTo(s"port_named_$$axilite_s_portName") {
+		  (hls_${FUNC}_accel.slave_node
+			:= AXI4Buffer()
+			:= AXI4UserYanker()
+			:= AXI4Deinterleaver(sbus.blockBytes)
+			:= AXI4IdIndexer(1)
+			:= TLToAXI4()
+            := TLFragmenter(${S_AXI_DATA_WIDTH} >> 3, 64, alwaysMin=true, holdFirstDeny=true)
+			:= TLWidthWidget(sbus.beatBytes)
+			:= _)
+		}
+    //}
+}
+
+trait CanHavePeripheryHLS${FUNC}AXIImp extends LazyModuleImp {
+    val outer: CanHavePeripheryHLS${FUNC}AXI
+}
+
+// class WithHLS${FUNC}() extends Config((site, here, up) => {
+//   case ${FUNC}Key => Some(${FUNC}Config())
+// })

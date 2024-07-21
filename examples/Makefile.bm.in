@@ -1,0 +1,75 @@
+CC=riscv64-unknown-elf-gcc
+OBJDUMP=riscv64-unknown-elf-objdump
+# CFLAGS+=-mcmodel=medany -std=gnu99 -O2 -fno-common -fno-builtin-printf -Wall -DWRAP_$(FUNC)
+# LDFLAGS=-static -nostdlib -nostartfiles -lgcc
+CFLAGS+=-fno-common -fno-builtin-printf -specs=htif_nano.specs -DWRAP_$(FUNC)
+LDFLAGS=-static -specs=htif_nano.specs
+
+BM_LIB_DIR=${RDIR}/tools/centrifuge/scripts/sw_aux/bm_linker_scripts/
+BM_INC_DIR=${RDIR}/tools/centrifuge/scripts/sw_aux/sw_helper/
+
+# INCLUDES=-I${BM_LIB_DIR} -I${BM_INC_DIR}
+INCLUDES=-I${BM_INC_DIR}
+
+BM_LIB_FLAG=-lriscvbm
+BM_LIB=$(BM_LIB_DIR)/libriscvbm.a
+
+SRC ?= $(wildcard *.c)
+SRC_S = $(wildcard *.S)
+# Transforms the contents of the src variable, 
+# changing all file suffixes from .c to .o, 
+# thus constructing the object file list we need.
+OBJ = $(SRC:.c=.o) $(SRC_S:.S=.s.o) 
+
+OBJ_ORIG = $(filter-out accel_wrapper.o, $(OBJ))
+OBJ_ACCEL = $(filter-out accel.o, $(OBJ))
+
+# Filter out the orig func in accel.o with $(OBJ: filter-out accel.o, $(wildcard *.o))
+# And decide whether to link the accel wrapper
+# To be backward compatible, if define the CUSTOM_INST variable the default .rv
+# will call the accelerator wrapper
+ifdef CUSTOM_INST 
+OBJ_BASE = $(OBJ_ACCEL)
+else
+OBJ_BASE = $(OBJ_ORIG)
+endif
+
+# ifdef CUSTOM_DRIVER 
+# OBJ_BASE = $(OBJ_ACCEL)
+# else
+# OBJ_BASE = $(OBJ_ORIG)
+# endif
+
+.PHONY: clean
+
+default: all 
+
+all: $(addsuffix .bm.rv,$(TARGET)) bm_accel
+
+dumps: $(addsuffix .dump,$(TARGET))
+
+%.s.o: %.S
+	$(CC) $(CFLAGS) $(INCLUDES) -D__ASSEMBLY__=1 -c $< -o $@
+
+%.o: %.c
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+
+#%.rv: %.o crt.o syscalls.o $(BM_LIB_DIR)/bm_linker_scripts/link.ld
+# Use $info to debug
+#$(TARGET).rv: $(OBJ) $(BM_LIB) $(BM_LIB_DIR)/link.ld $(info $(OBJ))
+$(TARGET).bm.rv: Makefile $(OBJ) $(BM_LIB) $(BM_LIB_DIR)/link.ld 
+	$(CC) $(LDFLAGS) $(INCLUDES) $(OBJ_BASE) -o $@
+# $(CC) -T $(BM_LIB_DIR)/link.ld $(LDFLAGS) $(INCLUDES) -L$(BM_LIB_DIR) $(BM_LIB_FLAG) $(OBJ_BASE) -o $@
+
+# Add new target
+bm_accel: $(addsuffix .bm_accel.rv,$(TARGET))
+
+$(TARGET).bm_accel.rv: $(OBJ) $(BM_LIB) $(BM_LIB_DIR)/link.ld 
+	$(CC) $(LDFLAGS) $(INCLUDES) $(OBJ_ACCEL) -o $@
+# $(CC) -T $(BM_LIB_DIR)/link.ld $(LDFLAGS) $(INCLUDES) -L$(BM_LIB_DIR) $(BM_LIB_FLAG) $(OBJ_ACCEL) -o $@
+
+%.dump: %.rv
+	$(OBJDUMP) -D $< > $@
+
+clean:
+	rm -f *.rv *.o *.dump

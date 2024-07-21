@@ -12,9 +12,9 @@ export RDIR=$(git rev-parse --show-toplevel)/../../
 #source sourceme-f1-manager.sh
 
 # modify the pk source code to enable pk for custom instructions
-pushd $RDIR/toolchains/riscv-tools/riscv-pk
-git apply $RDIR/tools/centrifuge/patches/riscv-pk.patch
-popd
+# pushd $RDIR/toolchains/riscv-tools/riscv-pk
+# git apply $RDIR/tools/centrifuge/patches/riscv-pk.patch
+# popd
 
 #pushd $RDIR
 #./scripts/build-toolchains.sh
@@ -44,10 +44,10 @@ popd
 #git apply $RDIR/hls/patches/riscv-linux.patch
 #popd
 #
-pushd $CL_DIR/verif/scripts
-git apply $RDIR/tools/centrifuge/patches/XSim_Makefile.patch 
-touch top.vivado.vhd.f
-popd
+# pushd $CL_DIR/verif/scripts
+# git apply $RDIR/tools/centrifuge/patches/XSim_Makefile.patch 
+# touch top.vivado.vhd.f
+# popd
 
 ## Add Linux static memory allocator for the accelorator
 #cp $RDIR/hls/sw/riscv-linux/hls_mmap_static.c  $RDIR/sw/firesim-software/riscv-linux/mm/
@@ -71,15 +71,15 @@ popd
 #fi
 #
 # Only on AWS FPGA AMI machines (see firesim/build-setup-nolog.sh for how this trick works):
-if wget -T 1 -t 3 -O /dev/null http://169.254.169.254/; then
+# if wget -T 1 -t 3 -O /dev/null http://169.254.169.254/; then
   # # Update Makefiles for Xsim to support VHDL simluation.
-  pushd $CL_DIR/verif/scripts
-  git apply $RDIR/hls/patches/XSim_Makefile.patch 
-  touch top.vivado.vhd.f
-  popd
+#  pushd $CL_DIR/verif/scripts
+#  git apply $RDIR/hls/patches/XSim_Makefile.patch 
+#  touch top.vivado.vhd.f
+#  popd
 
   # Setup perl modules
-  sudo yum install -y cpan
-  sudo cpan JSON
-  sudo yum install -y perl-Tie-IxHash
-fi
+#  sudo yum install -y cpan
+#  sudo cpan JSON
+#  sudo yum install -y perl-Tie-IxHash
+# fi

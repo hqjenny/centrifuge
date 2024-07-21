@@ -1,0 +1,16 @@
+# HLS-generated Accelerators
+[firesim-rocket-singlecore-hls-no-nic-l2-llc4mb-ddr3]
+DESIGN=FireSim
+TARGET_CONFIG=DDR3FRFCFSLLC4MB_HLSFireSimRocketChipConfig
+PLATFORM_CONFIG=F90MHz_BaseF1Config
+instancetype=z1d.2xlarge
+deploytriplet=None
+
+# HLS-generated Accelerators, with NIC
+[firesim-rocket-singlecore-hls-no-l2-llc4mb-ddr3]
+DESIGN=FireSim
+TARGET_CONFIG=WithNIC_DDR3FRFCFSLLC4MB_HLSFireSimRocketChipConfig
+PLATFORM_CONFIG=F90MHz_BaseF1Config
+instancetype=z1d.2xlarge
+deploytriplet=None
+
