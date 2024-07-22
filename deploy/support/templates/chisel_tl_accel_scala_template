@@ -3,17 +3,18 @@ package hls_${FUNC}
 import chisel3._
 import chisel3.util._
 
-import freechips.rocketchip.config.{Parameters, Field, Config}
+import org.chipsalliance.cde.config.{Parameters, Field, Config}
 import freechips.rocketchip.diplomacy._
 import freechips.rocketchip.tilelink._
 import freechips.rocketchip.amba.axi4._
 import freechips.rocketchip.util._ 
+import freechips.rocketchip.prci._
 import freechips.rocketchip.subsystem._
 
 //case class ${FUNC}Config()
 //case object ${FUNC}Key extends Field[Option[${FUNC}Config]](None)
 
-class HLS${FUNC}AXI (address: BigInt = 0x20000, beatBytes: Int = 8) (implicit p: Parameters) extends LazyModule {  
+class HLS${FUNC}AXI (address: BigInt = 0x20000, beatBytes: Int = 8) (implicit p: Parameters) extends ClockSinkDomain(ClockSinkParameters())(p) {  
 
     val numInFlight = 8
 
@@ -29,33 +30,33 @@ class HLS${FUNC}AXI (address: BigInt = 0x20000, beatBytes: Int = 8) (implicit p:
         beatBytes = beatBytes
     )))
 
-    lazy val module = new HLS${FUNC}AXIModule(this)
-}
+    override lazy val module = new HLS${FUNC}AXIModule
+    class HLS${FUNC}AXIModule extends Impl {  
+        withClockAndReset(clock, reset) {
+            //val (out, edge) = outer.node.out(0)
+            val (slave_in, slave_edge) = slave_node.in(0)
 
-class HLS${FUNC}AXIModule(outer: HLS${FUNC}AXI) extends LazyModuleImp(outer) {  
+            val bId = Reg(UInt(32.W))
+            val rId = Reg(UInt(32.W))
 
-    //val (out, edge) = outer.node.out(0)
-    val (slave_in, slave_edge) = outer.slave_node.in(0)
+            val bb = Module(new ${FUNC}())
 
-    val bId = Reg(UInt(32.W))
-    val rId = Reg(UInt(32.W))
+            ${AXI_MODULE_STMT}
 
-    val bb = Module(new ${FUNC}())
+            // For AXI4lite, these two signals are always True
+            slave_in.r.bits.last := true.B 
 
-    ${AXI_MODULE_STMT}
+            when(slave_in.aw.fire()){
+                bId := slave_in.aw.bits.id
+            }
 
-    // For AXI4lite, these two signals are always True
-    slave_in.r.bits.last := true.B 
-
-    when(slave_in.aw.fire()){
-        bId := slave_in.aw.bits.id
+            when(slave_in.ar.fire()){
+                rId := slave_in.ar.bits.id 
+            }
+            slave_in.r.bits.id := rId
+            slave_in.b.bits.id := bId
+        }
     }
-
-    when(slave_in.ar.fire()){
-        rId := slave_in.ar.bits.id 
-    }
-    slave_in.r.bits.id := rId
-    slave_in.b.bits.id := bId
 }
 
 trait CanHavePeripheryHLS${FUNC}AXI { this: BaseSubsystem =>
@@ -65,12 +66,16 @@ trait CanHavePeripheryHLS${FUNC}AXI { this: BaseSubsystem =>
     private val axi_m_portName = "HLS-Accelerator-${FUNC}-master"
     private val axilite_s_portName = "HLS-Accelerator-${FUNC}-slave"
 
+    private val sbus = locateTLBusWrapper(SBUS)
+
     // Disable Config 
     //p(${FUNC}Key).map { k =>
       
         //val accel_s_axi_width = ${S_AXI_DATA_WIDTH} 
         //val hls_${FUNC}_accel = LazyModule(new HLS${FUNC}AXI(address, sbus.beatBytes))
         val hls_${FUNC}_accel = LazyModule(new HLS${FUNC}AXI(address, ${S_AXI_DATA_WIDTH} >> 3))
+
+        hls_${FUNC}_accel.clockNode := sbus.fixedClockNode
       
         ${AXI_TRAIT_STMT}
 

@@ -3,6 +3,7 @@ import shutil
 import collections
 import logging
 import argparse
+import os
 from string import Template
 import re
 from .. import util
@@ -132,7 +133,7 @@ def get_rocc_scalarIO_count(input_info):
 
 def generate_rocc_scalarIO(num_scalar):
     if num_scalar > 0:
-        return "    val scalar_io = HeterogeneousBag(scalar_io_dataWidths.map(w => Input(UInt(w.W))))\n"
+        return "    val scalar_io = HeterogeneousBag.apply(scalar_io_dataWidths.map(w => Input(UInt(w.W))))\n"
     else:
         return ""
 
@@ -208,6 +209,15 @@ def generate_args(inputs, outputs):
 
     return args_arr
 
+def generate_bbox_paths(verilog_dir):
+    vlog_files = []
+    for path in os.listdir(verilog_dir):
+        vlog_files.append(str(verilog_dir) + "/" + str(path)) #assuming no subdirectories
+    return vlog_files
+
+def generate_bbox_str(vlog_files):
+    bbox_strs = ["addPath(s\"{}\")".format(f) for f in vlog_files]
+    return "\n    ".join(bbox_strs)
 
 def generate_opt_ap_signals(inputs, outputs):
     ret_str = ""
@@ -218,7 +228,7 @@ def generate_opt_ap_signals(inputs, outputs):
     if 'ap_clk' in list(inputs.keys()):
         ret_str += "    bb.io.ap_clk := clock\n"
     if 'ap_rst_n' in list(inputs.keys()):
-        ret_str += "    bb.io.ap_rst_n := !reset.asBool()\n"
+        ret_str += "    bb.io.ap_rst_n := !reset.asBool\n"
     return ret_str
 
 
@@ -322,7 +332,7 @@ def parse_verilog_rocc(vpath):
     return (inputs, outputs)
 
 
-def generate_chisel_rocc(func, idx, inputs, outputs, scala_dir, template_dir):
+def generate_chisel_rocc(func, idx, inputs, outputs, scala_dir, verilog_dir, template_dir):
 
     ##########################################################
     logger.info("Generating RoCC BlackBox file ...")
@@ -332,6 +342,10 @@ def generate_chisel_rocc(func, idx, inputs, outputs, scala_dir, template_dir):
     # Generate arguments
     args_arr = generate_args(inputs, outputs)
     args_str = "\n        ".join(args_arr)
+
+    # Generate paths to verilog files
+    bbox_paths_arr = generate_bbox_paths(verilog_dir)
+    bbox_paths_str = generate_bbox_str(bbox_paths_arr)
 
     # Generate spec for args
     input_info = parse_verilog_input_info(inputs)
@@ -357,6 +371,7 @@ def generate_chisel_rocc(func, idx, inputs, outputs, scala_dir, template_dir):
         'SCALAR_IO': scalar_io_str,
         'AP_RETURN_RST_CLK': ap_return_rst_clk_str,
         'SIGNAL_ASSIGNMENT': signal_assignment_str,
+        "BBOX_PATHS": bbox_paths_str,
 
     }
     scala_path = scala_dir / pathlib.Path(func + '_blackbox.scala')
@@ -489,7 +504,7 @@ def generate_tl_module_stmt(inputs, outputs, buses):
 
     bus_stmt_arr = []
     for k, _ in buses.items():
-        bus_stmt = "val (out_{0}, edge_{0}) = outer.node_{0}.out(0)".format(k)
+        bus_stmt = "val (out_{0}, edge_{0}) = node_{0}.out(0)".format(k)
         bus_stmt_arr.append(bus_stmt)
     ret_str += "\n    ".join(bus_stmt_arr)
     ret_str += "\n"
@@ -563,8 +578,8 @@ def generate_tl_module_stmt(inputs, outputs, buses):
             elif matchRBID:
                 assign_str = generate_AXI_signal(matchRBID,
                     in_str + " := out_{0}.{1}.bits.id")
-            elif matchRBUSER: # omit user signal
-                assign_str = ""
+            elif matchRBUSER: # tie off user signal
+                assign_str = in_str + " := 0.U"
             elif matchRBRESP:
                 assign_str = generate_AXI_signal(matchRBRESP,
                     in_str + " := out_{0}.{1}.bits.resp")
@@ -721,7 +736,7 @@ def generate_tl_trait_stmt(func, buses):
     return ret_str
 
 
-def generate_chisel_tl(func, idx, inputs, outputs, params, buses, scala_dir, template_dir):
+def generate_chisel_tl(func, idx, inputs, outputs, params, buses, scala_dir, verilog_dir, template_dir):
     ##########################################################
     logger.info("Generating TL BlackBox file ...")
     template_name = 'chisel_tl_blackbox_scala_template'
@@ -735,10 +750,15 @@ def generate_chisel_tl(func, idx, inputs, outputs, params, buses, scala_dir, tem
     args_arr = generate_args(inputs, outputs)
     args_str = "\n        ".join(args_arr)
 
+    # Generate paths to verilog files
+    bbox_paths_arr = generate_bbox_paths(verilog_dir)
+    bbox_paths_str = generate_bbox_str(bbox_paths_arr)
+
     chisel_dict = {
         "FUNC": func,
         "PARAMS": params_str,
         "ARGS": args_str,
+        "BBOX_PATHS": bbox_paths_str,
     }
     scala_path = scala_dir / pathlib.Path(func + '_blackbox.scala')
     util.generate_file(template_path, chisel_dict, scala_path)
@@ -777,13 +797,13 @@ def generate_chisel(accel_conf):
         logger.info("\tRun CHISEL generation for {}:".format(accel.name))
         inputs, outputs = parse_verilog_rocc(
                 accel.verilog_dir / (accel.name + ".v"))
-        generate_chisel_rocc( accel.name, accel.rocc_insn_id, inputs, outputs, accel.scala_dir, template_dir)
+        generate_chisel_rocc( accel.name, accel.rocc_insn_id, inputs, outputs, accel.scala_dir, accel.verilog_dir, template_dir)
 
     for accel in accel_conf.tl_accels:
         logger.info("\tRun CHISEL generation for {}:".format(accel.name))
         inputs, outputs, params, buses = parse_verilog_tl(
                 accel.verilog_dir / (accel.name + ".v"))
-        generate_chisel_tl( accel.name, accel.base_addr, inputs, outputs, params, buses, accel.scala_dir, template_dir)
+        generate_chisel_tl( accel.name, accel.base_addr, inputs, outputs, params, buses, accel.scala_dir, accel.verilog_dir, template_dir)
 
 
 if __name__ == '__main__':
