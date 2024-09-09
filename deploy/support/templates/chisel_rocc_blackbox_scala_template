@@ -1,15 +1,21 @@
 package hls_${FUNC}
-import Chisel._
-import chisel3.dontTouch
-import freechips.rocketchip.config.{Parameters, Field}
+
+import sys.process._
+
+import chisel3._
+import chisel3.util._
+import org.chipsalliance.cde.config.{Parameters, Field}
 import freechips.rocketchip.tile._
 import freechips.rocketchip.util._
 import vivadoHLS._
 
-class ${FUNC}() extends BlackBox() {
-    val io = new Bundle {
+class ${FUNC}() extends BlackBox() with HasBlackBoxPath {
+    val io = IO(new Bundle {
         ${ARGS}
-    }
+    })
+
+	${BBOX_PATHS}
+
 }
 
 
@@ -19,13 +25,13 @@ class HLS${FUNC}Blackbox() extends Module {
 	val ap_bus_addrWidths = List(${PTR_ADDR_WIDTH_ARR})
 	val ap_bus_dataWidths = List(${PTR_DATA_WIDTH_ARR})
 	val ap_bus_argLoc = List(${PTR_IDX_ARR})
-	val io = new Bundle {
+	val io = IO(new Bundle {
 	    val ap = new ApCtrlIO(dataWidth = ${RETURN_WIDTH})
-	    val ap_bus = HeterogeneousBag(ap_bus_addrWidths.zip(ap_bus_dataWidths).map {
+	    val ap_bus = HeterogeneousBag.apply(ap_bus_addrWidths.zip(ap_bus_dataWidths).map {
                         case (aw, dw) => new ApBusIO(dw, aw)
                         })
        ${SCALAR_IO} 
-    }
+    })
 
 	val bb = Module(new ${FUNC}())
 

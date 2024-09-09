@@ -36,7 +36,7 @@ def run_sim(accel_conf, simulator, subtask, bm_sw_path=None):
     if subtask is None:
         compile_sim_cmd(accel_conf, simulator, 'clean')
         compile_sim_cmd(accel_conf, simulator, 'debug', False)
-        append_verilog_to_top_v(accel_conf, simulator)
+        #append_verilog_to_top_v(accel_conf, simulator)
         compile_sim_cmd(accel_conf, simulator, 'debug')
     else:
         if subtask == 'clean':

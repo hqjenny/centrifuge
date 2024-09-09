@@ -30,7 +30,6 @@ Run Centrifuge to generate the accelerator SoC defined in `vadd_soc.json`.
 ```
 cd $RDIR/tools/centrifuge/deploy
 ./centrifuge generate_hw -c ../examples/vadd_proj/vadd_soc.json
-./centrifuge generate_sw -c ../examples/vadd_proj/vadd_soc.json 
 ```
 This also generates the sw helper functions to invoke the accelerator. The generated sw wrapper `accel_wrapper.c` and `accel_wrapper.h`is under the hardware path  `$RDIR/tools/centrifuge/examples/vadd_proj/centrifuge_wrappers/`. 
 
@@ -42,7 +41,7 @@ Run the following command to invoke compilation for bare-metal.
 ```
 We currently have the vadd RoCC example code and Makefile under example directory and are working on migrating the compilation flow from perl to python.
 ```
-cd $RDIR/tools/centrifuge/examples/vadd && make
+cd $RDIR/tools/centrifuge/examples/vadd_proj && make
 ```
 The generated `vadd.bm.rv` is a software only reference code for vadd and `vadd.bm_accel.rv` is the baremetal code for calling the RoCC vadd accelerator
 
@@ -60,4 +59,9 @@ For instance, to invoke the accelerator in bare-metal software, run:
 ```
 cd $RDIR/sims/vcs/
 ./simv-example-HLSRocketConfig-debug <sw binary>
+```
+To run the simulation using Chipyard, run:
+```
+cd $RDIR/sims/vcs/
+make run-binary-debug CONFIG=HLSRocketConfig BINARY=<sw binary>
 ```

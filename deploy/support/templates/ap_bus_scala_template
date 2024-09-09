@@ -1,43 +1,45 @@
 package vivadoHLS
 
-import Chisel._
+import chisel3._
+import chisel3.util._
 
 //These are definitions of the bus standards used on Vivado HLS generated accelerators
 
-//Request Packet Format
-class ApBusReq(dataWidth:Int, addrWidth:Int) extends Bundle{
-  //Req specific lines
-  //Specifies a write request
-  val din     = Bool(OUTPUT) //req_din in verilog
+// Request Packet Format
+class ApBusReq(dataWidth: Int, addrWidth: Int) extends Bundle {
+  // Req specific lines
+  // Specifies a write request
+  val din      = Output(Bool()) // req_din in verilog
 
-  //Lines used for req
-  val address     = UInt(OUTPUT, width = addrWidth)
-  val dataout     = UInt(OUTPUT, width = dataWidth)
-  val size        = UInt(OUTPUT, width = addrWidth)
+  // Lines used for req
+  val address  = Output(UInt(addrWidth.W))
+  val dataout  = Output(UInt(dataWidth.W))
+  val size     = Output(UInt(addrWidth.W))
 }
 
-//Response Packet Format
-class ApBusRsp(dataWidth:Int) extends Bundle{
-  val datain      = UInt(INPUT , width = dataWidth)
+// Response Packet Format
+class ApBusRsp(dataWidth: Int) extends Bundle {
+  val datain   = Input(UInt(dataWidth.W))
 }
 
-class ApBusIO(dataWidth:Int = 64, addrWidth:Int = 32) extends Bundle{
-  val req = new ApBusReq(dataWidth, addrWidth)
-  val req_full_n  = Bool(INPUT ) //req_full_n in verilog
-  //Write the request
-  val req_write   = Bool(OUTPUT) //req_write in verilog
+// Main IO Bundle
+class ApBusIO(dataWidth: Int = 64, addrWidth: Int = 32) extends Bundle {
+  val req        = new ApBusReq(dataWidth, addrWidth)
+  val req_full_n = Input(Bool())  // req_full_n in verilog
+  // Write the request
+  val req_write  = Output(Bool()) // req_write in verilog
 
-  val rsp = new ApBusRsp(dataWidth)
-  val rsp_empty_n = Bool(INPUT )
-  val rsp_read    = Bool(OUTPUT)
+  val rsp        = new ApBusRsp(dataWidth)
+  val rsp_empty_n = Input(Bool())
+  val rsp_read   = Output(Bool())
 }
 
-class ApCtrlIO(dataWidth:Int = 64) extends Bundle{
-  //val clk    = Bool(INPUT )
-  //val rst    = Bool(INPUT )
-  val start  = Bool(INPUT )
-  val done   = Bool(OUTPUT)
-  val idle   = Bool(OUTPUT)
-  val ready  = Bool(OUTPUT)
-  val rtn    = UInt(OUTPUT, width = dataWidth)
+// Control IO Bundle
+class ApCtrlIO(dataWidth: Int = 64) extends Bundle {
+  val start = Input(Bool())
+  val done  = Output(Bool())
+  val idle  = Output(Bool())
+  val ready = Output(Bool())
+  val rtn   = Output(UInt(dataWidth.W))
 }
+

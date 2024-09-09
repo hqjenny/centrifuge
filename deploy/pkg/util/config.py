@@ -77,7 +77,7 @@ def cleanPaths(opts, baseDir=pathlib.Path('.')):
                 raise ConfigurationOptionError(opt, "Invalid path: " + str(e))
 
 
-class cfCtx(collections.MutableMapping):
+class cfCtx(collections.abc.MutableMapping):
     """Global Centrifuge context (configuration)."""
     
     # Actual internal storage for all options

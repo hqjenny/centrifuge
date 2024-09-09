@@ -1,16 +1,17 @@
 package controlUtils
 
-import Chisel._
+import chisel3._
+import chisel3.util._
 
 //This is based on the existing chisel arbiters but has a different implementation
 class PriorityArbiterIO[T <: Data](gen: T, n: Int, priorityBits: Int) extends Bundle{
   val in  = Vec(n,  Flipped(Decoupled(gen)))
   val out = Decoupled(gen)
-  val chosen = UInt(OUTPUT, log2Up(n))
+  val chosen = Output(UInt(log2Up(n).W))
   //Priorities of the inputs (0 is max priority)
-  val priority = Vec(n,Input(UInt(priorityBits.W)))
+  val priority = Vec(n, Input(UInt(priorityBits.W)))
   //Priority of the outputed value
-  val priorityOut = UInt(OUTPUT, width = priorityBits)
+  val priorityOut = Output(UInt(priorityBits.W))
 }
 
 class PriorityArbiter[T <: Data](gen: T, n: Int, priorityBits: Int) extends Module{
@@ -24,7 +25,7 @@ class PriorityArbiter[T <: Data](gen: T, n: Int, priorityBits: Int) extends Modu
     //No arbitration required!
     io.out.valid := io.in(0).valid
     io.out.bits := io.in(0).bits
-    io.chosen := UInt(0)
+    io.chosen := UInt(0.W)
     io.priorityOut := io.priority(0)
     io.in(0).ready := io.out.ready
   }
@@ -58,17 +59,17 @@ class PriorityArbiter[T <: Data](gen: T, n: Int, priorityBits: Int) extends Modu
     //proceduarally constructing a tree of muxes.  The initial node is 0 but, on each itteration, 
     //it is set to the muxof the current node and the selected one.  The final value is then connected
     //to the output and contains the whole tree of muxes
-    var chosenInd = UInt(0)
+    var chosenInd = 0.U
     for(i <- 1 until n){
-      val chooseThis = (io.in(chosenInd).valid === Bool(false) && io.in(i).valid === Bool(true)) || (io.in(i).valid === Bool(true) && io.priority(i) < io.priority(chosenInd))
-      chosenInd = Mux(chooseThis, UInt(i), chosenInd)
+      val chooseThis = (io.in(chosenInd).valid === false.B && io.in(i).valid === true.B) || (io.in(i).valid === true.B && io.priority(i) < io.priority(chosenInd))
+      chosenInd = Mux(chooseThis, i.U, chosenInd)
     }
     
     //Set IO lines
     for(i <- 0 to n-1 by 1){
       //set the ready lines going to the input ports so that the chosen one
       //gets the value of io.out.ready and the rest get a value of Bool(false)
-      io.in(i).ready := (chosenInd === UInt(i)) && io.out.ready
+      io.in(i).ready := (chosenInd === i.U) && io.out.ready
     }
 
     io.out.valid := io.in(chosenInd).valid
@@ -80,14 +81,14 @@ class PriorityArbiter[T <: Data](gen: T, n: Int, priorityBits: Int) extends Modu
 
 class InitCounter(val n: Int, val initVal: Int) {
   /** current value of the counter */
-  val value = if (n == 1) UInt(0) else Reg(init=UInt(initVal, log2Up(n)))
+  val value = if (n == 1) 0.U else RegInit(initVal.U(log2Up(n).W))
   /** increment the counter
     * @return if the counter is at the max value */
   def inc(): Bool = {
-    if (n == 1) Bool(true)
+    if (n == 1) true.B
     else {
-      val wrap = value === UInt(n-1)
-      value := Mux(Bool(!isPow2(n)) && wrap, UInt(0), value + UInt(1))
+      val wrap = value === (n-1).U
+      value := Mux((!isPow2(n)).B && wrap, 0.U, value + 1.U)
       wrap
     }
   }
@@ -124,9 +125,9 @@ class RegisterQueue[T <: Data](gen: T, val entries: Int,  initVals: Seq[T], pipe
   
   //val ending = Vec.fill(entries-initVals.length)(gen)
   val ending = Vec(entries-initVals.length, gen)
-  val fullInitVals = Vec(initVals ++ ending)
+  val fullInitVals = VecInit(initVals ++ ending)
 
-  val ram = Reg(init=fullInitVals)
+  val ram = RegInit(fullInitVals)
   //val ram = Mem(entries, gen)
   //var registers = new ArraySeq(entries)
   //for(i <- 0 until entries){
@@ -151,12 +152,12 @@ class RegisterQueue[T <: Data](gen: T, val entries: Int,  initVals: Seq[T], pipe
 
   val enq_ptr = InitCounter(entries, if(initVals.length < entries) initVals.length else 0)
   val deq_ptr = Counter(entries)
-  val maybe_full = Reg(init=(if(initVals.length < entries) Bool(false) else Bool(true)))
+  val maybe_full = RegInit((if(initVals.length < entries) false.B else true.B))
 
   val ptr_match = enq_ptr.value === deq_ptr.value
   val empty = ptr_match && !maybe_full
   val full = ptr_match && maybe_full
-  val maybe_flow = Bool(flow) && empty
+  val maybe_flow = flow.B && empty
   val do_flow = maybe_flow && io.deq.ready
 
   val do_enq = io.enq.ready && io.enq.valid && !do_flow
@@ -172,8 +173,8 @@ class RegisterQueue[T <: Data](gen: T, val entries: Int,  initVals: Seq[T], pipe
     maybe_full := do_enq
   }
 
-  io.deq.valid := !empty || Bool(flow) && io.enq.valid
-  io.enq.ready := !full || Bool(pipe) && io.deq.ready
+  io.deq.valid := !empty || flow.B && io.enq.valid
+  io.enq.ready := !full || pipe.B && io.deq.ready
   io.deq.bits := Mux(maybe_flow, io.enq.bits, ram(deq_ptr.value))
 
   val ptr_diff = enq_ptr.value - deq_ptr.value
@@ -182,16 +183,16 @@ class RegisterQueue[T <: Data](gen: T, val entries: Int,  initVals: Seq[T], pipe
   } else {
     io.count := Mux(ptr_match,
                     Mux(maybe_full,
-                      UInt(entries), UInt(0)),
+                      UInt(entries.W), UInt(0.W)),
                     Mux(deq_ptr.value > enq_ptr.value,
-                      UInt(entries) + ptr_diff, ptr_diff))
+                      UInt(entries.W) + ptr_diff, ptr_diff))
   }
 }
 
 class ValidDemuxIO(fanout:Int) extends Bundle{
-  val validIn = Bool(INPUT)
-  val validSelect = UInt(INPUT, log2Up(fanout))
-  val validOut = Vec(fanout, Bool(OUTPUT))
+  val validIn = Input(Bool())
+  val validSelect = Input(UInt(log2Up(fanout).W))
+  val validOut = Vec(fanout, Output(Bool()))
   //val validOut = Vec.fill(fanout)(Bool(OUTPUT))
 }
 
@@ -199,7 +200,7 @@ class ValidDemux(fanout:Int) extends Module{
   val io = IO(new ValidDemuxIO(fanout))
 
   for(i <- 0 until fanout){
-    io.validOut(i) := io.validIn && (UInt(i) === io.validSelect)
+    io.validOut(i) := io.validIn && (i.U === io.validSelect)
   }
 }
 

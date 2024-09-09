@@ -355,12 +355,12 @@ endif
 
 ifeq ($(LLVM), 1)
 	ACCEL ?=0
-	include ../../../../Makefile.llvm.in
+	include ../Makefile.llvm.in
 else
 ifeq ($(GCC), 1)
-	include ../../../../Makefile.gcc.in
+	include ../Makefile.gcc.in
 else
-	include ../../../../Makefile.bm.in
+	include ../Makefile.bm.in
 endif
 endif"""
         print(s, file=f)

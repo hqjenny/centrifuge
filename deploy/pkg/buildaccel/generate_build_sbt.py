@@ -16,15 +16,15 @@ def generate_build_sbt(accel_conf):
 
     accel_template = Template("""
 lazy val ${SOC_NAME} = (project in file("generators/${SOC_NAME}"))
-  .dependsOn(boom, testchipip, hwacha, sifive_blocks, sifive_cache${ACCELS})
-  .settings(chiselSettings)
+  .dependsOn(boom, testchipip, rocketchip_blocks, rocketchip_inclusive_cache${ACCELS})
+  .settings(libraryDependencies ++= rocketLibDeps.value)
   .settings(commonSettings)
 """)
 
     bm_template = Template("""
 lazy val ${ACCEL} = (project in file("${DIR}"))
-  .dependsOn(rocketchip, testchipip, midasTargetUtils, icenet)
-  .settings(chiselSettings)
+  .dependsOn(rocketchip, testchipip, icenet)
+  .settings(libraryDependencies ++= rocketLibDeps.value)
   .settings(commonSettings)
 """)
 

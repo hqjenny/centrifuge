@@ -1,14 +1,21 @@
 package hls_${FUNC}
-import Chisel._
-import freechips.rocketchip.config.{Parameters, Field}
+
+import sys.process._
+
+import chisel3._
+import chisel3.util._
+import org.chipsalliance.cde.config.{Parameters, Field}
 import freechips.rocketchip.tile._
 import freechips.rocketchip.util._
 
-class ${FUNC}() extends BlackBox() {
+class ${FUNC}() extends BlackBox() with HasBlackBoxPath {
     ${PARAMS}
-    val io = new Bundle {
+    val io = IO(new Bundle {
         ${ARGS}
-    }
+    })
+
+    ${BBOX_PATHS}
+
 }
 
 

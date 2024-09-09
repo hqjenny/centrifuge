@@ -1,9 +1,9 @@
 package memControl
 
-import Chisel._
-import Chisel.ImplicitConversions._
+import chisel3._
+import chisel3.util._
 import freechips.rocketchip.tile._
-import freechips.rocketchip.config._
+import org.chipsalliance.cde.config._
 import freechips.rocketchip.diplomacy._
 import freechips.rocketchip.rocket._
 import freechips.rocketchip.tilelink._
@@ -15,17 +15,17 @@ import vivadoHLS._
 import controlUtils._
 
 class RequestParserIO(dataWidth: Int, addrWidth: Int) extends Bundle{
-  val reqIn = new ApBusReq(dataWidth, addrWidth).flip
+  val reqIn = Flipped(new ApBusReq(dataWidth, addrWidth))
   val reqOut = new ApBusReq(dataWidth, addrWidth)
-  val offsetAddr = UInt(INPUT, width=addrWidth)
-  val loadOffset = Bool(INPUT)
+  val offsetAddr = Input(UInt(addrWidth.W))
+  val loadOffset = Input(Bool())
 }
 class RequestParser(dataWidth: Int, addrWidth: Int) extends Module{
   val io = IO(new RequestParserIO(dataWidth, addrWidth))
   
-  val offsetReg = Reg(init = UInt(0, width=addrWidth))
+  val offsetReg = RegInit(0.U(addrWidth.W))
 
-  val multAmt = UInt(dataWidth/8)
+  val multAmt = (dataWidth/8).U
 
   when(io.loadOffset){
     offsetReg := io.offsetAddr
@@ -40,7 +40,7 @@ class RequestParser(dataWidth: Int, addrWidth: Int) extends Module{
 
 class TimestampedRequestIO(dataWidth:Int, addrWidth:Int, counterSize: Int) extends Bundle{
   val req = new ApBusReq(dataWidth, addrWidth)
-  val timestamp = UInt(INPUT, log2Up(counterSize))
+  val timestamp = Input(UInt(log2Up(counterSize).W))
 }
 
 class ApBusReqType (dataWidth:Int, addrWidth:Int) extends Bundle{
@@ -49,37 +49,37 @@ class ApBusReqType (dataWidth:Int, addrWidth:Int) extends Bundle{
   val din     = Bool() //req_din in verilog
 
   //Lines used for req
-  val address     = UInt(width = addrWidth)
-  val dataout     = UInt(width = dataWidth)
-  val size        = UInt(width = addrWidth)
+  val address     = UInt(addrWidth.W)
+  val dataout     = UInt(dataWidth.W)
+  val size        = UInt(addrWidth.W)
 }
 
 class TimestampedRequestIOType(dataWidth:Int, addrWidth:Int, counterSize: Int) extends Bundle{
   val req = new ApBusReqType(dataWidth, addrWidth)
-  val timestamp = UInt(width = log2Up(counterSize))
+  val timestamp = UInt(log2Up(counterSize).W)
 }
 
 
 class RequestIngestIO(dataWidth: Seq[Int], addrWidth: Seq[Int], counterSize: Int, inputBufferLen: Int) extends Bundle{
   //val reqsIn  = Vec.tabulate(dataWidth.length)((i) => Wire(new ApBusReq(dataWidth(i), addrWidth(i)).flip))
-  val reqsIn = HeterogeneousBag(dataWidth.zip(addrWidth).map {
+  val reqsIn = Flipped(HeterogeneousBag.apply(dataWidth.zip(addrWidth).map {
     case (dw, aw) => new ApBusReq(dw, aw)
-  }).flip
+  }))
  
   val reqsFullN = Vec(dataWidth.length, Output(Bool()))
   //val reqsWrite = Vec(dataWidth.length, Bool(INPUT)).flip
   val reqsWrite = Vec(dataWidth.length, Input(Bool()))
   //val offsetAddrs = Vec.tabulate(dataWidth.length)((i) => UInt(INPUT, width=addrWidth(i)))
-  //val offsetAddrs = HeterogeneousBag(addrWidth.map(aw => UInt(INPUT, width = aw)))
-  val offsetAddrs = HeterogeneousBag(addrWidth.map(aw => Input(UInt(aw.W))))
+  //val offsetAddrs = HeterogeneousBag.apply(addrWidth.map(aw => UInt(INPUT, width = aw)))
+  val offsetAddrs = HeterogeneousBag.apply(addrWidth.map(aw => Input(UInt(aw.W))))
   //val loadOffsets = Vec(dataWidth.length, Bool(INPUT)).flip
   val loadOffsets = Vec(dataWidth.length, Input(Bool()))
 
-  val newRequests = UInt(OUTPUT, width = log2Up(dataWidth.length)+1) //The number of new requests recieved in this cycle (used to track number of outstanding requests)
+  val newRequests = Output(UInt((log2Up(dataWidth.length)+1).W)) //The number of new requests recieved in this cycle (used to track number of outstanding requests)
 
   //The widths are the maximums of all of the input widths
   val reqOut = Decoupled(new ApBusReq(if (dataWidth.length > 0) dataWidth.max else 0, if (addrWidth.length > 0) addrWidth.max else 0))
-  val selectedBus = UInt(OUTPUT, log2Up(dataWidth.length))
+  val selectedBus = Output(UInt(log2Up(dataWidth.length).W))
 }
 
 class RequestIngest(dataWidth: Seq[Int], addrWidth: Seq[Int], inputBufferLen: Int) extends Module{
@@ -93,25 +93,25 @@ class RequestIngest(dataWidth: Seq[Int], addrWidth: Seq[Int], inputBufferLen: In
 
   val counter = Counter(counterSize)
 
-  val prevTimestamp = Reg(init = UInt(0, width=log2Up(counterSize)))
+  val prevTimestamp = RegInit(0.U(log2Up(counterSize).W))
 
   val parsers = Seq.tabulate(busCount)((i) => Module(new RequestParser(dataWidth(i), addrWidth(i))).io)
 
   //val queues = Vec.tabulate(busCount)((i) => Module(new Queue(new TimestampedRequestIOType(dataWidth(i), addrWidth(i), log2Up(counterSize)), inputBufferLen)))
   val queues = Seq.tabulate(busCount)((i) => Module(new Queue(new TimestampedRequestIOType(dataWidth(i), addrWidth(i), log2Up(counterSize)), inputBufferLen)).io)
-  /*val queues = HeterogeneousBag(dataWidth.zip(addrWidth).map{ 
+  /*val queues = HeterogeneousBag.apply(dataWidth.zip(addrWidth).map{ 
       case (dw, aw) => Module(new Queue(new TimestampedRequestIOType(dw, aw, log2Up(counterSize)), inputBufferLen))
   })*/ 
   //Vec.tabulate(busCount)((i) => Module(new Queue(new TimestampedRequestIO(dataWidth(i), addrWidth(i), log2Up(counterSize)), inputBufferLen)).io)
 
   val arbiter = Module(new PriorityArbiter(new ApBusReq(if (dataWidth.length > 0) dataWidth.max else 0, if (addrWidth.length > 0) addrWidth.max else 0), busCount, log2Up(counterSize)))
 
-  val incrCounter = Wire(Bool(false))  
+  val incrCounter = WireDefault(false.B)  
   if (dataWidth.length > 0) {    
     incrCounter := io.reqsWrite.reduce(_||_)
   }
   //+1 is because we need to be able to represent 0 and BusCount not BusCount-1
-  val requestsUInt = io.reqsWrite.map((x) => Mux(x, UInt(1, width=busCount), UInt(0, width=busCount+1)))
+  val requestsUInt = io.reqsWrite.map((x) => Mux(x, 1.U(busCount.W), 0.U((busCount+1).W)))
 
   if (dataWidth.length > 0) {    
     io.newRequests := requestsUInt.reduce(_+_)
@@ -154,28 +154,28 @@ class RequestIssuerIO(dataWidth: Int, addrWidth:Int, maxReqWidth:Int, numBus:Int
   //val reqIn = Decoupled(new ApBusReq(dataWidth, addrWidth)).flip
   val reqIn = Flipped(Decoupled(new ApBusReq(dataWidth, addrWidth)))
   //The bus that the request came from
-  val reqBus = UInt(INPUT, width=log2Up(numBus))
+  val reqBus = Input(UInt(log2Up(numBus).W))
 
   //Lines for table address check and for updating the table
-  val accessWidth = UInt(OUTPUT, width=maxReqWidth)
-  val accessRead = Bool(INPUT)
-  val conflict = Bool(INPUT)
+  val accessWidth = Output(UInt(maxReqWidth.W))
+  val accessRead = Output(Bool())
+  val conflict = Input(Bool())
   //val tagQueueIO = Decoupled(UInt(OUTPUT, width=roccTagWidth)).flip
   val tagQueueIO = Flipped(Decoupled(Output(UInt(roccTagWidth.W))))
-  val busNum = UInt(OUTPUT, width=log2Up(numBus))
+  val busNum = Output(UInt(log2Up(numBus).W))
   
   //RoCC Lines
-  val roCCReqAddr  = UInt(OUTPUT, width = roccAddrWidth) // coreMaxAddrBits)
-  val roCCReqTag   = UInt(OUTPUT, width = roccTagWidth) //coreDCacheReqTagBits)
-  val roCCReqCmd   = UInt(OUTPUT, width = roccCmdWidth) //M_SZ)
-  val roCCReqTyp   = UInt(OUTPUT, width = roccTypWidth) //
-  val roCCReqData  = UInt(OUTPUT, width = roccDataWidth) //coreDataBits)
-  val roCCReqValid = Bool(OUTPUT)
-  val roCCReqRdy   = Bool(INPUT)
+  val roCCReqAddr  = Output(UInt(roccAddrWidth.W)) // coreMaxAddrBits)
+  val roCCReqTag   = Output(UInt(roccTagWidth.W)) //coreDCacheReqTagBits)
+  val roCCReqCmd   = Output(UInt(roccCmdWidth.W)) //M_SZ)
+  val roCCReqTyp   = Output(UInt(roccTypWidth.W)) //
+  val roCCReqData  = Output(UInt(roccDataWidth.W)) //coreDataBits)
+  val roCCReqValid = Output(Bool())
+  val roCCReqRdy   = Input(Bool())
 
-  val reqWidth     = UInt(OUTPUT, width = maxReqWidth) //Pass to table to specify width of request
+  val reqWidth     = Output(UInt(maxReqWidth.W)) //Pass to table to specify width of request
 
-  val reqSent      = Bool(OUTPUT)
+  val reqSent      = Output(Bool())
 }
 
 //maxReqBytes = 8 (64 bit) in our case
@@ -185,7 +185,7 @@ class RequestIssuer(dataWidth: Int, addrWidth:Int, maxReqBytes:Int, roccAddrWidt
   val io = IO(new RequestIssuerIO(dataWidth, addrWidth, maxReqWidth, numBus, roccAddrWidth, roccDataWidth, roccTagWidth, roccCmdWidth, roccTypWidth))
 
 if (busDataWidths.length > 0) {
-  val busByteWidth = Vec(busDataWidths.map((x) => UInt(x)/UInt(8)))
+  val busByteWidth = VecInit(busDataWidths.map((x) => x.U / 8.U))
 
   val currentByteWidth = busByteWidth(io.reqBus)
 
@@ -195,10 +195,11 @@ if (busDataWidths.length > 0) {
   io.roCCReqData  := io.reqIn.bits.dataout
   io.roCCReqTag   := io.tagQueueIO.bits
   io.roCCReqCmd   := Mux(io.reqIn.bits.din, M_XWR, M_XRD) //Set the transaction type (Write / Read)
-  io.roCCReqTyp   := Mux(currentByteWidth===UInt(8), log2Ceil(8).U, Mux(currentByteWidth===UInt(4), log2Ceil(4).U, Mux(currentByteWidth===UInt(2), log2Ceil(2).U, log2Ceil(1).U))) //Set transaction width
+  io.roCCReqTyp   := Mux(currentByteWidth===8.U, log2Ceil(8).U, Mux(currentByteWidth===4.U, log2Ceil(4).U, Mux(currentByteWidth===2.U, log2Ceil(2).U, log2Ceil(1).U))) //Set transaction width
   io.reqWidth     := currentByteWidth
 
   io.accessWidth  := currentByteWidth
+  io.accessRead   := !io.reqIn.bits.din
 
   io.roCCReqValid := io.reqIn.valid && !io.conflict && io.tagQueueIO.valid
 
@@ -211,21 +212,21 @@ if (busDataWidths.length > 0) {
 }
 
 class RoutingTableIO(tagWidth:Int, numBus:Int, addrWidth: Int, maxReqWidth: Int) extends Bundle{
-  val reqValid = Bool(INPUT)
-  val reqTag   = UInt(INPUT, width = tagWidth)
-  val reqWrite = Bool(INPUT) //If the transaction is a write
-  val reqAddr  = UInt(INPUT, width = addrWidth)
-  val reqBus   = UInt(INPUT, log2Up(numBus))
-  val reqWidth = UInt(INPUT, width = maxReqWidth)
+  val reqValid = Input(Bool())
+  val reqTag   = Input(UInt(tagWidth.W))
+  val reqWrite = Input(Bool()) //If the transaction is a write
+  val reqAddr  = Input(UInt(addrWidth.W))
+  val reqBus   = Input(UInt(log2Up(numBus).W))
+  val reqWidth = Input(UInt(maxReqWidth.W))
 
-  val checkAddr = UInt(INPUT, width = addrWidth)
-  val checkWidth = UInt(INPUT, width = maxReqWidth)
-  val checkRead = Bool(INPUT)
-  val conflict = Bool(OUTPUT)
+  val checkAddr = Input(UInt(addrWidth.W))
+  val checkWidth = Input(UInt(maxReqWidth.W))
+  val checkRead = Input(Bool())
+  val conflict = Output(Bool())
 
-  val respTag  = UInt(INPUT, width = tagWidth)
-  val respVaid = Bool(INPUT)
-  val respBus =  UInt(OUTPUT, width = log2Up(numBus))
+  val respTag = Input(UInt(tagWidth.W))
+  val respValid = Input(Bool()) // Note: fixed typo from `respVaid` to `respValid`
+  val respBus = Output(UInt(log2Up(numBus).W))
 }
 
 //maxReqBytes = 8 (64 bit) in our case
@@ -235,85 +236,83 @@ class RoutingTable(tagWidth:Int, numTags:Int, numBus:Int, addrWidth: Int, maxReq
 
   val io = IO(new RoutingTableIO(tagWidth, numBus, addrWidth, maxReqWidth))
 
-if (addrWidth > 0) {
+  if (addrWidth > 0) {
 
-  val v = Reg(Vec.fill(numTags)(Bool(false))) //valid (outstanding memory request)
-  val write = Reg(Vec.fill(numTags)(Bool(false))) //outstanding request is a write
-  val addr = Reg(Vec.fill(numTags)(UInt(0, width=addrWidth)))
-  val width = Reg(Vec.fill(numTags)(UInt(0, width=maxReqWidth)))
-  val bus = Reg(Vec.fill(numTags)(UInt(0, width=log2Up(numBus))))
+    val v = RegInit(VecInit(Seq.fill(numTags)(false.B))) //valid (outstanding memory request)
+    val write = RegInit(VecInit(Seq.fill(numTags)(false.B))) // outstanding request is a write
+    val addr = RegInit(VecInit(Seq.fill(numTags)(0.U(addrWidth.W))))
+    val width = RegInit(VecInit(Seq.fill(numTags)(0.U(maxReqWidth.W))))
+    val bus = RegInit(VecInit(Seq.fill(numTags)(0.U(log2Up(numBus).W))))
 
-  //write Req into table 
-  when(io.reqValid){
-    v(io.reqTag) := Bool(true)       //Set table entry as valid
-    write(io.reqTag) := io.reqWrite  //Set write flag
-    addr(io.reqTag)  := io.reqAddr   //Set addr
-    width(io.reqTag) := io.reqWidth  //Set transaction width (in bytes)
-    bus(io.reqTag)   := io.reqBus    //Set the requesting bus
+    //write Req into table 
+    when(io.reqValid){
+      v(io.reqTag) := true.B       //Set table entry as valid
+      write(io.reqTag) := io.reqWrite  //Set write flag
+      addr(io.reqTag)  := io.reqAddr   //Set addr
+      width(io.reqTag) := io.reqWidth  //Set transaction width (in bytes)
+      bus(io.reqTag)   := io.reqBus    //Set the requesting bus
+    }
+
+    //clear returned transaction.  The tag queue prevents accedently claring a tag that has not yet returned
+    when(io.respValid){
+      v(io.respTag) := false.B //This entry is no longer valid
+    }
+
+    //Return the bus that requsted the returning transaction
+    io.respBus := bus(io.respTag)
+
+    //Reads can execute if there is no outstanding write to the address (v==false || write==false)
+    //    Reads stall when v==true and write==true
+      
+    //Writes can only occure if there are no outstanding ops (v==false)
+    //    Writes stall when v==true
+
+    val addrsConflicting = VecInit(Seq.tabulate(numTags)((i) => !((io.checkAddr + io.checkWidth <= addr(i)) || (addr(i) + width(i) <= io.checkAddr))))
+
+    //There is a conflict if: the address is conflicting, the entry is valid, and if(reading, there is an outstanding write)
+    val conflicting = VecInit(Seq.tabulate(numTags)((i) => addrsConflicting(i) && v(i) && Mux(io.checkRead, write(i), true.B)))
+
+    io.conflict := conflicting.reduce(_||_)
   }
-
-  //clear returned transaction.  The tag queue prevents accedently claring a tag that has not yet returned
-  when(io.respVaid){
-    v(io.respTag) := Bool(false) //This entry is no longer valid
-  }
-
-  //Return the bus that requsted the returning transaction
-  io.respBus := bus(io.respTag)
-
-  //Reads can execute if there is no outstanding write to the address (v==false || write==false)
-  //    Reads stall when v==true and write==true
-    
-  //Writes can only occure if there are no outstanding ops (v==false)
-  //    Writes stall when v==true
-
-  val addrsConflicting = Vec.tabulate(numTags)((i) => !((io.checkAddr + io.checkWidth <= addr(i)) || (addr(i) + width(i) <= io.checkAddr)))
-
-  //There is a conflict if: the address is conflicting, the entry is valid, and if(reading, there is an outstanding write)
-  val conflicting = Vec.tabulate(numTags)((i) => addrsConflicting(i) && v(i) && Mux(io.checkRead, write(i), Bool(true)))
-
-  io.conflict := conflicting.reduce(_||_)
-}
 }
 
 class MemControllerIO(dataWidth:Seq[Int], addrWidth:Seq[Int], roccAddrWidth:Int, roccDataWidth:Int, roccTagWidth:Int, roccCmdWidth:Int, roccTypWidth:Int) extends Bundle{
   //----ap_bus requests----
-  val reqsIn = HeterogeneousBag(dataWidth.zip(addrWidth).map {
+  val reqsIn = Flipped(HeterogeneousBag.apply(dataWidth.zip(addrWidth).map {
     case (dw, aw) => new ApBusReq(dw, aw)
-  }).flip
+  }))
   //Decoupled signals for requests
-  val reqsFullN = Vec(dataWidth.length, Bool(OUTPUT))
+  val reqsFullN = Vec(dataWidth.length, Output(Bool()))
   //val reqsWrite = Vec(dataWidth.length, Bool(INPUT)).flip
   val reqsWrite = Vec(dataWidth.length, Input(Bool()))
 //Offset address lines
   //val offsetAddrs = Vec.tabulate(dataWidth.length)((i) => UInt(INPUT, width=addrWidth(i)))
-  val offsetAddrs = HeterogeneousBag(addrWidth.map(aw => UInt(INPUT, width = aw)))
+  val offsetAddrs = HeterogeneousBag.apply(addrWidth.map(aw => Input(UInt(aw.W))))
   //val loadOffsets = Vec(dataWidth.length, Bool(INPUT)).flip
-  val loadOffsets = Vec(dataWidth.length,Input(Bool()))
+  val loadOffsets = Vec(dataWidth.length, Input(Bool()))
 
   //----status line----
-  val memBusy = Bool(OUTPUT)
+  val memBusy = Output(Bool())
 
   //----ap_bus response----
-  //val rspOut  = Vec.tabulate(dataWidth.length)((i) => new ApBusRsp(dataWidth(i)).flip)
-  val rspOut = HeterogeneousBag(dataWidth.map(dw => new ApBusRsp(dw))).flip
-  val rsp_empty_n = Vec(dataWidth.length, Output(Bool())) //This is the same as valid
-  val rsp_read    = Vec(dataWidth.length, Input(Bool())) //This is the same as ready
+  val rspOut = Flipped(HeterogeneousBag.apply(dataWidth.map(dw => new ApBusRsp(dw))))
+  val rsp_empty_n = Vec(dataWidth.length, Output(Bool())) // This is the same as valid
+  val rsp_read = Vec(dataWidth.length, Input(Bool())) // This is the same as ready
 
   //----RoCC Mem Req----
-  val roCCReqAddr  = UInt(OUTPUT, width = roccAddrWidth) // coreMaxAddrBits)
-  val roCCReqTag   = UInt(OUTPUT, width = roccTagWidth) //coreDCacheReqTagBits)
-  val roCCReqCmd   = UInt(OUTPUT, width = roccCmdWidth) //M_SZ)
-  val roCCReqTyp   = UInt(OUTPUT, width = roccTypWidth) //MT_SZ)
-  val roCCReqData  = UInt(OUTPUT, width = roccDataWidth) //
-  val roCCReqValid = Bool(OUTPUT)
-  val roCCReqRdy   = Bool(INPUT)
+  val roCCReqAddr  = Output(UInt(roccAddrWidth.W))
+  val roCCReqTag   = Output(UInt(roccTagWidth.W))
+  val roCCReqCmd   = Output(UInt(roccCmdWidth.W))
+  val roCCReqTyp   = Output(UInt(roccTypWidth.W))
+  val roCCReqData  = Output(UInt(roccDataWidth.W))
+  val roCCReqValid = Output(Bool())
+  val roCCReqRdy   = Input(Bool())
 
-  //val roCCRespAddr  = UInt(INPUT, width = roccAddrWidth) // coreMaxAddrBits)
-  val roCCRspTag   = UInt(INPUT, width = roccTagWidth) //coreDCacheReqTagBits)
-  val roCCRspCmd   = UInt(INPUT, width = roccCmdWidth) //M_SZ)
-  val roCCRspData  = UInt(INPUT, width = roccDataWidth) //MT_SZ)
-  //val roCCRespTyp   = UInt(INPUT, width = roccTypWidth) //MT_SZ)
-  val roCCRspValid = Bool(INPUT)
+  // RoCC Response signals
+  val roCCRspTag   = Input(UInt(roccTagWidth.W))
+  val roCCRspCmd   = Input(UInt(roccCmdWidth.W))
+  val roCCRspData  = Input(UInt(roccDataWidth.W))
+  val roCCRspValid = Input(Bool())
 }
 
 class MemController(dataWidth:Seq[Int], addrWidth:Seq[Int], reqBufferLen:Int, rspBufferLen:Int, maxReqBytes:Int, roccAddrWidth:Int, roccDataWidth:Int, roccTagWidth:Int, roccCmdWidth:Int, roccTypWidth:Int, numTags:Int, tagOffset:Int ) extends Module{
@@ -327,16 +326,16 @@ if (numBus > 0){
   
   //Tags may have an offset if this is not the only accelerator in the system
   val tags = (tagOffset until (tagOffset+numTags))
-  val tagUInts = tags.map((x) => UInt(x, width=roccTagWidth).asUInt)
-  val tagQueue = Module(new RegisterQueue(gen=UInt(width=roccTagWidth),  entries=numTags,  initVals=tagUInts, flow=true))
-  val rspQueues = Seq.tabulate(numBus)((i) => Module(new Queue(UInt(width=dataWidth(i)), rspBufferLen)).io)
+  val tagUInts = tags.map((x) => x.U(roccTagWidth.W))
+  val tagQueue = Module(new RegisterQueue(gen=UInt(roccTagWidth.W),  entries=numTags,  initVals=tagUInts, flow=true))
+  val rspQueues = Seq.tabulate(numBus)((i) => Module(new Queue(UInt(dataWidth(i).W), rspBufferLen)).io)
   val validDemux = Module(new ValidDemux(numBus))
 
-  val currentRequestNum = Reg(init=UInt(0, width=(reqBufferLen*numBus+1+numTags)))
+  val currentRequestNum = RegInit(0.U((reqBufferLen*numBus+1+numTags).W))
 
   //Logic for number of outstanding requests
-  currentRequestNum := currentRequestNum + reqIngest.io.newRequests - Mux(io.roCCRspValid, UInt(1), UInt(0))
-  io.memBusy := currentRequestNum =/= UInt(0)
+  currentRequestNum := currentRequestNum + reqIngest.io.newRequests - Mux(io.roCCRspValid, 1.U, 0.U)
+  io.memBusy := currentRequestNum =/= 0.U
 
   //==== Ingest Logic ====
   //Hook up ap_bus request lines to ingest logic
@@ -344,8 +343,8 @@ if (numBus > 0){
   reqIngest.io.reqsIn  := io.reqsIn
   io.reqsFullN              := reqIngest.io.reqsFullN
   reqIngest.io.reqsWrite    := io.reqsWrite
-  //reqIngest.io.offsetAddrs  := io.offsetAddrs
-  io.offsetAddrs  := reqIngest.io.offsetAddrs
+  reqIngest.io.offsetAddrs  := io.offsetAddrs
+  //io.offsetAddrs  := reqIngest.io.offsetAddrs
   reqIngest.io.loadOffsets  := io.loadOffsets
 
   //val newRequests
@@ -395,7 +394,7 @@ if (numBus > 0){
   reqIssuer.io.conflict     := scoreboard.io.conflict
 
   scoreboard.io.respTag  := io.roCCRspTag
-  scoreboard.io.respVaid := io.roCCRspValid
+  scoreboard.io.respValid := io.roCCRspValid
   //val scoreboard.io.respBus 
 
   //====TagQueue====

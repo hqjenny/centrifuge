@@ -1,9 +1,10 @@
 package hls_${FUNC}
-import Chisel._
+import chisel3._
+import chisel3.util._
 import chisel3.dontTouch
-import freechips.rocketchip.config.{Parameters, Field}
+import org.chipsalliance.cde.config.{Parameters, Field}
 import freechips.rocketchip.tile._
-import freechips.rocketchip.config._
+import org.chipsalliance.cde.config._
 import freechips.rocketchip.diplomacy._
 import freechips.rocketchip.rocket._
 import freechips.rocketchip.tilelink._
@@ -21,24 +22,24 @@ class HLS${FUNC}Control(opcodes: OpcodeSet)(implicit p: Parameters) extends Lazy
 class HLS${FUNC}ControlModule(outer: HLS${FUNC}Control)(implicit p: Parameters) extends LazyRoCCModuleImp(outer) 
     with HasCoreParameters {
 
-val result = Reg(init=Bits(0, width=xLen))
-val respValid = Reg(init=Bool(false))
-val rdy = Reg(init=Bool(true))
-val busy = Reg(init=Bool(false))
-val bufferedCmd = Reg(init=Wire( new RoCCCommand()(p)))
+val result = RegInit(0.U(xLen.W))
+val respValid = RegInit(false.B)
+val rdy = RegInit(true.B)
+val busy = RegInit(false.B)
+val bufferedCmd = Reg(new RoCCCommand()(p))
 
 val cmd = Queue(io.cmd)
 val funct = bufferedCmd.inst.funct
 val rs1 = bufferedCmd.rs1
 val rs2 = bufferedCmd.rs2
 val rdTag = bufferedCmd.inst.rd
-val doAdd = funct === UInt(0)
+val doAdd = funct === 0.U
 
 val rs1_unbuffered = cmd.bits.rs1
 val rs2_unbuffered = cmd.bits.rs2
 
-val idle :: working :: Nil = Enum(UInt(),2)
-val state = Reg(init=idle)
+val idle :: working :: Nil = Enum(2)
+val state = RegInit(idle)
 
 when(reset.asBool){
   bufferedCmd.inst.funct := 0.asUInt(7.W)
@@ -68,7 +69,7 @@ io.mem.req.bits.dv := io.cmd.bits.status.dv
 val accel = Module(new HLS${FUNC}Blackbox())
 
 //Acclerator Registers (we buffer inputs to accelerator)
-val ap_start = Reg(init=Bool(false))
+val ap_start = RegInit(false.B)
 
 //Assign Inputs to Accelerator
 accel.io.ap.start := ap_start
@@ -126,7 +127,7 @@ io.mem.req.bits.size        := memControl.io.roCCReqTyp
 
 // If the address is not a mulitple of 8 byte which the coreDataBits width, 
 // We have to shift the N-bit data to the right place in a 64-bit word   
-val shift = (memControl.io.roCCReqAddr & UInt( log2Up(coreDataBits) - 1 )) << UInt(3)
+val shift = (memControl.io.roCCReqAddr & (log2Up(coreDataBits) - 1).U) << 3.U
 io.mem.req.bits.data       := memControl.io.roCCReqData << shift(7,0)
 io.mem.req.valid           := memControl.io.roCCReqValid
 memControl.io.roCCReqRdy   := io.mem.req.ready
@@ -157,7 +158,7 @@ memControl.io.offsetAddrs(i) := cArgsUnbuffered(accel.ap_bus_argLoc(i))
 if(accel.io.ap_bus.length > 0){
 //Will run ap_start after offsets loaded
 for(i <- 0 until memControl.io.loadOffsets.length){
-  memControl.io.loadOffsets(i) := (state === idle) && cmd.fire()
+  memControl.io.loadOffsets(i) := (state === idle) && cmd.fire
 }
 }
 
@@ -167,13 +168,13 @@ switch(state){
 is (idle){
   //Waiting for command
 
-  when(cmd.fire()){
+  when(cmd.fire){
     //We have a valid, unserviced command. This code takes ready low so
     //we should not accedently cause an infinite loop
 
     bufferedCmd := cmd.bits //Accelerator takes from bufferedCmd directly
-    busy := Bool(true)
-    rdy := Bool(false)
+    busy := true.B
+    rdy := false.B
    
     //Load the offsets
     /*if(accel.io.ap_bus.length > 0){
@@ -183,7 +184,7 @@ is (idle){
       }
     }*/
 
-    ap_start := Bool(true)        //Set next state
+    ap_start := true.B        //Set next state
     state := working
     //Note: Based on timing diagram in Vivado HLS user guide (pg 157), read occurs
     //AFTER the 1st cycle.  There will be a 1 cycle delay before input read as
@@ -201,7 +202,7 @@ is (idle){
   when(respValid && io.resp.ready){
     //The processor has read the response.  There is no more data for it
     //Drive resp.valid low to avoid stalling processor
-    respValid := Bool(false)
+    respValid := false.B
   }
 }
 is (working){
@@ -229,13 +230,13 @@ is (working){
     //we are creating.
 
     result := ap_return
-    respValid := Bool(true)
+    respValid := true.B
   }
   when(ap_ready){
     //The accelerator has read the inputs and is ready to accept new ones.
     //According to the timing diagram,
     //ap_start should be deasserted for the next posedge.
-    ap_start := Bool(false)
+    ap_start := false.B
   }
 
 
@@ -251,8 +252,8 @@ is (working){
       //should save one cycle over using ap_idle as the trigger.  this is because,
       //according to the timing diagram in the user manual (pg  
 
-      rdy := Bool(true) // ready to accept new commands
-      busy := Bool(false) // operation complete, no longer busy
+      rdy := true.B // ready to accept new commands
+      busy := false.B // operation complete, no longer busy
       state := idle
 
       //note: this code could possibly be placed in the ap_done action to save
@@ -275,8 +276,8 @@ is (working){
       //should save one cycle over using ap_idle as the trigger.  this is because,
       //according to the timing diagram in the user manual (pg  
 
-      rdy := Bool(true) // ready to accept new commands
-      busy := Bool(false) // operation complete, no longer busy
+      rdy := true.B // ready to accept new commands
+      busy := false.B // operation complete, no longer busy
       state := idle
 
       //note: this code could possibly be placed in the ap_done action to save
@@ -289,7 +290,7 @@ is (working){
   when(respValid && io.resp.ready){
     //The processor has read the response.  There is no more data for it
     //Drive resp.valid low to avoid stalling processor
-    respValid := Bool(false)
+    respValid := false.B
   }
 }
 }
@@ -297,23 +298,23 @@ is (working){
 // ===== End Controller State Machine Logic =====
 
 // ===== Tie off these lines =====
-  io.interrupt := Bool(false)
+  io.interrupt := false.B
   // Set this true to trigger an interrupt on the processor (please refer to supervisor documentation)
 
   // MEMORY REQUEST INTERFACE
   if(accel.io.ap_bus.length == 0){
     // No connected memory bus lines on accelerator
     // We will not be doing any memory ops in this accelerator
-    io.mem.req.valid := Bool(false)
-    io.mem.req.bits.addr := UInt(0)
-    io.mem.req.bits.tag := UInt(0)
+    io.mem.req.valid := false.B
+    io.mem.req.bits.addr := 0.U
+    io.mem.req.bits.tag := 0.U
     io.mem.req.bits.cmd := M_XRD // perform a load (M_XWR for stores)
     io.mem.req.bits.size := log2Ceil(8).U
-    io.mem.req.bits.signed := Bool(false)
-    io.mem.req.bits.data := UInt(0) // not performing any stores
+    io.mem.req.bits.signed := false.B
+    io.mem.req.bits.data := 0.U // not performing any stores
   }
-  //io.mem.invalidate_lr := Bool(false)
+  //io.mem.invalidate_lr := false.B
 
   //If enable physical addr, make sure to use pmp instr to set the right permission on addr range
-  io.mem.req.bits.phys := Bool(false)
+  io.mem.req.bits.phys := false.B
 }
